@@ -75,10 +75,10 @@ typedef union packed {
 
 
 typedef struct packed {
-	logic         valid; 
+  logic         valid; 
   inst_t        inst;
-	logic [31:0]  pc;
-	logic [31:0]  pc_next;  // pc+4
+  logic [31:0]  pc;
+  logic [31:0]  pc_next;  // pc+4
 } if_id_pkt_t;
 
 typedef struct packed {
