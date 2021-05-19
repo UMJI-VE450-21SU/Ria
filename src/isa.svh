@@ -108,8 +108,8 @@
 `define RV32_OR         `RV32_R_t(`RV32_OP, 3'b110, 7'b0000000)
 `define RV32_AND        `RV32_R_t(`RV32_OP, 3'b111, 7'b0000000)
 `define RV32_FENCE      `RV32_I_t(`RV32_OP_FENCE, 3'b000)
-`define ECALL           {25'b0, `RV32_OP_SYSTEM}
-`define EBREAK          {11'b0, 1'b1, 13'b0, `RV32_OP_SYSTEM}
+`define RV32_ECALL      {25'b0, `RV32_OP_SYSTEM}
+`define RV32_EBREAK     {11'b0, 1'b1, 13'b0, `RV32_OP_SYSTEM}
 
 // RV32 Zifencei
 `define RV32_FENCE_I    `RV32_I_t(`RV32_OP_FENCE, 3'b001)
