@@ -117,7 +117,7 @@
 // RV32 Zicsr
 `define RV32_CSRRW      `RV32_I_t(`RV32_OP_SYSTEM, 3'b001)
 `define RV32_CSRRS      `RV32_I_t(`RV32_OP_SYSTEM, 3'b010)
-`define RV32_CSRRC      `RV32_I_t(`RV32_OP_SYSTEM, 3'b011)                                                  
+`define RV32_CSRRC      `RV32_I_t(`RV32_OP_SYSTEM, 3'b011)
 `define RV32_CSRRWI     `RV32_I_t(`RV32_OP_SYSTEM, 3'b101)
 `define RV32_CSRRSI     `RV32_I_t(`RV32_OP_SYSTEM, 3'b110)
 `define RV32_CSRRCI     `RV32_I_t(`RV32_OP_SYSTEM, 3'b111)
