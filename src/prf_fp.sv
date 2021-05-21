@@ -1,5 +1,5 @@
 `define PRF_FP_SIZE        64
-`define PRF_FP_INDEX_SIZE  6  // log2(64)
+`define PRF_FP_INDEX_SIZE  6  // log2(PRF_FP_SIZE)
 `define PRF_FP_WAYS        2
 
 module prf_fp (
@@ -8,14 +8,14 @@ module prf_fp (
   input  [`PRF_FP_WAYS-1:0] [`PRF_FP_INDEX_SIZE-1:0]    rda_idx,
   input  [`PRF_FP_WAYS-1:0] [`PRF_FP_INDEX_SIZE-1:0]    rdb_idx,
   input  [`PRF_FP_WAYS-1:0] [`PRF_FP_INDEX_SIZE-1:0]    wr_idx,
-  input  [`PRF_FP_WAYS-1:0] [31:0]                      wr_dat,
+  input  [`PRF_FP_WAYS-1:0] [63:0]                      wr_dat,
   input  [`PRF_FP_WAYS-1:0]                             wr_en,
-  output logic [`PRF_FP_WAYS-1:0] [31:0]                rda_dat,
-  output logic [`PRF_FP_WAYS-1:0] [31:0]                rdb_dat
+  output logic [`PRF_FP_WAYS-1:0] [63:0]                rda_dat,
+  output logic [`PRF_FP_WAYS-1:0] [63:0]                rdb_dat
 );
 
-  reg   [`PRF_FP_SIZE-1:0] [31:0]                 rf;
-  logic [`PRF_FP_SIZE-1:0] [31:0]                 rf_next;
+  reg   [`PRF_FP_SIZE-1:0] [63:0]                 rf;
+  logic [`PRF_FP_SIZE-1:0] [63:0]                 rf_next;
 
   logic [`PRF_FP_WAYS-1:0] [`PRF_FP_WAYS-1:0]     opa_is_from_wr;
   logic [`PRF_FP_WAYS-1:0] [`PRF_FP_WAYS-1:0]     opb_is_from_wr;

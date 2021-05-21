@@ -1,5 +1,5 @@
-`define PRF_INT_SIZE        128
-`define PRF_INT_INDEX_SIZE  7  // log2(128)
+`define PRF_INT_SIZE        64
+`define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
 `define PRF_INT_WAYS        3
 
 module prf_int (
