@@ -81,25 +81,5 @@ typedef struct packed {
   logic [31:0]  pc_next;  // pc+4
 } if_id_pkt_t;
 
-typedef struct packed {
-  logic beq;
-  logic bne;
-  logic blt;
-  logic bge;
-  logic bltu;
-  logic bgeu;
-  logic add;
-  logic sub;
-  logic slt;
-  logic sltu;
-  logic lxor;
-  logic lor;
-  logic land;
-  logic sll;
-  logic srl;
-  logic sra;
-} alu_pkt_t;
-
-
 
 `endif  // __DEFINES_SVH__
