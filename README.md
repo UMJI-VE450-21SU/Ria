@@ -16,8 +16,8 @@ Team: Zhiyuan Liu, Jian Shi, Li Shi, Yiqiu Sun, Yichao Yuan
 ### Open source RISC-V cores
 
 1. The Berkeley Out-of-Order Machine (BOOM), [Docs](https://docs.boom-core.org/en/latest/index.html)
-   github link: https://github.com/riscv-boom/riscv-boom 
+   github link: https://github.com/riscv-boom/riscv-boom; https://github.com/chipsalliance/rocket-chip
 
-1. Hummingbirdv2 E203 Core and SoC, [Docs](https://doc.nucleisys.com/hbirdv2/index.html)
+2. Hummingbirdv2 E203 Core and SoC, [Docs](https://doc.nucleisys.com/hbirdv2/index.html)
 
-1. EH1 RISC-V SweRV Core from WD, [GitHub](https://github.com/chipsalliance/Cores-SweRV)
+3. EH1 RISC-V SweRV Core from WD, [GitHub](https://github.com/chipsalliance/Cores-SweRV)
