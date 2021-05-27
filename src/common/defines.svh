@@ -1,6 +1,37 @@
 `ifndef __DEFINES_SVH__
 `define __DEFINES_SVH__
 
+`define DISPATCH_WIDTH      4
+
+`define ISSUE_WIDTH_INT     3
+`define ISSUE_WIDTH_MEM     1
+`define ISSUE_WIDTH_FP      2
+
+`define IQ_INT_SIZE         16
+`define IQ_MEM_SIZE         16
+`define IQ_FP_SIZE          16
+
+`define ARF_INT_SIZE        32
+`define ARF_INT_INDEX_SIZE  5
+
+`define ARF_FP_SIZE         32
+`define ARF_FP_INDEX_SIZE   5
+
+`define PRF_INT_SIZE        64
+`define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
+`define PRF_INT_WAYS        3
+
+`define PRF_FP_SIZE         64
+`define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
+`define PRF_FP_WAYS         2
+
+// NOP = ADDI x0, x0, 0
+`define RV32_NOP        32'h00000013
+
+typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
+typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
+typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
+typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
 
 // RISCV ISA SPEC
 typedef union packed {
@@ -70,16 +101,6 @@ typedef union packed {
   } sys;
 } inst_t;
 
-// NOP = ADDI x0, x0, 0
-`define RV32_NOP        32'h00000013
-
-
-typedef struct packed {
-  logic         valid; 
-  inst_t        inst;
-  logic [31:0]  pc;
-  logic [31:0]  pc_next;  // pc+4
-} if_id_pkt_t;
 
 
 `endif  // __DEFINES_SVH__
