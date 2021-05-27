@@ -11,12 +11,12 @@
 // ../common/defines.svh
 //////////////////////////////////////////////////////////////////////////////////
 
-`define INST_NUM          100
+`define INST_NUM          10
 `define INST_WIDTH        32
 `define INST_INDEX_SIZE   5   // log2(INST_WIDTH)
 
 module mem_simulator #(
-  parameter init_file = "../../testbench/inst/default.mem"
+  parameter init_file = "default.mem"
 )(
   input                                   clock,
   input           [`INST_INDEX_SIZE-1:0]  inst_addr,
@@ -35,8 +35,10 @@ end
 
 assign validation = (inst_addr < `INST_NUM) ? 1 : 0;
 
+assign inst_value_next = inst_list[inst_addr];
+
 always_ff @(posedge clock) begin
-  inst_value <= inst_list[inst_addr];
+  inst_value <= inst_value_next;
 end
 
 endmodule
