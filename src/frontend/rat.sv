@@ -11,8 +11,8 @@
 // common/defines.svh
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/defines.svh"
-`define CP_NUM          4
-`define CP_INDEX_SIZE   2   // log2(CP_NUM)
+`define CP_NUM          2   // amount of check point
+`define CP_INDEX_SIZE   1   // log2(CP_NUM)
 
 module free_list (
   input   clock,
@@ -30,17 +30,15 @@ module check_point (
   input   clock,
   input   reset,
 
-  input   recover,
   input   check,
   input   request,
 
-  input         [`CP_INDEX_SIZE-1:0]   target_index,
-  input         [`CP_INDEX_SIZE-1:0]   request_index,
-  input         [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
-  output  logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
+  input       [`CP_INDEX_SIZE-1:0]   check_index,
+  input       [`CP_INDEX_SIZE-1:0]   request_index,
+  input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
+  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
 );
   reg   [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
-  logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_next;
 
   initial begin
     for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
@@ -48,7 +46,7 @@ module check_point (
     end
   end
 
-assign checkpoint_next = checkpoint[request_index];
+assign checkpoint_out = checkpoint[request_index];
 
   always_ff @(posedge clock) begin
     if (reset) begin
@@ -57,10 +55,7 @@ assign checkpoint_next = checkpoint[request_index];
       end
     end else begin
         if (check) begin
-          checkpoint[target_index] <= checkpoint_in;
-        end
-        if (request) begin
-          checkpoint_out <= checkpoint_next;
+          checkpoint[check_index] <= checkpoint_in;
         end
     end
   end
@@ -70,30 +65,56 @@ endmodule
 module mapping_table (
   input   clock,
   input   reset,
-  input   recover,
-  input   recover_index,
-  input   
+
+  input   check,
+  input   request,
+
+  input   [`CP_INDEX_SIZE-1:0]                              check_index,
+  input   [`CP_INDEX_SIZE-1:0]                              request_index,
+
   input   [`PRF_INT_WAYS-1:0]                               dst_valid,
 
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1：0]   RSRC_L,
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1：0]   RSRC_R,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1：0]   src_L,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1：0]   src_R,
+
+  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1：0]   Psrc_L,
+  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1：0]   Psrc_R,
+);
+
+checkpoint int_check_point(
+  .clock        (clock),
+  .reset        (reset),
+  .check        (check),
+  .request      (request),
+  .check_index      (check_index),
+  .request_index    (request_index),
+  .checkpoint_in    (mapping_tb),
+  .checkpoint_out   (mapping_tb_next)
 );
 
   // Mapping Table
-  reg [`PRF_INT_INDEX_SIZE-1:0]                   MP_TB   [`ARF_INT_SIZE-1:0];
+  reg   [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb[`ARF_INT_SIZE-1:0];
+  logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_next;
+
+  logic [`PRF_INT_INDEX_SIZE-1:0]   src_L_next[`PRF_INT_WAYS-1:0];
+  logic [`PRF_INT_INDEX_SIZE-1:0]   src_R_next[`PRF_INT_WAYS-1:0];
 
   initial begin
     for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
-      for (int j = 0; j < `PRF_INT_INDEX_SIZE; j = j + 1 )  begin
-        MP_TB[i][j] = 0;
-      end
+      mapping_tb[i] = 0;
     end
   end
 
   always_comb begin
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
-      RSRC_L[i] = MP_TB[RSRC_L[i]];
-      RSRC_R[i] = MP_TB[RSRC_R[i]];
+      Psrc_L[i] = mapping_tb[src_L[i]];
+      Psrc_R[i] = mapping_tb[src_R[i]];
+    end
+  end
+
+  always_ff @(posedge clock) begin
+    if (request) begin
+      mapping_tb <= mapping_tb_next;
     end
   end
 
