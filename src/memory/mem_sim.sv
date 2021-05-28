@@ -10,24 +10,24 @@
 // Dependencies: 
 // ../common/defines.svh
 //////////////////////////////////////////////////////////////////////////////////
-
+`include "../common/defines.svh"
 `define INST_NUM          10
 `define INST_WIDTH        32
-`define INST_INDEX_SIZE   5   // log2(INST_WIDTH)
+`define INST_PACK         128
+`define INST_INDEX_SIZE   32
 
 module mem_simulator #(
   parameter init_file = "default.mem"
 )(
   input                                   clock,
   input           [`INST_INDEX_SIZE-1:0]  inst_addr,
-  output  logic   [`INST_WIDTH-1:0]       inst_value,
+  output  logic   [`INST_PACK-1:0]        inst_value,
   output  logic                           validation
 );
 
-logic validation_next;
-logic [`INST_WIDTH-1:0]       inst_value_next;
+logic [`INST_PACK-1:0]       inst_value_next;
 
-reg   [`INST_WIDTH-1:0]       inst_list     [`INST_NUM-1:0];
+reg   [`INST_PACK-1:0]       inst_list     [`INST_NUM-1:0];
 
 initial begin
   $readmemh(init_file, inst_list);
