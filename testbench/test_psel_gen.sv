@@ -2,7 +2,7 @@
 module test_psel_gen;
 
   parameter WIDTH=16;
-  parameter REQS=4;
+  parameter REQS=8;
 
   reg   [WIDTH-1:0]       req;
   wire  [WIDTH-1:0]       gnt;
