@@ -74,11 +74,11 @@ module mapping_table (
 
   input   [`PRF_INT_WAYS-1:0]                               dst_valid,
 
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1：0]   src_L,
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1：0]   src_R,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_l,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_r,
 
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1：0]   Psrc_L,
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1：0]   Psrc_R,
+  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_l,
+  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_r,
 );
 
 checkpoint int_check_point(
@@ -96,9 +96,6 @@ checkpoint int_check_point(
   reg   [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb[`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_next;
 
-  logic [`PRF_INT_INDEX_SIZE-1:0]   src_L_next[`PRF_INT_WAYS-1:0];
-  logic [`PRF_INT_INDEX_SIZE-1:0]   src_R_next[`PRF_INT_WAYS-1:0];
-
   initial begin
     for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
       mapping_tb[i] = 0;
@@ -107,8 +104,8 @@ checkpoint int_check_point(
 
   always_comb begin
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
-      Psrc_L[i] = mapping_tb[src_L[i]];
-      Psrc_R[i] = mapping_tb[src_R[i]];
+      psrc_l[i] = mapping_tb[src_l[i]];
+      psrc_r[i] = mapping_tb[src_r[i]];
     end
   end
 
