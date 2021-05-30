@@ -134,16 +134,23 @@ module issue_queue_int (
     .empty
   );
 
-  always_comb begin  // todo: 2 level loops --> 1 level loop (consider full unrolling)
+  always_comb begin
+    uop_in_count = 0;
+    for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
+      if (uop_in[i].valid) begin
+        uop_in_count = uop_in_count + 1;
+      end
+    end
+  end
+
+  always_comb begin
     uop_to_slot = 0;
     load = 0;
-    uop_in_count = 0;
     for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
       for (int j = 0; j < `IQ_INT_SIZE; i++) begin
         if (gnt_bus_in[i][j] & uop_in[i].valid) begin
           uop_to_slot[j] = uop_in[i];
           load[j] = 1'b1;
-          uop_in_count = uop_in_count + 1;
         end
       end
     end
@@ -161,14 +168,20 @@ module issue_queue_int (
     .empty
   );
   
-  // todo: 2 level loops --> 1 level loop (consider full unrolling) 
   always_comb begin
     uop_out_count = 0;
+    for (int i = 0; i < `IQ_INT_SIZE; i++) begin
+      if (clear[i]) begin
+        uop_out_count = uop_out_count + 1;
+      end
+    end
+  end
+
+  always_comb begin
     for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
       for (int j = 0; j < `IQ_INT_SIZE; i++) begin
         if (gnt_bus_out[i][j]) begin
           uop_out[i] = uop_to_issue[j];
-          uop_out_count = uop_out_count + 1;
         end
       end
     end
