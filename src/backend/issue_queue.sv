@@ -9,7 +9,7 @@ module issue_slot_int (
   input  [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
   input  [`ISSUE_WIDTH_INT-1:0]                           ctb_valid,
 
-  input             rs1_from_ctb,
+  input             rs1_from_ctb,  // todo: put this into uop
   input             rs2_from_ctb,
 
   input             load,
@@ -17,7 +17,7 @@ module issue_slot_int (
   input  micro_op_t uop_in,
   output micro_op_t uop_out,
 
-  output            ready,
+  output            ready,  // todo: consider ex_full
   output            free
 );
 
@@ -44,7 +44,7 @@ module issue_slot_int (
       rs1_ready <= 1'b0;
       rs2_ready <= 1'b0;
       uop       <= 0;
-    end else if (load & uop_in.valid) begin
+    end else if (load & uop_in.valid) begin  // todo: update conditions for rs1_ready/rs2_ready
       free      <= 1'b0;
       rs1_ready <= uop_in.rs1_valid ? (rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
       rs2_ready <= uop_in.rs2_valid ? (rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
@@ -59,6 +59,8 @@ module issue_slot_int (
 endmodule
 
 
+// Input:  From dispatch,    width = DISPATCH_WIDTH  = 4
+// Output: To PRF & Ex Unit, width = ISSUE_WIDTH_INT = 3
 module issue_queue_int (
   input  clock,
   input  reset,
@@ -67,10 +69,12 @@ module issue_queue_int (
   input  [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
   input  [`ISSUE_WIDTH_INT-1:0]                           ctb_valid,
 
-  // todo: how to set these inputs?
+  // todo: how to set these inputs? Answer: from rename logic
   // todo: how to know whether a dependency is ready or waiting for ctb?
-  // input  [`ISSUE_WIDTH_INT-1:0]             rs1_from_ctb,
-  // input  [`ISSUE_WIDTH_INT-1:0]             rs2_from_ctb,
+  input  [`DISPATCH_WIDTH-1:0]              rs1_from_ctb,
+  input  [`DISPATCH_WIDTH-1:0]              rs2_from_ctb,
+
+  input  [`ISSUE_WIDTH_INT-1:0]             ex_full,
 
   input  micro_op_t [`DISPATCH_WIDTH-1:0]   uop_in,
   output micro_op_t [`ISSUE_WIDTH_INT-1:0]  uop_out,
@@ -106,7 +110,7 @@ module issue_queue_int (
         .reset              (reset),
         .ctb_prf_int_index  (ctb_prf_int_index),
         .ctb_valid          (ctb_valid),
-        .rs1_from_ctb       (1'b0)
+        .rs1_from_ctb       (1'b0), // todo: update rs1_from_ctb
         .rs2_from_ctb       (1'b0),
         .load               (load[k]),
         .uop_in             (uop_to_slot[k]),
@@ -119,6 +123,7 @@ module issue_queue_int (
 
 
   // Input selector
+  // todo: Sort by instruction age (might be stored in uop, use a circular counter)
   psel_gen input_selector #(
     /*REQS=*/ `DISPATCH_WIDTH,
     /*WIDTH=*/`IQ_INT_SIZE
@@ -129,9 +134,10 @@ module issue_queue_int (
     .empty
   );
 
-  always_comb begin
-    uop_in_count = 0;
+  always_comb begin  // todo: 2 level loops --> 1 level loop (consider full unrolling)
+    uop_to_slot = 0;
     load = 0;
+    uop_in_count = 0;
     for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
       for (int j = 0; j < `IQ_INT_SIZE; i++) begin
         if (gnt_bus_in[i][j] & uop_in[i].valid) begin
@@ -144,7 +150,8 @@ module issue_queue_int (
   end
 
   // Output selector
-  psel_gen input_selector #(
+  // Adjust for different execution pipes
+  psel_gen output_selector #(
     /*REQS=*/ `ISSUE_WIDTH_INT,
     /*WIDTH=*/`IQ_INT_SIZE
   ) psel_gen_inst (
@@ -154,12 +161,13 @@ module issue_queue_int (
     .empty
   );
   
+  // todo: 2 level loops --> 1 level loop (consider full unrolling) 
   always_comb begin
     uop_out_count = 0;
     for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
       for (int j = 0; j < `IQ_INT_SIZE; i++) begin
         if (gnt_bus_out[i][j]) begin
-          uop_out[uop_out_count] = uop_to_issue[j];
+          uop_out[i] = uop_to_issue[j];
           uop_out_count = uop_out_count + 1;
         end
       end
