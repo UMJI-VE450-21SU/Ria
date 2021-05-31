@@ -47,7 +47,7 @@ initial begin
   rand_lock = 0;
 end
 
-assign rand_next = rand_lock ? rand_val : ($random % 16 + 2);
+assign rand_next = rand_lock ? rand_val : ($random % 16 + 1);
 
 assign inst_value_next = inst_list[addr_lock];
 
