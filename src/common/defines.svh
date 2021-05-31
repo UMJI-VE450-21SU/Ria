@@ -20,6 +20,7 @@
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
 `define PRF_INT_WAYS        3
+`define PRF_INT_WAYS_SIZE   2  // log2(PRF_INT_WAYS)
 
 `define PRF_FP_SIZE         64
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
