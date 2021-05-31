@@ -9,15 +9,12 @@ module issue_slot_int (
   input  [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
   input  [`ISSUE_WIDTH_INT-1:0]                           ctb_valid,
 
-  input             rs1_from_ctb,  // todo: put this into uop
-  input             rs2_from_ctb,
-
   input             load,
 
   input  micro_op_t uop_in,
   output micro_op_t uop_out,
 
-  output            ready,  // todo: consider ex_full
+  output            ready,
   output            free
 );
 
@@ -31,26 +28,36 @@ module issue_slot_int (
 
   micro_op_t uop;
 
-  for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
-    assign rs1_index_match_ctb[i] = (uop_in.rs1_prf_int_index == ctb_prf_int_index[i]);
-    assign rs2_index_match_ctb[i] = (uop_in.rs2_prf_int_index == ctb_prf_int_index[i]);
-    assign rs1_from_ctb_valid     = (~rs1_ready & ctb_valid[i] & rs1_index_match_ctb[i]);
-    assign rs2_from_ctb_valid     = (~rs2_ready & ctb_valid[i] & rs2_index_match_ctb[i]);
-  end
+  generate
+    for (genvar i = 0; i < `ISSUE_WIDTH_INT; i++) begin
+      assign rs1_index_match_ctb[i] = (uop_in.rs1_prf_int_index == ctb_prf_int_index[i]);
+      assign rs2_index_match_ctb[i] = (uop_in.rs2_prf_int_index == ctb_prf_int_index[i]);
+      assign rs1_from_ctb_valid     = (~rs1_ready & ctb_valid[i] & rs1_index_match_ctb[i]);
+      assign rs2_from_ctb_valid     = (~rs2_ready & ctb_valid[i] & rs2_index_match_ctb[i]);
+    end
+  endgenerate
 
   always_ff @ (posedge clock) begin
     if (reset | clear) begin
       free      <= 1'b1;
-      rs1_ready <= 1'b0;
-      rs2_ready <= 1'b0;
       uop       <= 0;
-    end else if (load & uop_in.valid) begin  // todo: update conditions for rs1_ready/rs2_ready
+    end else if (load & uop_in.valid) begin
       free      <= 1'b0;
-      rs1_ready <= uop_in.rs1_valid ? (rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
-      rs2_ready <= uop_in.rs2_valid ? (rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
       uop       <= uop_in;
     end
-    // else: rs1_ready/rs2_ready remain current values
+  end
+
+  always_ff @ (posedge clock) begin
+    if (reset | clear) begin
+      rs1_ready <= 1'b0;
+      rs2_ready <= 1'b0;
+    end else if (load & uop_in.valid) begin
+      rs1_ready <= uop_in.rs1_valid ? (uop_in.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
+      rs2_ready <= uop_in.rs2_valid ? (uop_in.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
+    end else begin
+      rs1_ready <= uop.rs1_valid ? (uop.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
+      rs2_ready <= uop.rs2_valid ? (uop.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
+    end
   end
 
   assign ready = rs1_ready & rs2_ready;
@@ -69,12 +76,7 @@ module issue_queue_int (
   input  [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
   input  [`ISSUE_WIDTH_INT-1:0]                           ctb_valid,
 
-  // todo: how to set these inputs? Answer: from rename logic
-  // todo: how to know whether a dependency is ready or waiting for ctb?
-  input  [`DISPATCH_WIDTH-1:0]              rs1_from_ctb,
-  input  [`DISPATCH_WIDTH-1:0]              rs2_from_ctb,
-
-  input  [`ISSUE_WIDTH_INT-1:0]             ex_full,
+  input  [`ISSUE_WIDTH_INT-1:0]             ex_busy,
 
   input  micro_op_t [`DISPATCH_WIDTH-1:0]   uop_in,
   output micro_op_t [`ISSUE_WIDTH_INT-1:0]  uop_out,
@@ -110,8 +112,6 @@ module issue_queue_int (
         .reset              (reset),
         .ctb_prf_int_index  (ctb_prf_int_index),
         .ctb_valid          (ctb_valid),
-        .rs1_from_ctb       (1'b0), // todo: update rs1_from_ctb
-        .rs2_from_ctb       (1'b0),
         .load               (load[k]),
         .uop_in             (uop_to_slot[k]),
         .uop_out            (uop_to_issue[k]),
@@ -143,6 +143,7 @@ module issue_queue_int (
     end
   end
 
+  // Allocate input uops to each free issue slots
   always_comb begin
     uop_to_slot = 0;
     load = 0;
@@ -157,7 +158,7 @@ module issue_queue_int (
   end
 
   // Output selector
-  // Adjust for different execution pipes
+  // todo: Adjust for different execution pipes
   psel_gen output_selector #(
     /*REQS=*/ `ISSUE_WIDTH_INT,
     /*WIDTH=*/`IQ_INT_SIZE
@@ -177,6 +178,7 @@ module issue_queue_int (
     end
   end
 
+  // Select part of ready instructions to be issued
   always_comb begin
     for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
       for (int j = 0; j < `IQ_INT_SIZE; i++) begin
