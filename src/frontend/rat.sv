@@ -21,14 +21,14 @@ module free_list_int (
   input   check,
   input   recover,
 
-  input   [`CP_INDEX_SIZE-1:0]                            check_idx,
-  input   [`CP_INDEX_SIZE-1:0]                            recover_idx,
+  input       [`CP_INDEX_SIZE-1:0]                            check_idx,
+  input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input   [`PRF_INT_WAYS-1:0]                             commit_valid,
-  input   [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit,
+  input       [`PRF_INT_WAYS-1:0]                             commit_valid,
+  input       [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit,
 
-  input   [`PRF_INT_WAYS-1:0]                                 prf_req,
-  output reg [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]    prf_out,
+  input       [`PRF_INT_WAYS-1:0]                             prf_req,
+  output reg  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out,
   output reg                                                  allocatable
 );
 
@@ -55,12 +55,9 @@ module free_list_int (
 
   always_comb begin
     free_num_next             = free_num;
-    free_list_next            = free_list;
     free_list_increase        = free_list;
-    free_list_decrease        = 0;
     free_list_decrease_num    = 0;
     free_list_decrease_count  = 0;
-    allocatable_next          = 0;
     prf_out_count             = 0;
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1 )  begin
       prf_out_list[i] = 0;
@@ -73,10 +70,11 @@ module free_list_int (
         free_list_decrease_num = free_list_decrease_num + 1;
       end
     end
+    free_list_decrease = free_list_increase;
     if (free_list_decrease_num <= free_num_next) begin
       allocatable_next = 1;
       for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
-        if (free_list_next[i] == 1'b0) begin
+        if (free_list_increase[i] == 1'b0) begin
           free_list_decrease[i] = 1'b1;
           prf_out_list[free_list_decrease_count] = i;
           free_list_decrease_count = free_list_decrease_count + 1;
@@ -85,7 +83,7 @@ module free_list_int (
           break;
         end
       end
-      free_list_next = free_list_increase | free_list_decrease;
+      free_list_next = free_list_decrease;
       for (int i = 0; i < `PRF_INT_WAYS; i = i + 1 )  begin
         if (prf_req[i]) begin
           prf_out_next[i] = prf_out_list[prf_out_count];
@@ -94,6 +92,7 @@ module free_list_int (
       end
     end else begin
       allocatable_next = 0;
+      free_list_next = free_list_increase;
     end
   end
 
@@ -113,6 +112,7 @@ module free_list_int (
       free_list <= free_list_next;
       free_num <= free_num_next;
     end
+    allocatable <= allocatable_next;
   end
 
   always_ff @(posedge clock) begin
@@ -135,14 +135,13 @@ module check_point_int (
   input   reset,
 
   input   check,
-  input   recover,
 
   input       [`CP_INDEX_SIZE-1:0]   check_idx,
   input       [`CP_INDEX_SIZE-1:0]   recover_idx,
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
   output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
 );
-  reg   [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
+  reg         [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
 
   initial begin
     for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
@@ -154,7 +153,9 @@ module check_point_int (
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      checkpoint[i] <= 0;
+      for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
+        checkpoint[i] <= 0;
+      end
     end if (check) begin
       checkpoint[check_idx] <= checkpoint_in;
     end
@@ -174,51 +175,50 @@ module rat_internal (
 
   input   [`PRF_INT_WAYS-1:0]                               dst_valid,
 
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_l,
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_r,
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   dst,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]  src_l,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]  src_r,
+  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]  dst,
 
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_l,
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_r,
+  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]  psrc_l,
+  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]  psrc_r,
+
+  output logic                                                allocatable
 );
 
   // Mapping Table
   reg   [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb[`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_next;
+  logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
 
   // Free List
-  logic [`PRF_INT_WAYS-1:0]                             request;
+  logic [`PRF_INT_WAYS-1:0]                             commit_valid;
   logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit;
-  logic [`PRF_INT_SIZE-1:0]                             prf_out,
-  logic [`PRF_INT_SIZE-1:0]                             prf_out_valid
+  logic [`PRF_INT_SIZE-1:0]                             prf_req;
+  logic [`PRF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 
 check_point_int int_check_point(
-  .clock        (clock),
-  .reset        (reset),
-  .check        (check),
-  .recover      (recover),
+  .clock            (clock),
+  .reset            (reset),
+  .check            (check),
   .check_idx        (check_idx),
   .recover_idx      (recover_idx),
   .checkpoint_in    (mapping_tb),
-  .checkpoint_out   (mapping_tb_next)
+  .checkpoint_out   (mapping_tb_cp)
 );
 
 free_list_int  int_free_list(
-  .clock        (clock),
-  .reset        (reset),
-  .check        (check),
-  .recover      (recover),
-  .check_idx        (check_idx),
-  .recover_idx      (recover_idx),
-  .commit_valid     (request),
+  .clock              (clock),
+  .reset              (reset),
+  .check              (check),
+  .recover            (recover),
+  .check_idx          (check_idx),
+  .recover_idx        (recover_idx),
+  .commit_valid       (commit_valid),
   .prf_commit         (prf_commit),
+  .prf_req            (prf_req),
+  .prf_out            (prf_out),
+  .allocatable        (allocatable)
 );
-
-  initial begin
-    for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
-      mapping_tb[i] = 0;
-    end
-  end
 
   always_comb begin
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
@@ -229,10 +229,12 @@ free_list_int  int_free_list(
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      mapping_tb <= 0;
+      for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+        mapping_tb[i] <= 0;
+      end
     end
     else if (recover) begin
-      mapping_tb <= mapping_tb_next;
+      mapping_tb <= mapping_tb_cp;
     end
     else begin
       
