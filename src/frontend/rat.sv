@@ -13,16 +13,16 @@
 `include "../common/micro_op.svh"
 
 module free_list_int (
-  input   clock,
-  input   reset,
+  input       clock,
+  input       reset,
 
-  input   check,
-  input   recover,
+  input       check,
+  input       recover,
 
   input       [`CP_INDEX_SIZE-1:0]                            check_idx,
   input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input       [`PRF_INT_WAYS-1:0]                             commit_valid,
+  input       [`PRF_INT_WAYS-1:0]                             prf_commit_valid,
   input       [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit,
 
   input       [`PRF_INT_WAYS-1:0]                             prf_req,
@@ -60,7 +60,7 @@ module free_list_int (
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1 )  begin
       prf_out_list[i] = 0;
       prf_out_next[i] = 0;
-      if (commit_valid[i]) begin
+      if (prf_commit_valid[i]) begin
         free_list_increase[prf_commit[i]] = 1'b0;
         free_num_next = free_num_next + 1;
       end
@@ -130,20 +130,18 @@ module free_list_int (
 endmodule
 
 module check_point_int (
-  input   clock,
-  input   reset,
+  input       clock,
+  input       reset,
 
-  input   check,
+  input       check,
 
   input       [`CP_INDEX_SIZE-1:0]                            check_idx,
   input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
-  input       [`ARF_INT_SIZE-1:0]                             occupy_in,
-  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out,
-  output logic[`ARF_INT_SIZE-1:0]                             occupy_out
+  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
 );
-  reg         [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
-  reg         [`ARF_INT_SIZE-1:0]                             occupy_checkpoint[`CP_NUM-1:0];
+
+  reg     [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
 
   initial begin
     for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
@@ -152,92 +150,123 @@ module check_point_int (
   end
 
   assign checkpoint_out = checkpoint[recover_idx];
-  assign occupy_out = occupy_checkpoint[recover_idx];
 
   always_ff @(posedge clock) begin
     if (reset) begin
       for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
         checkpoint[i]               <= 0;
-        occupy_checkpoint[i]        <= 0;
       end
     end if (check) begin
       checkpoint[check_idx]         <= checkpoint_in;
-      occupy_checkpoint[check_idx]  <= occupy_in;
     end
   end
 
 endmodule
 
 module map_table (
-  input   clock,
-  input   reset,
+  input         clock,
+  input         reset,
 
-  input   check,
-  input   recover,
-  input   pause,
+  input         check,
+  input         recover,
+  input         pause,
 
-  input   [`CP_INDEX_SIZE-1:0]                                  check_idx,
-  input   [`CP_INDEX_SIZE-1:0]                                  recover_idx,
+  input         [`CP_INDEX_SIZE-1:0]                            check_idx,
+  input         [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input   [`PRF_INT_WAYS-1:0]                                   dst_valid,
+  input         [`PRF_INT_WAYS-1:0]                             dst_valid,
 
   input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_l,
   input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_r,
   input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   dst,
 
   input         [`PRF_INT_WAYS-1:0]                             retire_req,
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   retire_arf,
+  input         [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf,
 
   output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_l,
   output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_r,
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   pdst,
+
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_dst,
+  output logic  [`PRF_INT_WAYS-1:0]                             prev_dst_valid,
 
   output logic                                                  allocatable
 );
 
-  // Mapping Table
+  // I/O for Mapping Table
   reg   [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb[`ARF_INT_SIZE-1:0];
-  logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_next;
+  logic [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb_next[`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
-  reg   [`ARF_INT_SIZE-1:0]                             occupy;
-  logic [`ARF_INT_SIZE-1:0]                             occupy_next;
-  logic [`ARF_INT_SIZE-1:0]                             occupy_cp;
 
-  // Free List
-  logic [`PRF_INT_WAYS-1:0]                             commit_valid;
+  // I/O for Free List
+  logic [`PRF_INT_WAYS-1:0]                             prf_commit_valid;
   logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit;
   logic [`PRF_INT_SIZE-1:0]                             prf_req;
   logic [`PRF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 
 check_point_int int_check_point(
-  .clock            (clock          ),
-  .reset            (reset          ),
-  .check            (check          ),
-  .check_idx        (check_idx      ),
-  .recover_idx      (recover_idx    ),
-  .checkpoint_in    (mapping_tb     ),
-  .occupy_in        (occupy         ),
-  .checkpoint_out   (mapping_tb_cp  ),
-  .occupy_out       (occupy_cp      )
+  .clock            (clock            ),
+  .reset            (reset            ),
+  .check            (check            ),
+  .check_idx        (check_idx        ),
+  .recover_idx      (recover_idx      ),
+  .checkpoint_in    (mapping_tb       ),
+  .checkpoint_out   (mapping_tb_cp    )
 );
 
 free_list_int  int_free_list(
-  .clock            (clock          ),
-  .reset            (reset          ),
-  .check            (check          ),
-  .recover          (recover        ),
-  .check_idx        (check_idx      ),
-  .recover_idx      (recover_idx    ),
-  .commit_valid     (commit_valid   ),
-  .prf_commit       (prf_commit     ),
-  .prf_req          (prf_req        ),
-  .prf_out          (prf_out        ),
-  .allocatable      (allocatable    )
+  .clock            (clock            ),
+  .reset            (reset            ),
+  .check            (check            ),
+  .recover          (recover          ),
+  .check_idx        (check_idx        ),
+  .recover_idx      (recover_idx      ),
+  .prf_commit_valid (prf_commit_valid ),
+  .prf_commit       (prf_commit       ),
+  .prf_req          (prf_req          ),
+  .prf_out          (prf_out          ),
+  .allocatable      (allocatable      )
 );
 
   always_comb begin
+    // Prepare input for Free List
+    prf_commit_valid  = retire_req;
+    prf_commit        = retire_prf;
+    prf_req           = dst_valid;
+    prev_dst          = 0;
+    prev_dst_valid    = 0;
+    for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
+      mapping_tb_next[i]   = mapping_tb[i];
+    end
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
-      psrc_l[i] = mapping_tb[src_l[i]];
-      psrc_r[i] = mapping_tb[src_r[i]];
+      for (int j = 0; j < i; j = j + 1 )  begin
+        // WAR
+        if (dst[i] == src_l[j] | dst[i] == src_r[j]) begin
+          mapping_tb_next[dst[i]] = prf_out[i];
+          pdst[i]                 = prf_out[i];
+        end
+        // WAW
+        if (dst[i] == dst[j]) begin
+          mapping_tb_next[dst[i]] = prf_out[i];
+          pdst[i]                 = prf_out[i];
+          prev_dst[i]             = mapping_tb_next[dst[i]];
+          prev_dst_valid[i]       = 1;
+        end
+        psrc_l[i] = mapping_tb_next[src_l[i]];
+        psrc_r[i] = mapping_tb_next[src_r[i]];
+
+        // RAW
+        // if (src_l[i] == dst[j]) begin
+        //   psrc_l[i] = mapping_tb_next[dst[j]];
+        // end else begin
+        //   psrc_l[i] = mapping_tb_next[src_l[i]];
+        // end
+        // if (src_r[i] == dst[j]) begin
+        //   psrc_r[i] = mapping_tb_next[dst[j]];
+        // end else begin
+        //   psrc_l[i] = mapping_tb_next[src_l[i]];
+        // end
+      end
     end
   end
 
@@ -246,13 +275,16 @@ free_list_int  int_free_list(
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= 0;
       end
-      occupy <= 0;
     end
     else if (recover) begin
-      mapping_tb <= mapping_tb_cp;
+      for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+        mapping_tb[i] <= mapping_tb_cp[i];
+      end
     end
     else begin
-      
+      for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+        mapping_tb[i] <= mapping_tb_next[i];
+      end
     end
   end
 
