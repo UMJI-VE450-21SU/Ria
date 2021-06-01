@@ -247,10 +247,10 @@ free_list_int  int_free_list(
         end
         // WAW
         if (dst[i] == dst[j]) begin
-          mapping_tb_next[dst[i]] = prf_out[i];
-          pdst[i]                 = prf_out[i];
           prev_dst[i]             = mapping_tb_next[dst[i]];
           prev_dst_valid[i]       = 1;
+          mapping_tb_next[dst[i]] = prf_out[i];
+          pdst[i]                 = prf_out[i];
         end
         psrc_l[i] = mapping_tb_next[src_l[i]];
         psrc_r[i] = mapping_tb_next[src_r[i]];
