@@ -11,10 +11,6 @@
 // ../common/defines.svh
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/defines.svh"
-`define INST_NUM          40
-`define INST_WIDTH        32
-`define INST_PACK         128
-`define INST_INDEX_SIZE   32
 
 module mem_simulator #(
   parameter init_file = "default.mem"

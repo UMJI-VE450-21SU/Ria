@@ -1,6 +1,12 @@
 `ifndef __DEFINES_SVH__
 `define __DEFINES_SVH__
 
+`define INST_NUM          40
+`define INST_WIDTH        32
+`define INST_PACK         128
+`define INST_INDEX_SIZE   32
+`define INST_FETCH_NUM    4
+
 `define DISPATCH_WIDTH      4
 
 `define ISSUE_WIDTH_INT     3
