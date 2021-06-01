@@ -67,7 +67,7 @@ typedef struct packed {
 
   arf_int_index_t rd_arf_int_index;
   prf_int_index_t rd_prf_int_index;
-  prf_int_index_t rd_prf_pre_int_index;
+  prf_int_index_t rd_prf_int_index_prev;
   logic           rd_valid;
 
   logic           valid;

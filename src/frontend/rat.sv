@@ -22,8 +22,8 @@ module free_list_int (
   input       [`CP_INDEX_SIZE-1:0]                            check_idx,
   input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input       [`PRF_INT_WAYS-1:0]                             prf_commit_valid,
-  input       [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit,
+  input       [`PRF_INT_WAYS-1:0]                             prf_replace_valid,
+  input       [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace,
 
   input       [`PRF_INT_WAYS-1:0]                             prf_req,
   output reg  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out,
@@ -60,8 +60,8 @@ module free_list_int (
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1 )  begin
       prf_out_list[i] = 0;
       prf_out_next[i] = 0;
-      if (prf_commit_valid[i]) begin
-        free_list_increase[prf_commit[i]] = 1'b0;
+      if (prf_replace_valid[i]) begin
+        free_list_increase[prf_replace[i]] = 1'b0;
         free_num_next = free_num_next + 1;
       end
       if (prf_req[i]) begin
@@ -174,21 +174,21 @@ module map_table (
   input         [`CP_INDEX_SIZE-1:0]                            check_idx,
   input         [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input         [`PRF_INT_WAYS-1:0]                             dst_valid,
+  input         [`PRF_INT_WAYS-1:0]                             rd_valid,
 
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_l,
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_r,
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   dst,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs1,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd,
 
   input         [`PRF_INT_WAYS-1:0]                             retire_req,
   input         [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf,
 
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_l,
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_r,
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   pdst,
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs1,
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs2,
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prd,
 
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_dst,
-  output logic  [`PRF_INT_WAYS-1:0]                             prev_dst_valid,
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd,
+  output logic  [`PRF_INT_WAYS-1:0]                             prev_rd_valid,
 
   output logic                                                  allocatable
 );
@@ -199,72 +199,72 @@ module map_table (
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
 
   // I/O for Free List
-  logic [`PRF_INT_WAYS-1:0]                             prf_commit_valid;
-  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_commit;
+  logic [`PRF_INT_WAYS-1:0]                             prf_replace_valid;
+  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace;
   logic [`PRF_INT_SIZE-1:0]                             prf_req;
   logic [`PRF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 
 check_point_int int_check_point(
-  .clock            (clock            ),
-  .reset            (reset            ),
-  .check            (check            ),
-  .check_idx        (check_idx        ),
-  .recover_idx      (recover_idx      ),
-  .checkpoint_in    (mapping_tb       ),
-  .checkpoint_out   (mapping_tb_cp    )
+  .clock              (clock            ),
+  .reset              (reset            ),
+  .check              (check            ),
+  .check_idx          (check_idx        ),
+  .recover_idx        (recover_idx      ),
+  .checkpoint_in      (mapping_tb       ),
+  .checkpoint_out     (mapping_tb_cp    )
 );
 
 free_list_int  int_free_list(
-  .clock            (clock            ),
-  .reset            (reset            ),
-  .check            (check            ),
-  .recover          (recover          ),
-  .check_idx        (check_idx        ),
-  .recover_idx      (recover_idx      ),
-  .prf_commit_valid (prf_commit_valid ),
-  .prf_commit       (prf_commit       ),
-  .prf_req          (prf_req          ),
-  .prf_out          (prf_out          ),
-  .allocatable      (allocatable      )
+  .clock              (clock            ),
+  .reset              (reset            ),
+  .check              (check            ),
+  .recover            (recover          ),
+  .check_idx          (check_idx        ),
+  .recover_idx        (recover_idx      ),
+  .prf_replace_valid  (prf_replace_valid),
+  .prf_replace        (prf_replace      ),
+  .prf_req            (prf_req          ),
+  .prf_out            (prf_out          ),
+  .allocatable        (allocatable      )
 );
 
   always_comb begin
     // Prepare input for Free List
-    prf_commit_valid  = retire_req;
-    prf_commit        = retire_prf;
-    prf_req           = dst_valid;
-    prev_dst          = 0;
-    prev_dst_valid    = 0;
+    prf_replace_valid = retire_req;
+    prf_replace       = retire_prf;
+    prf_req           = rd_valid;
+    prev_rd           = 0;
+    prev_rd_valid     = 0;
     for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i]   = mapping_tb[i];
     end
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
       for (int j = 0; j < i; j = j + 1 )  begin
         // WAR
-        if (dst[i] == src_l[j] | dst[i] == src_r[j]) begin
-          mapping_tb_next[dst[i]] = prf_out[i];
-          pdst[i]                 = prf_out[i];
+        if (rd[i] == rs1[j] | rd[i] == rs2[j]) begin
+          mapping_tb_next[rd[i]] = prf_out[i];
+          prd[i]                 = prf_out[i];
         end
         // WAW
-        if (dst[i] == dst[j]) begin
-          prev_dst[i]             = mapping_tb_next[dst[i]];
-          prev_dst_valid[i]       = 1;
-          mapping_tb_next[dst[i]] = prf_out[i];
-          pdst[i]                 = prf_out[i];
+        if (rd[i] == rd[j]) begin
+          prev_rd[i]             = mapping_tb_next[rd[i]];
+          prev_rd_valid[i]       = 1;
+          mapping_tb_next[rd[i]] = prf_out[i];
+          prd[i]                 = prf_out[i];
         end
-        psrc_l[i] = mapping_tb_next[src_l[i]];
-        psrc_r[i] = mapping_tb_next[src_r[i]];
+        prs1[i] = mapping_tb_next[rs1[i]];
+        prs2[i] = mapping_tb_next[rs2[i]];
 
         // RAW
-        // if (src_l[i] == dst[j]) begin
-        //   psrc_l[i] = mapping_tb_next[dst[j]];
+        // if (rs1[i] == rd[j]) begin
+        //   prs1[i] = mapping_tb_next[rd[j]];
         // end else begin
-        //   psrc_l[i] = mapping_tb_next[src_l[i]];
+        //   prs1[i] = mapping_tb_next[rs1[i]];
         // end
-        // if (src_r[i] == dst[j]) begin
-        //   psrc_r[i] = mapping_tb_next[dst[j]];
+        // if (rs2[i] == rd[j]) begin
+        //   prs2[i] = mapping_tb_next[rd[j]];
         // end else begin
-        //   psrc_l[i] = mapping_tb_next[src_l[i]];
+        //   prs1[i] = mapping_tb_next[rs1[i]];
         // end
       end
     end
