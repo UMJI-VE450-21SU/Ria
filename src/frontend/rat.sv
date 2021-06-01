@@ -11,8 +11,6 @@
 // common/micro_op.svh
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/micro_op.svh"
-`define CP_NUM          2   // amount of check point
-`define CP_INDEX_SIZE   1   // log2(CP_NUM)
 
 module free_list_int (
   input   clock,
@@ -99,19 +97,19 @@ module free_list_int (
   always_ff @(posedge clock) begin
     if (reset) begin
       free_list <= `PRF_INT_SIZE'b1;
-      free_num <= `PRF_INT_SIZE-1;
+      free_num  <= `PRF_INT_SIZE-1;
     end else if (recover) begin
       free_list <= free_list_check_point[recover_idx];
       free_num  <= free_num_check_point[recover_idx];
     end else if (allocatable_next) begin
       free_list <= free_list_next;
-      free_num <= free_num_next - free_list_decrease_num;
+      free_num  <= free_num_next - free_list_decrease_num;
       for (int i = 0; i < `PRF_INT_WAYS; ++i )  begin
         prf_out[i] <= prf_out_next[i];
       end
     end else begin
       free_list <= free_list_next;
-      free_num <= free_num_next;
+      free_num  <= free_num_next;
     end
     allocatable <= allocatable_next;
   end
@@ -120,12 +118,12 @@ module free_list_int (
     if (reset) begin
       // PRF 0 is always not allocatable.
       for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
-        free_list_check_point[i] <= `PRF_INT_SIZE'b1;
-        free_num_check_point[i] <= `PRF_INT_SIZE - 1;
+        free_list_check_point[i]        <= `PRF_INT_SIZE'b1;
+        free_num_check_point[i]         <= `PRF_INT_SIZE - 1;
       end
     end else if (check) begin
-      free_list_check_point[check_idx] <= free_list;
-      free_num_check_point[check_idx] <= free_num;
+      free_list_check_point[check_idx]  <= free_list;
+      free_num_check_point[check_idx]   <= free_num;
     end
   end
 
@@ -137,8 +135,8 @@ module check_point_int (
 
   input   check,
 
-  input       [`CP_INDEX_SIZE-1:0]   check_idx,
-  input       [`CP_INDEX_SIZE-1:0]   recover_idx,
+  input       [`CP_INDEX_SIZE-1:0]                            check_idx,
+  input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
   input       [`ARF_INT_SIZE-1:0]                             occupy_in,
   output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out,
@@ -159,12 +157,12 @@ module check_point_int (
   always_ff @(posedge clock) begin
     if (reset) begin
       for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
-        checkpoint[i] <= 0;
-        occupy_checkpoint[i] <= 0;
+        checkpoint[i]               <= 0;
+        occupy_checkpoint[i]        <= 0;
       end
     end if (check) begin
-      checkpoint[check_idx] <= checkpoint_in;
-      occupy_checkpoint[check_idx] <= occupy_in;
+      checkpoint[check_idx]         <= checkpoint_in;
+      occupy_checkpoint[check_idx]  <= occupy_in;
     end
   end
 
@@ -211,29 +209,29 @@ module map_table (
   logic [`PRF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 
 check_point_int int_check_point(
-  .clock            (clock),
-  .reset            (reset),
-  .check            (check),
-  .check_idx        (check_idx),
-  .recover_idx      (recover_idx),
-  .checkpoint_in    (mapping_tb),
-  .occupy_in        (occupy),
-  .checkpoint_out   (mapping_tb_cp),
-  .occupy_out       (occupy_cp)
+  .clock            (clock          ),
+  .reset            (reset          ),
+  .check            (check          ),
+  .check_idx        (check_idx      ),
+  .recover_idx      (recover_idx    ),
+  .checkpoint_in    (mapping_tb     ),
+  .occupy_in        (occupy         ),
+  .checkpoint_out   (mapping_tb_cp  ),
+  .occupy_out       (occupy_cp      )
 );
 
 free_list_int  int_free_list(
-  .clock              (clock),
-  .reset              (reset),
-  .check              (check),
-  .recover            (recover),
-  .check_idx          (check_idx),
-  .recover_idx        (recover_idx),
-  .commit_valid       (commit_valid),
-  .prf_commit         (prf_commit),
-  .prf_req            (prf_req),
-  .prf_out            (prf_out),
-  .allocatable        (allocatable)
+  .clock            (clock          ),
+  .reset            (reset          ),
+  .check            (check          ),
+  .recover          (recover        ),
+  .check_idx        (check_idx      ),
+  .recover_idx      (recover_idx    ),
+  .commit_valid     (commit_valid   ),
+  .prf_commit       (prf_commit     ),
+  .prf_req          (prf_req        ),
+  .prf_out          (prf_out        ),
+  .allocatable      (allocatable    )
 );
 
   always_comb begin
