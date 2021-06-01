@@ -98,7 +98,8 @@ module free_list_int (
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      free_list <= 0;
+      free_list <= `PRF_INT_SIZE'b1;
+      free_num <= `PRF_INT_SIZE-1;
     end else if (recover) begin
       free_list <= free_list_check_point[recover_idx];
       free_num  <= free_num_check_point[recover_idx];
@@ -139,9 +140,12 @@ module check_point_int (
   input       [`CP_INDEX_SIZE-1:0]   check_idx,
   input       [`CP_INDEX_SIZE-1:0]   recover_idx,
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
-  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
+  input       [`ARF_INT_SIZE-1:0]                             occupy_in,
+  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out,
+  output logic[`ARF_INT_SIZE-1:0]                             occupy_out
 );
   reg         [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
+  reg         [`ARF_INT_SIZE-1:0]                             occupy_checkpoint[`CP_NUM-1:0];
 
   initial begin
     for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
@@ -150,45 +154,55 @@ module check_point_int (
   end
 
   assign checkpoint_out = checkpoint[recover_idx];
+  assign occupy_out = occupy_checkpoint[recover_idx];
 
   always_ff @(posedge clock) begin
     if (reset) begin
       for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
         checkpoint[i] <= 0;
+        occupy_checkpoint[i] <= 0;
       end
     end if (check) begin
       checkpoint[check_idx] <= checkpoint_in;
+      occupy_checkpoint[check_idx] <= occupy_in;
     end
   end
 
 endmodule
 
-module rat_internal (
+module map_table (
   input   clock,
   input   reset,
 
   input   check,
   input   recover,
+  input   pause,
 
-  input   [`CP_INDEX_SIZE-1:0]                              check_idx,
-  input   [`CP_INDEX_SIZE-1:0]                              recover_idx,
+  input   [`CP_INDEX_SIZE-1:0]                                  check_idx,
+  input   [`CP_INDEX_SIZE-1:0]                                  recover_idx,
 
-  input   [`PRF_INT_WAYS-1:0]                               dst_valid,
+  input   [`PRF_INT_WAYS-1:0]                                   dst_valid,
 
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]  src_l,
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]  src_r,
-  input        [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]  dst,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_l,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   src_r,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   dst,
 
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]  psrc_l,
-  output logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]  psrc_r,
+  input         [`PRF_INT_WAYS-1:0]                             retire_req,
+  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   retire_arf,
 
-  output logic                                                allocatable
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_l,
+  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   psrc_r,
+
+  output logic                                                  allocatable
 );
 
   // Mapping Table
   reg   [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb[`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_next;
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
+  reg   [`ARF_INT_SIZE-1:0]                             occupy;
+  logic [`ARF_INT_SIZE-1:0]                             occupy_next;
+  logic [`ARF_INT_SIZE-1:0]                             occupy_cp;
 
   // Free List
   logic [`PRF_INT_WAYS-1:0]                             commit_valid;
@@ -203,7 +217,9 @@ check_point_int int_check_point(
   .check_idx        (check_idx),
   .recover_idx      (recover_idx),
   .checkpoint_in    (mapping_tb),
-  .checkpoint_out   (mapping_tb_cp)
+  .occupy_in        (occupy),
+  .checkpoint_out   (mapping_tb_cp),
+  .occupy_out       (occupy_cp)
 );
 
 free_list_int  int_free_list(
@@ -232,6 +248,7 @@ free_list_int  int_free_list(
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= 0;
       end
+      occupy <= 0;
     end
     else if (recover) begin
       mapping_tb <= mapping_tb_cp;
