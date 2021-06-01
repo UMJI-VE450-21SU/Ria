@@ -89,9 +89,18 @@ module issue_queue_int (
   reg   [$clog2(`IQ_INT_SIZE)-1:0]  free_count_reg;
 
   wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_in, gnt_bus_out;
+  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_alu;
+  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_br;
+  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_imul;
+  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_idiv;
 
-  logic       [`IQ_INT_SIZE-1:0]    free, load, ready, clear;
-  micro_op_t  [`IQ_INT_SIZE-1:0]    uop_to_slot, uop_to_issue;
+  logic       [`IQ_INT_SIZE-1:0]      free, load;
+
+  logic       [`IQ_INT_SIZE-1:0]      ready, ready_alu, ready_br, ready_imul, ready_idiv;
+  logic       [`IQ_INT_SIZE-1:0]      clear, clear_alu, clear_br, clear_imul, clear_idiv;
+
+  micro_op_t  [`IQ_INT_SIZE-1:0]      uop_to_slot, uop_to_issue;
+  // micro_op_t  [`ISSUE_WIDTH_INT-1:0]  uop_out_tmp;  // will be sent to output at next posedge clock
 
   // If #free slots < dispatch width, set the issue queue as full
   assign free_count = free_count_reg - uop_in_count + uop_out_count;
@@ -110,6 +119,7 @@ module issue_queue_int (
       issue_slot_int (
         .clock              (clock),
         .reset              (reset),
+        .clear              (clear),
         .ctb_prf_int_index  (ctb_prf_int_index),
         .ctb_valid          (ctb_valid),
         .load               (load[k]),
@@ -118,16 +128,18 @@ module issue_queue_int (
         .ready              (ready[k]),
         .free               (free[k])
       )
+      assign ready_alu[k]  = ready[k] & uop_to_issue[k].fu_code.fu_alu;
+      assign ready_br[k]   = ready[k] & uop_to_issue[k].fu_code.fu_br;
+      assign ready_imul[k] = ready[k] & uop_to_issue[k].fu_code.fu_mul;
+      assign ready_idiv[k] = ready[k] & uop_to_issue[k].fu_code.fu_div;
     end
   endgenerate
 
-
   // Input selector
-  // todo: Sort by instruction age (might be stored in uop, use a circular counter)
-  psel_gen input_selector #(
+  psel_gen #(
     /*REQS=*/ `DISPATCH_WIDTH,
     /*WIDTH=*/`IQ_INT_SIZE
-  ) psel_gen_inst (
+  ) input_selector (
     .req      (free),
     .gnt,
     .gnt_bus  (gnt_bus_in),
@@ -159,15 +171,47 @@ module issue_queue_int (
 
   // Output selector
   // todo: Adjust for different execution pipes
-  psel_gen output_selector #(
+  psel_gen #(
+    /*REQS=*/ 1,
+    /*WIDTH=*/`IQ_INT_SIZE
+  ) output_selector_br (
+    .req      (ready_br),
+    .gnt      (clear_br),
+    .gnt_bus,
+    .empty
+  );
+
+  psel_gen #(
+    /*REQS=*/ 1,
+    /*WIDTH=*/`IQ_INT_SIZE
+  ) output_selector_imul (
+    .req      (ready_imul),
+    .gnt      (clear_imul),
+    .gnt_bus,
+    .empty
+  );
+
+  psel_gen #(
+    /*REQS=*/ 1,
+    /*WIDTH=*/`IQ_INT_SIZE
+  ) output_selector_idiv (
+    .req      (ready_idiv),
+    .gnt      (clear_idiv),
+    .gnt_bus,
+    .empty
+  );
+
+  psel_gen #(
     /*REQS=*/ `ISSUE_WIDTH_INT,
     /*WIDTH=*/`IQ_INT_SIZE
-  ) psel_gen_inst (
-    .req      (ready),
-    .gnt      (clear),
+  ) output_selector_alu (
+    .req      (ready_alu),
+    .gnt      (clear_alu),
     .gnt_bus  (gnt_bus_out),
     .empty
   );
+
+  assign clear = clear_alu | clear_br | clear_imul | clear_idiv;
   
   always_comb begin
     uop_out_count = 0;
@@ -180,13 +224,44 @@ module issue_queue_int (
 
   // Select part of ready instructions to be issued
   always_comb begin
-    for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
-      for (int j = 0; j < `IQ_INT_SIZE; i++) begin
-        if (gnt_bus_out[i][j]) begin
-          uop_out[i] = uop_to_issue[j];
-        end
+    uop_out[0] = 0;
+    uop_out[1] = 0;
+    uop_out[2] = 0;
+    // Execution pipe 0 (ALU+Branch): Branch > ALU
+    for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+      if (clear_br[j]) begin
+        uop_out[0] = uop_to_issue[j];
+        break;
+      else if (gnt_bus_out[0][j]) begin
+        uop_out[0] = uop_to_issue[j];
+      end
+    end
+    // Execution pipe 1 (ALU+IntMult): IntMult > ALU
+    for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+      if (clear_imul[j]) begin
+        uop_out[1] = uop_to_issue[j];
+        break;
+      else if (gnt_bus_out[1][j]) begin
+        uop_out[1] = uop_to_issue[j];
+      end
+    end
+    // Execution pipe 1 (ALU+IntDiv): IntDiv > ALU
+    for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+      if (clear_idiv[j]) begin
+        uop_out[2] = uop_to_issue[j];
+        break;
+      else if (gnt_bus_out[2][j]) begin
+        uop_out[2] = uop_to_issue[j];
       end
     end
   end
+
+  // always_ff @ (posedge clock) begin
+  //   if (reset) begin
+  //     uop_out <= 0;
+  //   end else begin
+  //     uop_out <= uop_out_tmp;
+  //   end
+  // end
 
 endmodule
