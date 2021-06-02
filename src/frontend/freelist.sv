@@ -57,6 +57,8 @@ module free_list_int (
     free_list_decrease_num    = 0;
     free_list_decrease_count  = 0;
     prf_out_count             = 0;
+
+    // Calculate Free List after `replace`
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
       prf_out_list[i] = 0;
       prf_out_next[i] = 0;
@@ -68,9 +70,15 @@ module free_list_int (
         free_list_decrease_num = free_list_decrease_num + 1;
       end
     end
+
+    // Take replaced PRF into consideration
     free_list_decrease = free_list_increase;
+    
+    // Check allocatable
     if (free_list_decrease_num <= free_num_next) begin
       allocatable_next = 1;
+
+      // Allocate & Compress free PRF list
       for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
         if (free_list_increase[i] == 1'b0) begin
           free_list_decrease[i] = 1'b1;
@@ -82,6 +90,8 @@ module free_list_int (
         end
       end
       free_list_next = free_list_decrease;
+
+      // Decompress free PRF list
       for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
         if (prf_req[i]) begin
           prf_out_next[i] = prf_out_list[prf_out_count];
@@ -94,6 +104,7 @@ module free_list_int (
     end
   end
 
+  // Store calculation result & output final result
   always_ff @(posedge clock) begin
     if (reset) begin
       free_list <= `PRF_INT_SIZE'b1;
@@ -114,6 +125,7 @@ module free_list_int (
     allocatable <= allocatable_next;
   end
 
+  // Check point & Recover
   always_ff @(posedge clock) begin
     if (reset) begin
       // PRF 0 is always not allocatable.
