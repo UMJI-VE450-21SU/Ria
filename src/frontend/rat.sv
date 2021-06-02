@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/micro_op.svh"
 
-module map_table (
+module maptable (
   input         clock,
   input         reset,
 
@@ -54,7 +54,7 @@ module map_table (
   logic [`PRF_INT_SIZE-1:0]                             prf_req;
   logic [`PRF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 
-check_point_int int_check_point(
+checkpoint_int int_checkpoint(
   .clock              (clock            ),
   .reset              (reset            ),
   .check              (check            ),
@@ -64,7 +64,7 @@ check_point_int int_check_point(
   .checkpoint_out     (mapping_tb_cp    )
 );
 
-free_list_int  int_free_list(
+freelist_int  int_freelist(
   .clock              (clock            ),
   .reset              (reset            ),
   .check              (check            ),
@@ -145,9 +145,28 @@ module rat (
   input   reset,
   input   recover,
   input   pause,
-  input   micro_op_t  [`RENAME_WIDTH-1:0] uop_in,
-  output  micro_op_t  [`RENAME_WIDTH-1:0] uop_out,
+  input   micro_op_t.pc                     pc_recover,
+  input   micro_op_t    [`RENAME_WIDTH-1:0] uop_in,
+  output  micro_op_t    [`RENAME_WIDTH-1:0] uop_out,
   output  allocatable
 );
-  
+
+  // Info for check point table
+  reg   [`RAT_CP_INDEX_SIZE-1:0]  check_head;
+  reg   [`RAT_CP_INDEX_SIZE-1:0]  check_size;
+  logic [`RAT_CP_INDEX_SIZE-1:0]  check_tar;
+  logic                           check;
+
+  logic                           allocatable_next;
+
+  always_comb begin
+
+    // Check point table is full
+    if (check_size >= `RAT_CP_SIZE) begin
+      check             = 0;
+      allocatable_next  = 0;
+    end
+  end
+
+
 endmodule

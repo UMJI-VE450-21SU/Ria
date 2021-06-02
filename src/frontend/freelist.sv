@@ -3,7 +3,7 @@
 // Create Date: 2021/06/02
 // Contributor: Jian Shi
 // Reviewer: 
-// Module Name: free_list_int, free_list_fp
+// Module Name: freelist_int, freelist_fp
 // Target Devices: free list
 // Description: 
 // free list for Physical Register File
@@ -12,7 +12,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/micro_op.svh"
 
-module free_list_int (
+module freelist_int (
   input       clock,
   input       reset,
 

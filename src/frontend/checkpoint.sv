@@ -3,7 +3,7 @@
 // Create Date: 2021/06/02
 // Contributor: Jian Shi
 // Reviewer: 
-// Module Name: check_point_int, check_point_fp
+// Module Name: checkpoint_int, checkpoint_fp
 // Target Devices: check point table
 // Description: 
 // check point table for mapping table
@@ -12,7 +12,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/micro_op.svh"
 
-module check_point_int (
+module checkpoint_int (
   input       clock,
   input       reset,
 

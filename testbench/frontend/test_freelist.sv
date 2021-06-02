@@ -3,7 +3,7 @@
 // Create Date: 2021/06/01
 // Contributor: Jian Shi
 // Reviewer: 
-// Module Name: free_list_tb
+// Module Name: freelist_tb
 // Target Devices: testbench for free list
 // Description: 
 // testbench for free list
@@ -12,7 +12,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 1ps
 
-module free_list_tb;
+module freelist_tb;
 parameter half_clk_cycle = 1;
 
 reg  clock, reset, check, recover;
@@ -27,7 +27,7 @@ reg [`RENAME_WIDTH-1:0]                             prf_req;
 wire[`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 wire                                                allocatable;
 
-free_list_int UTT(
+freelist_int UTT(
   .clock              (clock            ),
   .reset              (reset            ),
   .check              (check            ),
