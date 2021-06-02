@@ -64,7 +64,7 @@ initial begin
     #2 replace_valid = 3'b000;
     #2 prf_req = 3'b011;
     #2 recover = 1; recover_idx = 0;
-    #2 prf_req = 3'b011;
+    #2 prf_req = 3'b010;
     #6 $stop;
 end
 
