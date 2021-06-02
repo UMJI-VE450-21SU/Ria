@@ -1,7 +1,12 @@
 `ifndef __DEFINES_SVH__
 `define __DEFINES_SVH__
 
-`define DISPATCH_WIDTH      4
+`define FRONTEND_WIDTH      4
+
+`define DECODE_WIDTH        `FRONTEND_WIDTH
+`define RENAME_WIDTH        `FRONTEND_WIDTH
+`define DISPATCH_WIDTH      `FRONTEND_WIDTH
+`define COMMIT_WIDTH        `FRONTEND_WIDTH
 
 `define ISSUE_WIDTH_INT     3
 `define ISSUE_WIDTH_MEM     1
@@ -20,6 +25,7 @@
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
 `define PRF_INT_WAYS        3
+`define PRF_INT_WAYS_SIZE   2  // log2(PRF_INT_WAYS)
 
 `define PRF_FP_SIZE         64
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
