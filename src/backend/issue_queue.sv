@@ -1,5 +1,6 @@
-`include "common/micro_op.svh"
+`include "micro_op.svh"
 
+`timescale 1ns / 1ps
 module issue_slot_int (
   input             clock,
   input             reset,
@@ -11,11 +12,13 @@ module issue_slot_int (
 
   input             load,
 
+  //input  [$clog2(`IQ_INT_SIZE)-1:0] compressed_offset,
+
   input  micro_op_t uop_in,
-  output micro_op_t uop_out,
+  output micro_op_t uop,
 
   output            ready,
-  output            free
+  output reg        free
 );
 
   wire [`ISSUE_WIDTH_INT-1:0] rs1_index_match_ctb;
@@ -25,8 +28,6 @@ module issue_slot_int (
 
   logic rs1_ready;
   logic rs2_ready;
-
-  micro_op_t uop;
 
   generate
     for (genvar i = 0; i < `ISSUE_WIDTH_INT; i++) begin
@@ -61,20 +62,20 @@ module issue_slot_int (
   end
 
   assign ready = rs1_ready & rs2_ready;
-  assign uop_out = ready ? uop : 0;
 
 endmodule
 
 
 // Input:  From dispatch,    width = DISPATCH_WIDTH  = 4
 // Output: To PRF & Ex Unit, width = ISSUE_WIDTH_INT = 3
+`timescale 1ns / 1ps
 module issue_queue_int (
   input  clock,
   input  reset,
 
   // ctb = common tag bus
   input  [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
-  input  [`ISSUE_WIDTH_INT-1:0]                           ctb_valid,
+  input  [`ISSUE_WIDTH_INT-1:0]             ctb_valid,
 
   input  [`ISSUE_WIDTH_INT-1:0]             ex_busy,
 
@@ -88,11 +89,8 @@ module issue_queue_int (
   logic [$clog2(`IQ_INT_SIZE)-1:0]  free_count;
   reg   [$clog2(`IQ_INT_SIZE)-1:0]  free_count_reg;
 
-  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_in, gnt_bus_out;
-  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_alu;
-  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_br;
-  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_imul;
-  wire  [`DISPATCH_WIDTH-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out_idiv;
+  wire  [`DISPATCH_WIDTH-1:0] [`IQ_INT_SIZE-1:0] gnt_bus_in;
+  wire  [`ISSUE_WIDTH_INT-1:0][`IQ_INT_SIZE-1:0] gnt_bus_out;
 
   logic       [`IQ_INT_SIZE-1:0]      free, load;
 
@@ -100,7 +98,6 @@ module issue_queue_int (
   logic       [`IQ_INT_SIZE-1:0]      clear, clear_alu, clear_br, clear_imul, clear_idiv;
 
   micro_op_t  [`IQ_INT_SIZE-1:0]      uop_to_slot, uop_to_issue;
-  // micro_op_t  [`ISSUE_WIDTH_INT-1:0]  uop_out_tmp;  // will be sent to output at next posedge clock
 
   // If #free slots < dispatch width, set the issue queue as full
   assign free_count = free_count_reg - uop_in_count + uop_out_count;
@@ -116,18 +113,18 @@ module issue_queue_int (
 
   generate
     for (genvar k = 0; k < `IQ_INT_SIZE; k++) begin
-      issue_slot_int (
+      issue_slot_int issue_slot_int_inst (
         .clock              (clock),
         .reset              (reset),
-        .clear              (clear),
+        .clear              (clear[k]),
         .ctb_prf_int_index  (ctb_prf_int_index),
         .ctb_valid          (ctb_valid),
         .load               (load[k]),
         .uop_in             (uop_to_slot[k]),
-        .uop_out            (uop_to_issue[k]),
+        .uop                (uop_to_issue[k]),
         .ready              (ready[k]),
         .free               (free[k])
-      )
+      );
       assign ready_alu[k]  = ready[k] & uop_to_issue[k].fu_code.fu_alu;
       assign ready_br[k]   = ready[k] & uop_to_issue[k].fu_code.fu_br;
       assign ready_imul[k] = ready[k] & uop_to_issue[k].fu_code.fu_mul;
@@ -135,15 +132,20 @@ module issue_queue_int (
     end
   endgenerate
 
+  (* keep="soft" *)
+  wire [`IQ_INT_SIZE-1:0] input_selector_gnt;
+  (* keep="soft" *)
+  wire                    input_selector_empty;
+
   // Input selector
   psel_gen #(
     /*REQS=*/ `DISPATCH_WIDTH,
     /*WIDTH=*/`IQ_INT_SIZE
   ) input_selector (
     .req      (free),
-    .gnt,
+    .gnt      (input_selector_gnt),
     .gnt_bus  (gnt_bus_in),
-    .empty
+    .empty    (input_selector_empty)
   );
 
   always_comb begin
@@ -169,6 +171,22 @@ module issue_queue_int (
     end
   end
 
+
+  (* keep="soft" *)
+  wire [0:0] [`IQ_INT_SIZE-1:0] output_selector_br_gnt_bus;
+  (* keep="soft" *)
+  wire output_selector_br_empty;
+  (* keep="soft" *)
+  wire [0:0] [`IQ_INT_SIZE-1:0] output_selector_imul_gnt_bus;
+  (* keep="soft" *)
+  wire output_selector_imul_empty;
+  (* keep="soft" *)
+  wire [0:0] [`IQ_INT_SIZE-1:0] output_selector_idiv_gnt_bus;
+  (* keep="soft" *)
+  wire output_selector_idiv_empty;
+  (* keep="soft" *)
+  wire output_selector_alu_empty;
+
   // Output selector
   // todo: Adjust for different execution pipes
   psel_gen #(
@@ -177,8 +195,8 @@ module issue_queue_int (
   ) output_selector_br (
     .req      (ready_br),
     .gnt      (clear_br),
-    .gnt_bus,
-    .empty
+    .gnt_bus  (output_selector_br_gnt_bus),
+    .empty    (output_selector_br_empty)
   );
 
   psel_gen #(
@@ -187,8 +205,8 @@ module issue_queue_int (
   ) output_selector_imul (
     .req      (ready_imul),
     .gnt      (clear_imul),
-    .gnt_bus,
-    .empty
+    .gnt_bus  (output_selector_imul_gnt_bus),
+    .empty    (output_selector_imul_empty)
   );
 
   psel_gen #(
@@ -197,8 +215,8 @@ module issue_queue_int (
   ) output_selector_idiv (
     .req      (ready_idiv),
     .gnt      (clear_idiv),
-    .gnt_bus,
-    .empty
+    .gnt_bus  (output_selector_idiv_gnt_bus),
+    .empty    (output_selector_idiv_empty)
   );
 
   psel_gen #(
@@ -208,7 +226,7 @@ module issue_queue_int (
     .req      (ready_alu),
     .gnt      (clear_alu),
     .gnt_bus  (gnt_bus_out),
-    .empty
+    .empty    (output_selector_alu_empty)
   );
 
   assign clear = clear_alu | clear_br | clear_imul | clear_idiv;
@@ -228,40 +246,32 @@ module issue_queue_int (
     uop_out[1] = 0;
     uop_out[2] = 0;
     // Execution pipe 0 (ALU+Branch): Branch > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
       if (clear_br[j]) begin
         uop_out[0] = uop_to_issue[j];
         break;
-      else if (gnt_bus_out[0][j]) begin
+      end else if (gnt_bus_out[0][j]) begin
         uop_out[0] = uop_to_issue[j];
       end
     end
     // Execution pipe 1 (ALU+IntMult): IntMult > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
       if (clear_imul[j]) begin
         uop_out[1] = uop_to_issue[j];
         break;
-      else if (gnt_bus_out[1][j]) begin
+      end else if (gnt_bus_out[1][j]) begin
         uop_out[1] = uop_to_issue[j];
       end
     end
     // Execution pipe 1 (ALU+IntDiv): IntDiv > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
       if (clear_idiv[j]) begin
         uop_out[2] = uop_to_issue[j];
         break;
-      else if (gnt_bus_out[2][j]) begin
+      end else if (gnt_bus_out[2][j]) begin
         uop_out[2] = uop_to_issue[j];
       end
     end
   end
-
-  // always_ff @ (posedge clock) begin
-  //   if (reset) begin
-  //     uop_out <= 0;
-  //   end else begin
-  //     uop_out <= uop_out_tmp;
-  //   end
-  // end
 
 endmodule
