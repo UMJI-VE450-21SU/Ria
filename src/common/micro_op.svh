@@ -75,7 +75,4 @@ typedef struct packed {
   logic           valid;
 } micro_op_t;
 
-`define CP_NUM          2   // amount of check point
-`define CP_INDEX_SIZE   1   // log2(CP_NUM)
-
 `endif  // __MICRO_OP_SVH__

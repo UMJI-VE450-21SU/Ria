@@ -8,6 +8,9 @@
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH
 `define COMMIT_WIDTH        `FRONTEND_WIDTH
 
+`define CP_NUM          2   // amount of check point
+`define CP_INDEX_SIZE   1   // log2(CP_NUM)
+
 `define ISSUE_WIDTH_INT     3
 `define ISSUE_WIDTH_MEM     1
 `define ISSUE_WIDTH_FP      2
