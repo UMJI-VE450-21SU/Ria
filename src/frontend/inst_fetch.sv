@@ -40,15 +40,15 @@ module inst_fetch (
     
     //decides req signal 
     if ( (reset | ready) & ~buffer_full) begin
-      req = 1'b1;
+      req <= 1'b1;
     end else begin
-      req = 1'b0;
+      req <= 1'b0;
     end
   end
 
   generate
     for (genvar i = 0; i < `INST_FETCH_NUM; i++) begin
-      assign inst_valid[i] =  ((inst_addr[3:2] <= i) ? 1 : 0)  & mem_valid & ~buffer_full & ready ;  
+      assign inst_valid[i] <=  ((inst_addr[3:2] <= i) ? 1 : 0)  & mem_valid & ~buffer_full & ready ;  
     end
   endgenerate
     
