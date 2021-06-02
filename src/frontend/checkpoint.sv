@@ -18,17 +18,17 @@ module check_point_int (
 
   input       check,
 
-  input       [`CP_INDEX_SIZE-1:0]                            check_idx,
-  input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
+  input       [`RAT_CP_INDEX_SIZE-1:0]                        check_idx,
+  input       [`RAT_CP_INDEX_SIZE-1:0]                        recover_idx,
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
   output reg  [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
 );
 
-  reg     [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`CP_NUM-1:0];
+  reg     [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`RAT_CP_SIZE-1:0];
   logic   [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out_next;
 
   initial begin
-    for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
+    for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
       checkpoint[i] = 0;
     end
   end
@@ -37,7 +37,7 @@ module check_point_int (
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
+      for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
         checkpoint[i]       <= 0;
       end
     end if (check) begin

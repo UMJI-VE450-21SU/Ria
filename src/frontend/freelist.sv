@@ -19,8 +19,8 @@ module free_list_int (
   input       check,
   input       recover,
 
-  input       [`CP_INDEX_SIZE-1:0]                            check_idx,
-  input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
+  input       [`RAT_CP_INDEX_SIZE-1:0]                        check_idx,
+  input       [`RAT_CP_INDEX_SIZE-1:0]                        recover_idx,
 
   input       [`RENAME_WIDTH-1:0]                             prf_replace_valid,
   input       [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace,
@@ -32,8 +32,8 @@ module free_list_int (
 
   // 0 for free; 1 for busy.
   reg     [`PRF_INT_SIZE-1:0]           free_list;
-  reg     [`PRF_INT_SIZE-1:0]           free_list_check_point[`CP_NUM-1:0];
-  reg     [`PRF_INT_INDEX_SIZE-1:0]     free_num_check_point[`CP_NUM-1:0];
+  reg     [`PRF_INT_SIZE-1:0]           free_list_check_point[`RAT_CP_SIZE-1:0];
+  reg     [`PRF_INT_INDEX_SIZE-1:0]     free_num_check_point[`RAT_CP_SIZE-1:0];
 
   logic   [`PRF_INT_SIZE-1:0]           free_list_next;
   logic   [`PRF_INT_SIZE-1:0]           free_list_increase;
@@ -117,7 +117,7 @@ module free_list_int (
   always_ff @(posedge clock) begin
     if (reset) begin
       // PRF 0 is always not allocatable.
-      for (int i = 0; i < `CP_NUM; i = i + 1 )  begin
+      for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
         free_list_check_point[i]        <= `PRF_INT_SIZE'b1;
         free_num_check_point[i]         <= `PRF_INT_SIZE - 1;
       end

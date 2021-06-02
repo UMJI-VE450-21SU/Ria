@@ -21,8 +21,8 @@ module map_table (
   input         recover,
   input         pause,
 
-  input         [`CP_INDEX_SIZE-1:0]                            check_idx,
-  input         [`CP_INDEX_SIZE-1:0]                            recover_idx,
+  input         [`RAT_CP_INDEX_SIZE-1:0]                        check_idx,
+  input         [`RAT_CP_INDEX_SIZE-1:0]                        recover_idx,
 
   input         [`RENAME_WIDTH-1:0]                             rd_valid,
 
