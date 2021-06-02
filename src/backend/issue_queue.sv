@@ -162,7 +162,7 @@ module issue_queue_int (
     uop_to_slot = 0;
     load = 0;
     for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
-      for (int j = 0; j < `IQ_INT_SIZE; i++) begin
+      for (int j = 0; j < `IQ_INT_SIZE; j++) begin
         if (gnt_bus_in[i][j] & uop_in[i].valid) begin
           uop_to_slot[j] = uop_in[i];
           load[j] = 1'b1;
