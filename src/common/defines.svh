@@ -6,6 +6,8 @@
 `define INST_PACK         128
 `define INST_INDEX_SIZE   32
 `define INST_FETCH_NUM    4
+`define IB_SIZE           16
+`define IB_ADDR           4
 
 `define DISPATCH_WIDTH      4
 
