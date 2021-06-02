@@ -60,10 +60,12 @@ typedef struct packed {
   arf_int_index_t rs1_arf_int_index;
   prf_int_index_t rs1_prf_int_index;
   logic           rs1_valid;
+  logic           rs1_from_ctb;       // rs1 prf index from common tag bus
 
   arf_int_index_t rs2_arf_int_index;
   prf_int_index_t rs2_prf_int_index;
   logic           rs2_valid;
+  logic           rs2_from_ctb;       // rs2 prf index from common tag bus
 
   arf_int_index_t rd_arf_int_index;
   prf_int_index_t rd_prf_int_index;
