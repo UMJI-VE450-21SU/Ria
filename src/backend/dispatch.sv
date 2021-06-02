@@ -52,9 +52,9 @@ module dispatch (
   // Valid signals for input micro-ops
   generate
     for (genvar i = 0; i < `DISPATCH_WIDTH; i++) begin
-      assign uop_to_int_valid[i] = uop_in[i].valid & uop_in[i].iq_code.iq_int;
-      assign uop_to_mem_valid[i] = uop_in[i].valid & uop_in[i].iq_code.iq_mem;
-      assign uop_to_fp_valid[i]  = uop_in[i].valid & uop_in[i].iq_code.iq_fp;
+      assign uop_to_int_valid[i] = uop_in[i].valid & (uop_in[i].iq_code == IQ_INT);
+      assign uop_to_mem_valid[i] = uop_in[i].valid & (uop_in[i].iq_code == IQ_MEM);
+      assign uop_to_fp_valid[i]  = uop_in[i].valid & (uop_in[i].iq_code == IQ_FP);
     end
   endgenerate
 
