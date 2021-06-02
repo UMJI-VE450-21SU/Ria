@@ -100,6 +100,8 @@ module issue_queue_int (
 
   micro_op_t  [`IQ_INT_SIZE-1:0]      uop_to_slot, uop_to_issue;
 
+  logic [`IQ_INT_SIZE-1:0][$clog2(`IQ_INT_SIZE)-1:0] compressed_offset;
+
   // If #free slots < dispatch width, set the issue queue as full
   assign free_count = free_count_reg - uop_in_count + uop_out_count;
   assign iq_int_full = free_count < `DISPATCH_WIDTH;
@@ -129,10 +131,42 @@ module issue_queue_int (
     end
   endgenerate
 
-  (* keep="soft" *)
-  wire [`IQ_INT_SIZE-1:0] input_selector_gnt;
-  (* keep="soft" *)
-  wire                    input_selector_empty;
+
+  // Output selector
+  // todo: Adjust for different execution pipes
+  psel_gen #(
+    /*REQS=*/ `ISSUE_WIDTH_INT,
+    /*WIDTH=*/`IQ_INT_SIZE
+  ) output_selector (
+    .req      (ready),
+    .gnt      (clear),
+    .gnt_bus  (gnt_bus_out),
+    .empty
+  );
+
+  always_comb begin
+    uop_out_count = 0;
+    for (int i = 0; i < `IQ_INT_SIZE; i++) begin
+      if (clear[i]) begin
+        uop_out_count = uop_out_count + 1;
+      end
+    end
+  end
+
+  // Select part of ready instructions to be issued
+  always_comb begin
+    for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
+      for (int j = 0; j < `IQ_INT_SIZE; j++) begin
+        if (gnt_bus_out[i][j]) begin
+          uop_out[i] = uop_to_issue[j];
+        end
+      end
+    end
+  end
+
+
+
+
 
   // Input selector
   psel_gen #(
@@ -140,9 +174,9 @@ module issue_queue_int (
     /*WIDTH=*/`IQ_INT_SIZE
   ) input_selector (
     .req      (free),
-    .gnt      (input_selector_gnt),
+    .gnt,
     .gnt_bus  (gnt_bus_in),
-    .empty    (input_selector_empty)
+    .empty
   );
 
   always_comb begin
@@ -168,39 +202,5 @@ module issue_queue_int (
     end
   end
 
-  (* keep="soft" *)
-  wire output_selector_empty;
-
-  // Output selector
-  // todo: Adjust for different execution pipes
-  psel_gen #(
-    /*REQS=*/ `ISSUE_WIDTH_INT,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector (
-    .req      (ready),
-    .gnt      (clear),
-    .gnt_bus  (gnt_bus_out),
-    .empty    (output_selector_empty)
-  );
-
-  always_comb begin
-    uop_out_count = 0;
-    for (int i = 0; i < `IQ_INT_SIZE; i++) begin
-      if (clear[i]) begin
-        uop_out_count = uop_out_count + 1;
-      end
-    end
-  end
-
-  // Select part of ready instructions to be issued
-  always_comb begin
-    for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
-      for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-        if (gnt_bus_out[i][j]) begin
-          uop_out[i] = uop_to_issue[j];
-        end
-      end
-    end
-  end
 
 endmodule
