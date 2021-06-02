@@ -8,7 +8,7 @@
 // Description: 
 // Record Mapping Relation between PRF & ARF; SRAM-Based RAT, sRAT
 // Dependencies: 
-// common/micro_op.svh
+// src/common/micro_op.svh
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/micro_op.svh"
 
@@ -22,11 +22,11 @@ module free_list_int (
   input       [`CP_INDEX_SIZE-1:0]                            check_idx,
   input       [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input       [`PRF_INT_WAYS-1:0]                             prf_replace_valid,
-  input       [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace,
+  input       [`RENAME_WIDTH-1:0]                             prf_replace_valid,
+  input       [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace,
 
-  input       [`PRF_INT_WAYS-1:0]                             prf_req,
-  output reg  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out,
+  input       [`RENAME_WIDTH-1:0]                             prf_req,
+  output reg  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out,
   output reg                                                  allocatable
 );
 
@@ -42,8 +42,8 @@ module free_list_int (
   logic   [`PRF_INT_WAYS_SIZE-1:0]      free_list_decrease_num;
   logic   [`PRF_INT_WAYS_SIZE-1:0]      free_list_decrease_count;
 
-  logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_list[`PRF_INT_WAYS-1:0];
-  logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_next[`PRF_INT_WAYS-1:0];
+  logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_list[`RENAME_WIDTH-1:0];
+  logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_next[`RENAME_WIDTH-1:0];
   logic   [`PRF_INT_WAYS_SIZE-1:0]      prf_out_count;
 
   reg     [`PRF_INT_INDEX_SIZE-1:0]     free_num;
@@ -57,7 +57,7 @@ module free_list_int (
     free_list_decrease_num    = 0;
     free_list_decrease_count  = 0;
     prf_out_count             = 0;
-    for (int i = 0; i < `PRF_INT_WAYS; i = i + 1 )  begin
+    for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
       prf_out_list[i] = 0;
       prf_out_next[i] = 0;
       if (prf_replace_valid[i]) begin
@@ -82,7 +82,7 @@ module free_list_int (
         end
       end
       free_list_next = free_list_decrease;
-      for (int i = 0; i < `PRF_INT_WAYS; i = i + 1 )  begin
+      for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
         if (prf_req[i]) begin
           prf_out_next[i] = prf_out_list[prf_out_count];
           prf_out_count = prf_out_count + 1;
@@ -104,7 +104,7 @@ module free_list_int (
     end else if (allocatable_next) begin
       free_list <= free_list_next;
       free_num  <= free_num_next - free_list_decrease_num;
-      for (int i = 0; i < `PRF_INT_WAYS; ++i )  begin
+      for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
         prf_out[i] <= prf_out_next[i];
       end
     end else begin
@@ -174,21 +174,21 @@ module map_table (
   input         [`CP_INDEX_SIZE-1:0]                            check_idx,
   input         [`CP_INDEX_SIZE-1:0]                            recover_idx,
 
-  input         [`PRF_INT_WAYS-1:0]                             rd_valid,
+  input         [`RENAME_WIDTH-1:0]                             rd_valid,
 
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs1,
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2,
-  input         [`PRF_INT_WAYS-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs1,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd,
 
-  input         [`PRF_INT_WAYS-1:0]                             retire_req,
-  input         [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf,
+  input         [`RENAME_WIDTH-1:0]                             retire_req,
+  input         [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf,
 
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs1,
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs2,
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prd,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs1,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs2,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prd,
 
-  output logic  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd,
-  output logic  [`PRF_INT_WAYS-1:0]                             prev_rd_valid,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd,
+  output logic  [`RENAME_WIDTH-1:0]                             prev_rd_valid,
 
   output logic                                                  allocatable
 );
@@ -199,8 +199,8 @@ module map_table (
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
 
   // I/O for Free List
-  logic [`PRF_INT_WAYS-1:0]                             prf_replace_valid;
-  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace;
+  logic [`RENAME_WIDTH-1:0]                             prf_replace_valid;
+  logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace;
   logic [`PRF_INT_SIZE-1:0]                             prf_req;
   logic [`PRF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
 
@@ -238,7 +238,7 @@ free_list_int  int_free_list(
     for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i]   = mapping_tb[i];
     end
-    for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
+    for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
       for (int j = 0; j < i; j = j + 1 )  begin
         // WAR
         if (rd[i] == rs1[j] | rd[i] == rs2[j]) begin
@@ -295,8 +295,8 @@ module rat (
   input   reset,
   input   recover,
   input   pause,
-  input   micro_op_t  [`PRF_INT_WAYS-1:0] uop_in,
-  output  micro_op_t  [`PRF_INT_WAYS-1:0] uop_out,
+  input   micro_op_t  [`RENAME_WIDTH-1:0] uop_in,
+  output  micro_op_t  [`RENAME_WIDTH-1:0] uop_out,
   output  allocatable
 );
   

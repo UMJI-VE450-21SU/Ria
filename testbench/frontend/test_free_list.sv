@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Project Name: RIA
-// Create Date: 2021/05/23
+// Create Date: 2021/06/01
 // Contributor: Jian Shi
 // Reviewer: 
 // Module Name: free_list_tb
@@ -19,15 +19,27 @@ reg  clock, reset, check, recover;
 reg [`CP_INDEX_SIZE-1:0]                            check_idx;
 reg [`CP_INDEX_SIZE-1:0]                            recover_idx;
 
-reg [`PRF_INT_WAYS-1:0]                             replace_valid;
-reg [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace;
+reg [`RENAME_WIDTH-1:0]                             replace_valid;
+reg [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace;
 
-reg [`PRF_INT_WAYS-1:0]                             prf_req;
+reg [`RENAME_WIDTH-1:0]                             prf_req;
 
-wire  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
-wire                                                  allocatable;
+wire[`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
+wire                                                allocatable;
 
-free_list_int UTT(clock, reset, check, recover, check_idx, recover_idx, replace_valid, prf_replace, prf_req, prf_out, allocatable);
+free_list_int UTT(
+  .clock              (clock            ),
+  .reset              (reset            ),
+  .check              (check            ),
+  .recover            (recover          ),
+  .check_idx          (check_idx        ),
+  .recover_idx        (recover_idx      ),
+  .prf_replace_valid  (replace_valid    ),
+  .prf_replace        (prf_replace      ),
+  .prf_req            (prf_req          ),
+  .prf_out            (prf_out          ),
+  .allocatable        (allocatable      )
+);
 
 always #half_clk_cycle clock = ~clock;
 
