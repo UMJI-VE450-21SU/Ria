@@ -9,11 +9,10 @@ module dispatch (
 
   generate
     for (genvar i = 0; i < `DISPATCH_WIDTH; i++) begin
-      assign uop_to_int[i] = (uop_in[i].iq_code.iq_int) ? uop_in[i] : 0;
-      assign uop_to_mem[i] = (uop_in[i].iq_code.iq_mem) ? uop_in[i] : 0;
-      assign uop_to_fp[i]  = (uop_in[i].iq_code.iq_fp)  ? uop_in[i] : 0;
+      assign uop_to_int[i] = (uop_in[i].iq_code == IQ_INT) ? uop_in[i] : 0;
+      assign uop_to_mem[i] = (uop_in[i].iq_code == IQ_MEM) ? uop_in[i] : 0;
+      assign uop_to_fp[i]  = (uop_in[i].iq_code == IQ_FP)  ? uop_in[i] : 0;
     end
   endgenerate
 
 endmodule
-
