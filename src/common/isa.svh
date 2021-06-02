@@ -201,13 +201,17 @@
 `define RC32_FCVT_D_W   
 `define RC32_FCVT_D_WU  
 
+`define RV32_RS1(inst) {``inst``[19:15]}
+`define RV32_RS2(inst) {``inst``[24:20]}
+`define RV32_RD (inst) {``inst``[11:7]}
 
 // RV32 Immediate signed/unsigned (U is technically unsigned) extension macros
-`define RV32_signext_I_Imm(inst) {{21{``inst``[31]}},``inst``[30:20]}
-`define RV32_signext_S_Imm(inst) {{21{``inst``[31]}},``inst[30:25],``inst``[11:7]}
-`define RV32_signext_B_Imm(inst) {{20{``inst``[31]}},``inst``[7],``inst``[30:25],``inst``[11:8], {1'b0}}
+`define RV32_shamt_Imm(inst)     {{27{1'b0}, ``inst``[24:20]}
+`define RV32_signext_I_Imm(inst) {{21{``inst``[31]}}, ``inst``[30:20]}
+`define RV32_signext_S_Imm(inst) {{21{``inst``[31]}}, ``inst``[30:25], ``inst``[11:7]}
+`define RV32_signext_B_Imm(inst) {{20{``inst``[31]}}, ``inst``[7], ``inst``[30:25], ``inst``[11:8], {1'b0}}
 `define RV32_signext_U_Imm(inst) {``inst``[31:12], {12{1'b0}}}
-`define RV32_signext_J_Imm(inst) {{12{``inst``[31]}},``inst``[19:12],``inst``[20],``inst``[30:21], {1'b0}} 
+`define RV32_signext_J_Imm(inst) {{12{``inst``[31]}}, ``inst``[19:12], ``inst``[20], ``inst``[30:21], {1'b0}} 
 
 // RV32 12bit Immediate injection/extraction, replace the Imm content with
 // specified value for injection, input immediate value index starting from 1
