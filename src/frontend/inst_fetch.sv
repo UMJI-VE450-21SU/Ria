@@ -36,9 +36,10 @@ module inst_fetch (
 
   always_ff @ (posedge clock) begin
     //TODO: change the reset logic, assume reset with real pc value 
+    //TODO: 16bits instruction 
     
     //decides req signal 
-    if (reset | ready) begin
+    if ( (reset | ready) & ~buffer_full) begin
       req = 1'b1;
     end else begin
       req = 1'b0;
@@ -47,7 +48,7 @@ module inst_fetch (
 
   generate
     for (genvar i = 0; i < `INST_FETCH_NUM; i++) begin
-      assign inst_valid[i] =  ( ( ( (inst_addr[3:2] <= i) ? 1 : 0 )  & mem_valid ) & ~buffer_full );  
+      assign inst_valid[i] =  ((inst_addr[3:2] <= i) ? 1 : 0)  & mem_valid & ~buffer_full & ready ;  
     end
   endgenerate
     
