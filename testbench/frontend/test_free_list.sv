@@ -8,7 +8,7 @@
 // Description: 
 // testbench for free list
 // Dependencies: 
-// src/frontend/rat.sv
+// src/frontend/freelist.sv
 //////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 1ps
 
