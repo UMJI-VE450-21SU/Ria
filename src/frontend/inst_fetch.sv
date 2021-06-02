@@ -48,7 +48,7 @@ module inst_fetch (
 
   generate
     for (genvar i = 0; i < `INST_FETCH_NUM; i++) begin
-      assign inst_valid[i] <=  ((inst_addr[3:2] <= i) ? 1 : 0)  & mem_valid & ~buffer_full & ready ;  
+      assign inst_valid[i] = (inst_addr[3:2] <= i)  & mem_valid & ~buffer_full & ready ;  
     end
   endgenerate
     
