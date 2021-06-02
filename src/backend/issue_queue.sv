@@ -53,11 +53,11 @@ module issue_slot_int (
       rs1_ready <= 1'b0;
       rs2_ready <= 1'b0;
     end else if (load & uop_in.valid) begin
-      rs1_ready <= uop_in.rs1_valid ? (uop_in.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
-      rs2_ready <= uop_in.rs2_valid ? (uop_in.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
+      rs1_ready <= (uop_in.rs1_source == RS_FROM_RF) ? (uop_in.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
+      rs2_ready <= (uop_in.rs2_source == RS_FROM_RF) ? (uop_in.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
     end else begin
-      rs1_ready <= uop.rs1_valid ? (uop.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
-      rs2_ready <= uop.rs2_valid ? (uop.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
+      rs1_ready <= (uop.rs1_source == RS_FROM_RF) ? (uop.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
+      rs2_ready <= (uop.rs2_source == RS_FROM_RF) ? (uop.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
     end
   end
 
