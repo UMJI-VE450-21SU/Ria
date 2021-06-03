@@ -149,13 +149,15 @@ module rat (
   input   micro_op_t    [`RENAME_WIDTH-1:0] uop_in,
   output  micro_op_t    [`RENAME_WIDTH-1:0] uop_out,
   output  allocatable,
-  output  allocatable
+  output  checkable
 );
 
   // Info for check point table
   reg   [`RAT_CP_INDEX_SIZE-1:0]  check_head;
   reg   [`RAT_CP_INDEX_SIZE-1:0]  check_size;
   reg   micro_op_t.pc             check_map[`RAT_CP_SIZE-1:0];
+  logic [`RAT_CP_INDEX_SIZE-1:0]  check_head_next;
+  logic [`RAT_CP_INDEX_SIZE-1:0]  check_size_next;
 
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_tar[`RAT_CP_SIZE-1:0];
   logic [`RAT_CP_SIZE-1:0]        check_valid;
@@ -164,11 +166,13 @@ module rat (
   logic                           allocatable_next;
 
   always_comb begin
-
+    for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
+      check_tar[i] = check_map[i];
+    end
     // Check point table is full
     if (check_size >= `RAT_CP_SIZE) begin
       check             = 0;
-      allocatable_next  = 0;
+      checkable         = 0;
     end
   end
 
@@ -178,11 +182,14 @@ module rat (
         check_map <= 0;
       end
     end else if (check) begin
+      check_size <= check_size_next;
       for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
         if (check_valid[i]) begin
           check_map[i] <= check_tar[i];
         end
       end
+    end else if (recover) begin
+      check_head <= check_head_next;
     end
   end
 
