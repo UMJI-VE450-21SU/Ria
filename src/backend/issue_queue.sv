@@ -12,13 +12,11 @@ module issue_slot_int (
 
   input             load,
 
-  //input  [$clog2(`IQ_INT_SIZE)-1:0] compressed_offset,
-
   input  micro_op_t uop_in,
   output micro_op_t uop,
 
   output            ready,
-  output reg        free
+  output            free
 );
 
   wire [`ISSUE_WIDTH_INT-1:0] rs1_index_match_ctb;
@@ -40,10 +38,8 @@ module issue_slot_int (
 
   always_ff @ (posedge clock) begin
     if (reset | clear) begin
-      free      <= 1'b1;
       uop       <= 0;
-    end else if (load & uop_in.valid) begin
-      free      <= 1'b0;
+    end else if (load & uop_in.valid) begin\
       uop       <= uop_in;
     end
   end
@@ -61,6 +57,7 @@ module issue_slot_int (
     end
   end
 
+  assign free = uop.valid;
   assign ready = rs1_ready & rs2_ready;
 
 endmodule
