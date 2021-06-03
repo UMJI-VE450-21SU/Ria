@@ -159,6 +159,7 @@ module rat (
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_head_next;
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_size_next;
 
+  // Store Several Branch info in same clk cycle
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_tar[`RAT_CP_SIZE-1:0];
   logic [`RAT_CP_SIZE-1:0]        check_valid;
   logic                           check;
@@ -166,8 +167,15 @@ module rat (
   logic                           allocatable_next;
 
   always_comb begin
+    check_valid = 0;
+    for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
+      if (~(uop_in[i].br_type.br_x)) begin
+        
+      end
+      end
+    end
     for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
-      check_tar[i] = check_map[i];
+      check_tar[i] = 0;
     end
     // Check point table is full
     if (check_size >= `RAT_CP_SIZE) begin
@@ -179,7 +187,7 @@ module rat (
   always_ff @(posedge clock) begin
     if (reset) begin
       for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
-        check_map <= 0;
+        check_map[i] <= 0;
       end
     end else if (check) begin
       check_size <= check_size_next;
