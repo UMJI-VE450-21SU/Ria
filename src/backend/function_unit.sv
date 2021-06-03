@@ -28,16 +28,16 @@ module alu (
 
   assign fn = uop.alu_type;
 
-  assign result = ({32{fn.fn_add}}  & add [31:0]) |
-                  ({32{fn.fn_sub}}  & sub [31:0]) |
-                  ({32{fn.fn_slt}}  & slt [31:0]) |
-                  ({32{fn.fn_sltu}} & sltu[31:0]) |
-                  ({32{fn.fn_xor}}  & lxor[31:0]) |
-                  ({32{fn.fn_or}}   & lor [31:0]) |
-                  ({32{fn.fn_and}}  & land[31:0]) |
-                  ({32{fn.fn_sll}}  & sll [31:0]) |
-                  ({32{fn.fn_srl}}  & srl [31:0]) |
-                  ({32{fn.fn_sra}}  & sra [31:0]);
+  assign result = ({32{fn == FN_ADD}}  & add [31:0]) |
+                  ({32{fn == FN_SUB}}  & sub [31:0]) |
+                  ({32{fn == FN_SLT}}  & slt [31:0]) |
+                  ({32{fn == FN_SLTU}} & sltu[31:0]) |
+                  ({32{fn == FN_XOR}}  & lxor[31:0]) |
+                  ({32{fn == FN_OR}}   & lor [31:0]) |
+                  ({32{fn == FN_AND}}  & land[31:0]) |
+                  ({32{fn == FN_SLL}}  & sll [31:0]) |
+                  ({32{fn == FN_SRL}}  & srl [31:0]) |
+                  ({32{fn == FN_SRA}}  & sra [31:0]);
 
   always_ff @(posedge clock) begin
     if (reset)
@@ -73,14 +73,14 @@ module branch (
   assign ltu  = in1 < in2;
   assign geu  = in1 > in2;
 
-  assign fn = uop.br_type;
+  assign br = uop.br_type;
 
-  assign result = (fn.br_eq  & eq)  |
-                  (fn.br_ne  & ne)  |
-                  (fn.br_lt  & lt)  |
-                  (fn.br_ge  & ge)  |
-                  (fn.br_ltu & ltu) |
-                  (fn.br_geu & geu);
+  assign result = ((br == BR_EQ)  & eq)  |
+                  ((br == BR_NE)  & ne)  |
+                  ((br == BR_LT)  & lt)  |
+                  ((br == BR_GE)  & ge)  |
+                  ((br == BR_LTU) & ltu) |
+                  ((br == BR_GEU) & geu);
 
   always_ff @(posedge clock) begin
     if (reset)

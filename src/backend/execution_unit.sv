@@ -30,8 +30,8 @@ module pipe_0 (
     .out      (br_out)
   );
 
-  assign out = ({32{uop.fu_code.fu_alu}} & alu_out) |
-               ({32{uop.fu_code.fu_alu}} & {32{br_out}});
+  assign out = ({32{uop.fu_code == FU_ALU}} & alu_out) |
+               ({32{uop.fu_code == FU_BR}} & {32{br_out}});
 
   assign busy = 1'b0;
 
