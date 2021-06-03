@@ -9,7 +9,7 @@ module prf_int (
   input  [`PRF_INT_WAYS-1:0] [31:0]                     rd_data,
   input  [`PRF_INT_WAYS-1:0]                            rd_en,
   output logic [`PRF_INT_WAYS-1:0] [31:0]               rs1_data,
-  output logic [`PRF_INT_WAYS-1:0] [31:0]               rs2_datat
+  output logic [`PRF_INT_WAYS-1:0] [31:0]               rs2_data
 );
 
   reg   [`PRF_INT_SIZE-1:0] [31:0]                rf;
@@ -30,7 +30,7 @@ module prf_int (
   always_comb begin
     for (int i = 0; i < `PRF_INT_WAYS; i = i + 1) begin
       rs1_data[i] = rf[rs1_index[i]];
-      rs2_datat[i] = rf[rs2_index[i]];
+      rs2_data[i] = rf[rs2_index[i]];
       for (int j = 0; j < `PRF_INT_WAYS; j = j + 1) begin
         if(rs1_from_rd[i][j])
           rs1_data[i] = rd_data[j];  
