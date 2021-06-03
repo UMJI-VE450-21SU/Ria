@@ -27,13 +27,14 @@
 
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
-`define PRF_INT_WAYS        3
+`define PRF_INT_WAYS        `ISSUE_WIDTH_INT
 
 `define PRF_FP_SIZE         64
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
-`define PRF_FP_WAYS         2
+`define PRF_FP_WAYS         `ISSUE_WIDTH_FP
 
-// NOP = ADDI x0, x0, 0CP_NUM
+
+typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
 typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
 
 // RISCV ISA SPEC
@@ -103,7 +104,6 @@ typedef union packed {
     logic [6:0]  opcode;
   } sys;
 } inst_t;
-
 
 
 `endif  // __DEFINES_SVH__
