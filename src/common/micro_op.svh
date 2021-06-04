@@ -48,6 +48,13 @@ typedef enum logic [3:0] {
   ALU_SRA  = 4'ha
 } alu_type_t;
 
+typedef enum logic [1:0]{
+  MULT    = 2'h0; // signed x signed
+  MULH    = 2'h1; // signed x signed
+  MULHSU  = 2'h2; // unsigned x signed
+  MULHU   = 2'h3; // unsigned x unsigned
+} mult_type_t;
+
 typedef enum logic [2:0] { 
   RS_INVALID    = 3'h0;
   RS_FROM_RF    = 3'h1;
