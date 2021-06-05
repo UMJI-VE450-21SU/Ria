@@ -6,10 +6,9 @@
 // Module Name: mappingtable
 // Target Devices: mapping table
 // Description: 
-// Record Mapping Relation between PRF & ARF; SRAM-Based RAT, sRAT
+// Record Mapping Relation between PRF & ARF; SRAM-Based RAT;
 // Dependencies: 
-// src/common/micro_op.svh,
-// src/frontend/freelist.sv, src/frontend/checkpoint.sv
+// src/common/micro_op.svh, src/frontend/freelist.sv, src/frontend/checkpoint.sv
 //////////////////////////////////////////////////////////////////////////////////
 `include "../common/micro_op.svh"
 

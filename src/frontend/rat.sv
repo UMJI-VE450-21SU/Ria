@@ -17,7 +17,7 @@ module rat (
   input   reset,
   input   recover,
   input   pause,
-  input   micro_op_t.pc                     pc_recover,
+  input   micro_op_t                        pc_recover,
   input   micro_op_t    [`RENAME_WIDTH-1:0] uop_in,
   output  micro_op_t    [`RENAME_WIDTH-1:0] uop_out,
   output  allocatable,
