@@ -2,7 +2,7 @@
 // Project Name: RIA
 // Create Date: 2021/06/02
 // Contributor: Jian Shi
-// Reviewer: 
+// Reviewer: Li Shi, Yiqiu Sun, Yichao Yuan, Zhiyuan Liu
 // Module Name: freelist_int, freelist_fp
 // Target Devices: free list
 // Description: 
