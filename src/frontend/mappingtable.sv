@@ -18,7 +18,6 @@ module mappingtable (
 
   input         check,
   input         recover,
-  input         pause,
 
   input         [`RAT_CP_INDEX_SIZE-1:0]                        check_idx,
   input         [`RAT_CP_INDEX_SIZE-1:0]                        recover_idx,

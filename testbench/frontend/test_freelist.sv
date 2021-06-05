@@ -16,6 +16,7 @@ module freelist_tb;
 parameter half_clk_cycle = 1;
 
 reg  clock, reset, check, recover;
+
 reg [`CP_INDEX_SIZE-1:0]                            check_idx;
 reg [`CP_INDEX_SIZE-1:0]                            recover_idx;
 
@@ -60,7 +61,7 @@ initial begin
     #2 check = 0;
     #2 prf_replace = 18'b001100000010000001; replace_valid = 3'b111;
     #2 replace_valid = 3'b000;
-    #2 prf_replace = 18'b011100010011000001; replace_valid = 3'b111;
+    #2 prf_replace = 18'b011100010011000001; replace_valid = 3'b110;
     #2 replace_valid = 3'b000;
     #2 prf_req = 3'b011;
     #2 recover = 1; recover_idx = 0;

@@ -27,7 +27,7 @@ module rat (
   // Info for check point table
   reg   [`RAT_CP_INDEX_SIZE-1:0]  check_head;
   reg   [`RAT_CP_INDEX_SIZE-1:0]  check_size;
-  reg   micro_op_t.pc             check_map[`RAT_CP_SIZE-1:0];
+  reg   [31:0]                    check_map[`RAT_CP_SIZE-1:0];
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_head_next;
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_size_next;
 
