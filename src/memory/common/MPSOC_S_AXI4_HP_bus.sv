@@ -70,59 +70,59 @@ interface MPSOC_S_AXI4_HP_bus(input logic ACLK, ARESETn);
     modport master (
     // AR channel
     output ARADDR, ARBURST, ARCACHE, ARID, ARLEN, ARLOCK, ARPROT,
-        ARQOS, ARSIZE, ARUSER, ARVALID;
+        ARQOS, ARSIZE, ARUSER, ARVALID,
 
-    input ARREADY;
+    input ARREADY,
 
     // AW channel
     output AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWQOS, AWLOCK, 
-        AWCACHE, AWPROT, AWUSER, AWVALID;
+        AWCACHE, AWPROT, AWUSER, AWVALID,
     
-    input AWREADY;
+    input AWREADY,
 
     // R channel
-    input RID, RDATA, RRESP, RVALID, RLAST;
+    input RID, RDATA, RRESP, RVALID, RLAST,
 
-    output RREADY;
+    output RREADY,
 
     // W channel
-    output WDATA, WSTRB, WVALID, WLAST;
+    output WDATA, WSTRB, WVALID, WLAST,
 
-    input WREADY;
+    input WREADY,
 
     // B channel
-    input BID, BRESP, BVALID;
+    input BID, BRESP, BVALID,
 
-    output BREADY;
+    output BREADY
     );
 
     modport slave (
     // AR channel
     input ARADDR, ARBURST, ARCACHE, ARID, ARLEN, ARLOCK, ARPROT,
-        ARQOS, ARSIZE, ARUSER, ARVALID;
+        ARQOS, ARSIZE, ARUSER, ARVALID,
 
-    output ARREADY;
+    output ARREADY,
 
     // AW channel
     input AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWQOS, AWLOCK, 
-        AWCACHE, AWPROT, AWUSER, AWVALID;
+        AWCACHE, AWPROT, AWUSER, AWVALID,
     
-    output AWREADY;
+    output AWREADY,
 
     // R channel
-    output RID, RDATA, RRESP, RVALID, RLAST;
+    output RID, RDATA, RRESP, RVALID, RLAST,
 
-    input RREADY;
+    input RREADY,
 
     // W channel
-    input WDATA, WSTRB, WVALID, WLAST;
+    input WDATA, WSTRB, WVALID, WLAST,
 
-    output WREADY;
+    output WREADY,
 
     // B channel
-    output BID, BRESP, BVALID;
+    output BID, BRESP, BVALID,
 
-    input BREADY;
+    input BREADY
     );
 endinterface //AXI4_bus
 

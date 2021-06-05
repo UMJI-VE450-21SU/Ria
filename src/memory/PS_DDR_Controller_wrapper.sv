@@ -3,11 +3,11 @@
 module PS_DDR_Controller_wrapper (
     MPSOC_S_AXI4_HP_bus.slave bus,
     output logic ACLK,
-    output logic ARESETn,
+    output logic ARESETn
 );
     // wrap the verilog wrapper for block design
 
-    design_1_wrapper ddr_controller (PS_DDR_Controller_wrapper
+    design_1_wrapper ddr_controller 
    (S_AXI_HP0_araddr(bus.ARADDR),
     S_AXI_HP0_arburst(bus.ARBURST),
     S_AXI_HP0_arcache(bus.ARCACHE),
