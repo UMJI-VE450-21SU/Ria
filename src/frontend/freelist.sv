@@ -39,8 +39,8 @@ module freelist_int (
   logic   [`PRF_INT_SIZE-1:0]           free_list_increase;
   logic   [`PRF_INT_SIZE-1:0]           free_list_decrease;
 
-  logic   [`PRF_INT_WAYS_SIZE-1:0]      free_list_decrease_num;
-  logic   [`PRF_INT_WAYS_SIZE-1:0]      free_list_decrease_count;
+  logic   [`PRF_INT_WAYS_SIZE:0]      free_list_decrease_num;
+  logic   [`PRF_INT_WAYS_SIZE:0]      free_list_decrease_count;
 
   logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_list[`RENAME_WIDTH-1:0];
   logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_next[`RENAME_WIDTH-1:0];
