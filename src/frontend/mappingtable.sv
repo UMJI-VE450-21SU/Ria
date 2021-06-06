@@ -38,12 +38,13 @@ module mappingtable (
   output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd,
   output logic  [`RENAME_WIDTH-1:0]                             prev_rd_valid,
 
-  output logic                                                  allocatable
+  output logic                                                  allocatable,
+  output logic                                                  ready
 );
 
   // I/O for Mapping Table
   reg   [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb[`ARF_INT_SIZE-1:0];
-  logic [`PRF_INT_INDEX_SIZE-1:0] [`ARF_INT_SIZE-1:0]   mapping_tb_cp_in;
+  logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp_in;
   logic [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb_next[`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
 
@@ -53,6 +54,15 @@ module mappingtable (
 
   // I/O for Free List
   logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out;
+
+  logic                                                 ready_next;
+  reg   [`RENAME_WIDTH-1:0]                             rd_valid_locker;
+  reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs1_locker;
+  reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2_locker;
+  reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd_locker;
+
+  reg   [`RENAME_WIDTH-1:0]                             replace_req_locker;
+  reg   [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   replace_prf_locker;
 
 checkpoint_int int_checkpoint(
   .clock              (clock            ),
@@ -92,22 +102,29 @@ freelist_int  int_freelist(
     tb_valid_next       = tb_valid;
     prev_rd             = 0;
     prev_rd_valid       = 0;
+    ready_next          = 0;
     for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i]   = mapping_tb[i];
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
-      if (rd_valid[i]) begin
+      if (replace_req_locker[i]) begin
+        tb_valid_next[replace_prf_locker[i]] = 0;
+      end
+    end
+    for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
+      if (rd_valid_locker[i]) begin
         // WAW
-        if (tb_valid_next[rd[i]]) begin
-          prev_rd[i]             = mapping_tb_next[rd[i]];
+        if (tb_valid_next[rd_locker[i]]) begin
+          prev_rd[i]             = mapping_tb_next[rd_locker[i]];
           prev_rd_valid[i]       = 1;
         end
-        mapping_tb_next[rd[i]]        = prf_out[i];
+        mapping_tb_next[rd_locker[i]]        = prf_out[i];
         prd[i]                        = prf_out[i];
-        tb_valid_next[rd[i]]          = 1;
+        tb_valid_next[prf_out[i]]     = 1;
       end
-      prs1[i] = mapping_tb_next[rs1[i]];
-      prs2[i] = mapping_tb_next[rs2[i]];
+      prs1[i] = mapping_tb_next[rs1_locker[i]];
+      prs2[i] = mapping_tb_next[rs2_locker[i]];
+      ready_next = 1;
     end
   end
 
@@ -117,19 +134,27 @@ freelist_int  int_freelist(
         mapping_tb[i] <= 0;
       end
       tb_valid <= `PRF_INT_SIZE'b1;
+      ready <= 0;
     end
     else if (recover) begin
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_cp[i];
       end
       tb_valid <= tb_valid_cp;
-    end
-    else begin
+      ready <= 1;
+    end else begin
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_next[i];
       end
       tb_valid <= tb_valid_next;
+      ready <= ready_next;
     end
+    rd_valid_locker     <= rd_valid;
+    rs1_locker          <= rs1;
+    rs2_locker          <= rs2;
+    rd_locker           <= rd;
+    replace_req_locker  <= replace_req;
+    replace_prf_locker  <= replace_prf;
   end
 
 endmodule

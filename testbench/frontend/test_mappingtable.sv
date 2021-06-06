@@ -36,7 +36,7 @@ wire [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]    prd;
 wire [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]    prev_rd;
 wire [`RENAME_WIDTH-1:0]                              prev_rd_valid;
 
-wire                                                  allocatable;
+wire                                                  allocatable, ready;
 
 always #half_clk_cycle clock = ~clock;
 
@@ -58,7 +58,8 @@ mappingtable UTT(
   .prd                (prd              ),
   .prev_rd            (prev_rd          ),
   .prev_rd_valid      (prev_rd_valid    ),
-  .allocatable        (allocatable      )
+  .allocatable        (allocatable      ),
+  .ready              (ready            )
 );
 
 initial begin
@@ -66,6 +67,12 @@ initial begin
     rd_valid = 0; rs1 = 0; rs2 = 0; rd = 0; replace_req = 0; replace_prf = 0;
     #2 reset = 0;
     #2 rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
+    #10 rd_valid = 4'b0; rs1 = 20'h8864; rs2 = 20'h8864; rd = 0;
+    #2 replace_req = 4'b1111; replace_prf = 24'h420C4;
+    #2 check = 1; check_idx = 2'b1; replace_req = 4'b0; replace_prf = 24'h0;
+    #2 check = 0; rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
+    #2 rd_valid = 4'b0;
+    #2 recover = 1; rd_valid = 4'b0; recover_idx = 2'b1;
     #10 $stop;
 end
 
