@@ -99,10 +99,10 @@ freelist_int  int_freelist(
 
   always_comb begin
     // Prepare input for Free List
-    tb_valid_next       = tb_valid;
-    prev_rd             = 0;
-    prev_rd_valid       = 0;
-    ready_next          = 0;
+    tb_valid_next = tb_valid;
+    prev_rd       = 0;
+    prev_rd_valid = 0;
+    ready_next    = 0;
     for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i]   = mapping_tb[i];
     end
@@ -118,13 +118,13 @@ freelist_int  int_freelist(
           prev_rd[i]             = mapping_tb_next[rd_locker[i]];
           prev_rd_valid[i]       = 1;
         end
-        mapping_tb_next[rd_locker[i]]        = prf_out[i];
+        mapping_tb_next[rd_locker[i]] = prf_out[i];
         prd[i]                        = prf_out[i];
         tb_valid_next[prf_out[i]]     = 1;
       end
-      prs1[i] = mapping_tb_next[rs1_locker[i]];
-      prs2[i] = mapping_tb_next[rs2_locker[i]];
-      ready_next = 1;
+      prs1[i]     = mapping_tb_next[rs1_locker[i]];
+      prs2[i]     = mapping_tb_next[rs2_locker[i]];
+      ready_next  = 1;
     end
   end
 
