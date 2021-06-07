@@ -15,13 +15,18 @@
 module rat (
   input   clock,
   input   reset,
+
   input   recover,
   input   pause,
+
   input   micro_op_t                        pc_recover,
   input   micro_op_t    [`RENAME_WIDTH-1:0] uop_in,
   output  micro_op_t    [`RENAME_WIDTH-1:0] uop_out,
+
   output  allocatable,
-  output  checkable
+  output  checkable,
+
+  output  ready
 );
 
   // Info for check point table
@@ -37,6 +42,28 @@ module rat (
   logic                           check;
 
   logic                           allocatable_next;
+
+mappingtable mapping_tb(
+  .clock          (clock),
+  .reset          (reset),
+  .check          (),
+  .recover        (),
+  .check_idx      (),
+  .recover_idx    (),
+  .rd_valid       (),
+  .rs1            (),
+  .rs2            (),
+  .rd             (),
+  .replace_req    (),
+  .replace_prf    (),
+  .prs1           (),
+  .prs2           (),
+  .prd            (),
+  .prev_rd        (),
+  .prev_rd_valid  (),
+  .allocatable    (),
+  .ready          ()
+);
 
   always_comb begin
     check_valid = 0;

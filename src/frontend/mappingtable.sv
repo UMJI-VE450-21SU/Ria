@@ -113,10 +113,10 @@ freelist_int  int_freelist(
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
       if (rd_valid_locker[i]) begin
-        // WAW
-        if (tb_valid_next[rd_locker[i]]) begin
-          prev_rd[i]             = mapping_tb_next[rd_locker[i]];
-          prev_rd_valid[i]       = 1;
+        // WAW: Return Previous PRF
+        prev_rd[i] = mapping_tb_next[rd_locker[i]];
+        if (tb_valid_next[prev_rd[i]]) begin
+          prev_rd_valid[i] = 1;
         end
         mapping_tb_next[rd_locker[i]] = prf_out[i];
         prd[i]                        = prf_out[i];
