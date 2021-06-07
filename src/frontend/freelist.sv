@@ -19,8 +19,8 @@ module freelist_int (
   input       check,
   input       recover,
 
-  input       [`RAT_CP_INDEX_SIZE-1:0]                        check_idx,
-  input       [`RAT_CP_INDEX_SIZE-1:0]                        recover_idx,
+  input       cp_index_t                                      check_idx,
+  input       cp_index_t                                      recover_idx,
 
   input       [`RENAME_WIDTH-1:0]                             prf_replace_valid,
   input       [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_replace,
@@ -39,8 +39,8 @@ module freelist_int (
   logic   [`PRF_INT_SIZE-1:0]           free_list_increase;
   logic   [`PRF_INT_SIZE-1:0]           free_list_decrease;
 
-  logic   [`PRF_INT_WAYS_SIZE:0]      free_list_decrease_num;
-  logic   [`PRF_INT_WAYS_SIZE:0]      free_list_decrease_count;
+  logic   [`PRF_INT_WAYS_SIZE:0]        free_list_decrease_num;
+  logic   [`PRF_INT_WAYS_SIZE:0]        free_list_decrease_count;
 
   logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_list[`RENAME_WIDTH-1:0];
   logic   [`PRF_INT_INDEX_SIZE-1:0]     prf_out_next[`RENAME_WIDTH-1:0];

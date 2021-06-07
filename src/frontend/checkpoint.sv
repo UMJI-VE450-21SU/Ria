@@ -18,8 +18,8 @@ module checkpoint_int (
 
   input       check,
 
-  input       [`RAT_CP_INDEX_SIZE-1:0]                        check_idx,
-  input       [`RAT_CP_INDEX_SIZE-1:0]                        recover_idx,
+  input       cp_index_t                                      check_idx,
+  input       cp_index_t                                      recover_idx,
 
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
   output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out,
