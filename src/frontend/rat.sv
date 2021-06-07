@@ -33,8 +33,9 @@ module rat (
   reg   [`RAT_CP_INDEX_SIZE-1:0]  check_head;
   reg   [`RAT_CP_INDEX_SIZE-1:0]  check_size;
   reg   [31:0]                    check_map[`RAT_CP_SIZE-1:0];
-  logic [`RAT_CP_INDEX_SIZE-1:0]  check_head_next;
-  logic [`RAT_CP_INDEX_SIZE-1:0]  check_size_next;
+
+  logic [`RAT_CP_INDEX_SIZE:0]    check_head_next;
+  logic [`RAT_CP_INDEX_SIZE:0]    check_size_next;
 
   // Store Several Branch info in same clk cycle
   logic [`RAT_CP_INDEX_SIZE-1:0]  check_tar[`RAT_CP_SIZE-1:0];
@@ -46,8 +47,8 @@ module rat (
 mappingtable mapping_tb(
   .clock          (clock),
   .reset          (reset),
-  .check          (),
-  .recover        (),
+  .check          (check),
+  .recover        (recover),
   .check_idx      (),
   .recover_idx    (),
   .rd_valid       (),
@@ -64,6 +65,19 @@ mappingtable mapping_tb(
   .allocatable    (),
   .ready          ()
 );
+
+  always_comb begin
+    check_head_next = check_head;
+    check_size_next = check_size;
+    if (recover) begin
+      for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
+        // Find Target Check Point
+        if (pc_recover.pc == check_map[i]) begin
+          check_head_next = i;
+        end
+      end
+    end
+  end
 
   always_comb begin
     check_valid = 0;

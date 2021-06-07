@@ -104,7 +104,8 @@ freelist_int  int_freelist(
     prev_rd_valid = 0;
     ready_next    = 0;
     for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
-      mapping_tb_next[i]   = mapping_tb[i];
+      mapping_tb_next[i]  = mapping_tb[i];
+      prd[i]              = 0;
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
       if (replace_req_locker[i]) begin
