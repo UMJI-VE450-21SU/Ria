@@ -62,7 +62,9 @@ typedef struct packed {
   inst_t          inst;
   iq_code_t       iq_code;      // which issue unit do we use?
   fu_code_t       fu_code;      // which functional unit do we use?
-  
+
+  cp_index_t      cp_index;
+
   br_type_t       br_type;
   alu_type_t      alu_type;
 
