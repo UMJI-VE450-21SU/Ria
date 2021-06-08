@@ -63,17 +63,17 @@ mappingtable UTT(
 );
 
 initial begin
-    #0 clock = 0; reset = 1; check = 0; recover = 0; check_idx = 0; recover_idx = 0;
-    rd_valid = 0; rs1 = 0; rs2 = 0; rd = 0; replace_req = 0; replace_prf = 0;
-    #2 reset = 0;
-    #2 rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
-    #10 rd_valid = 4'b0; rs1 = 20'h8864; rs2 = 20'h8864; rd = 0;
-    #2 replace_req = 4'b1111; replace_prf = 24'h420C4;
-    #2 check = 1; check_idx = 2'b1; replace_req = 4'b0; replace_prf = 24'h0;
-    #2 check = 0; rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
-    #2 rd_valid = 4'b0;
-    #2 recover = 1; rd_valid = 4'b0; recover_idx = 2'b1;
-    #10 $stop;
+  #0 clock = 0; reset = 1; check = 0; recover = 0; check_idx = 0; recover_idx = 0;
+  rd_valid = 0; rs1 = 0; rs2 = 0; rd = 0; replace_req = 0; replace_prf = 0;
+  #2 reset = 0;
+  #2 rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
+  #10 rd_valid = 4'b0; rs1 = 20'h8864; rs2 = 20'h8864; rd = 0;
+  #2 replace_req = 4'b1111; replace_prf = 24'h420C4;
+  #2 check = 1; check_idx = 2'b1; replace_req = 4'b0; replace_prf = 24'h0;
+  #2 check = 0; rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
+  #2 rd_valid = 4'b0;
+  #2 recover = 1; rd_valid = 4'b0; recover_idx = 2'b1;
+  #10 $stop;
 end
 
 endmodule

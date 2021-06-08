@@ -41,6 +41,7 @@ module rat (
   logic                           checkable_next;
 
   logic                           mappingtable_ready;
+  logic                           rat_ready;
 
   reg                             recover_locker;
   reg   [`RENAME_WIDTH-1:0]       retire_valid_locker;
@@ -87,16 +88,18 @@ mappingtable mapping_tb(
   .prev_rd        (prev_rd            ),
   .prev_rd_valid  (prev_rd_valid      ),
   .allocatable    (allocatable        ),
-  .ready          (ready              )
+  .ready          (mappingtable_ready )
 );
+
+  assign ready = mappingtable_ready & rat_ready;
 
   always_comb begin
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
-      rd_valid[i]     = op_in[i].rd_valid;
-      rs1[i]          = op_in[i].rs1_arf_int_index;
-      rs2[i]          = op_in[i].rs2_arf_int_index;
-      rd[i]           = op_in[i].rd_arf_int_index;
-      replace_prf[i]  = op_in[i].rd_prf_int_index_prev;
+      rd_valid[i]     = uop_in[i].rd_valid;
+      rs1[i]          = uop_in[i].rs1_arf_int_index;
+      rs2[i]          = uop_in[i].rs2_arf_int_index;
+      rd[i]           = uop_in[i].rd_arf_int_index;
+      replace_prf[i]  = uop_in[i].rd_prf_int_index_prev;
     end
   end
 
@@ -116,10 +119,10 @@ mappingtable mapping_tb(
   end
 
   always_comb begin
-    check_head_next = check_head;
-    check_size_next = check_size;
-    check_tail_next = 0;
-    checkable_next  = 1;
+    check_head_next   = check_head;
+    check_size_next   = check_size;
+    checkable_next    = 1;
+    rat_ready         = 0;
 
     // Mis-predict
     if (recover_locker) begin
@@ -134,13 +137,14 @@ mappingtable mapping_tb(
     for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
       // Retire PC
       if (retire_valid_locker[i]) begin
-        check_head_next = retire_index_locker + 1;
+        check_head_next = retire_index_locker[i] + 1;
         check_size_next = check_size_next - 1;
       end
     end
 
     check_size_next_bk = check_size_next;
 
+    // TODO: FIFO for Multi-Branch
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
       cp_index_next[i] = 0;
       // Meet Branch Prediction
@@ -161,19 +165,21 @@ mappingtable mapping_tb(
       check_size_next = check_size_next_bk;
       check = 0;
     end
+    rat_ready   = 1;
   end
 
   always_ff @(posedge clock) begin
     if (reset) begin
       check_head <= 0;
       check_size <= 0;
-    end else if (retire) begin
+    end else begin
       check_head <= check_head_next;
       check_size <= check_size_next;
     end
     recover_index_locker  <= pc_recover.cp_index;
     recover_locker        <= recover;
     retire_valid_locker   <= retire_valid;
+    checkable             <= checkable_next;
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
       br_type_locker[i]         <= uop_in[i].br_type;
       retire_index_locker[i]    <= pc_retire[i].cp_index;
