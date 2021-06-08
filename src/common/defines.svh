@@ -3,6 +3,8 @@
 
 `define FRONTEND_WIDTH      4
 
+`define MULT_LATENCY        5
+
 `define DECODE_WIDTH        `FRONTEND_WIDTH
 `define RENAME_WIDTH        `FRONTEND_WIDTH
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH

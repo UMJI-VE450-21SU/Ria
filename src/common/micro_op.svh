@@ -49,10 +49,10 @@ typedef enum logic [3:0] {
 } alu_type_t;
 
 typedef enum logic [1:0]{
-  MULT    = 2'h0; // signed x signed
-  MULH    = 2'h1; // signed x signed
-  MULHSU  = 2'h2; // unsigned x signed
-  MULHU   = 2'h3; // unsigned x unsigned
+  MULT    = 2'h0, // signed x signed
+  MULH    = 2'h1, // signed x signed
+  MULHSU  = 2'h2, // unsigned x signed
+  MULHU   = 2'h3  // unsigned x unsigned
 } mult_type_t;
 
 typedef enum logic [2:0] { 
