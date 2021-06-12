@@ -14,9 +14,9 @@
 
 module fetch_buffer(
     input          [`INST_PACK-1:0]        inst_value,
-    input          ['INST_FETCH_NUM-1:0]   inst_valid,
+    input          [`INST_FETCH_NUM-1:0]   inst_valid,
     input                                  reset,
-    output  logic                          buffer_full,
+    output  logic                          full,
     output  logic  [`INST_INDEX_SIZE-1:0]  inst0,
     output  logic  [`INST_INDEX_SIZE-1:0]  inst1,
     output  logic  [`INST_INDEX_SIZE-1:0]  inst2,
@@ -25,31 +25,47 @@ module fetch_buffer(
 
 );
 
-logic [`INST_INDEX_SIZE-1:0] inst_buffer ['IB_SIZE-1:0];
+    logic [`INST_INDEX_SIZE-1:0] inst_buffer [`IB_SIZE-1:0];
 
 logic                         empty;   
-logic [`IB_ADDR-1:0]          front;
-logic [`IB_ADDR-1:0]          rear;
+reg [`IB_ADDR-1:0]            front;
+logic  [`IB_ADDR-1:0]         next_front;
+reg [`IB_ADDR-1:0]            rear;
+logic  [`IB_ADDR-1:0]         next_rear;
 logic [`INST_PACK-1:0]        temp_inst_buffer;
+    reg [`IB_ADDR-1:0]        num_free;
+    logic [`IB_ADDR-1:0]      next_num_free;
 
+assign full = (next_num_free < `INST_FETCH_NUM);
+    
+assign {inst3,inst2,inst1,inst0} = temp_inst_buffer;
+    
 always_ff @ (posedge clock) begin
     if (reset) begin
-        front <= `IB_ADDR'd0;
-        rear <= `IB_ADDR'd0;
-        empty <= 1'b1;
-        buffer_full <= 1'b0;
-        inst0 <= `INST_INDEX_SIZE'd0;
-        inst1 <= `INST_INDEX_SIZE'd0;
-        inst2 <= `INST_INDEX_SIZE'd0;
-        inst3 <= `INST_INDEX_SIZE'd0;
-        valid <= `INST_FETCH_NUM'd0;
-    end else begin
-
+        front <= 0;
+        rear <= 0;
+        num_free <= `IB_SIZE;
+    end
+    else begin
+        front <= next_front;
+        rear <= next_rear;
+        num_free <= next_num_free;
+    end
+end
+        
+always_comb begin
+    // out
+    if (num_free > ) 
+    // in
+end
+      
+        
+        
         //if slot < 4, then output buffer full 
         if (rear >= front) begin
-            buffer_full <= ~ (empty |   ((rear - front) + 1 <= `IB_SIZE - 4));
+            full <= ~ (empty |   ((rear - front) + 1 <= `IB_SIZE - 4));
         end else begin
-            buffer_full <= ~ ((`IB_SIZE - (front - rear) + 1) <= `IB_SIZE -4);
+            full <= ~ ((`IB_SIZE - (front - rear) + 1) <= `IB_SIZE -4);
         end
         
         //enqueue the valid instruction: no need to consider buffer full, handle above
