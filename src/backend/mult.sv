@@ -36,7 +36,8 @@ always_ff @(posedge clock ) begin
     if(reset) begin
         range <= 0;
         sign_reg <= 0;
-    else
+    end
+    else begin
         range[`MULT_LATENCY-1:1] <= range[`MULT_LATENCY-2:0];
         range[0] <= (uop.mult_type_t ~= MULHU);
         sign_reg[`MULT_LATENCY-1:1] <= sign_reg[`MULT_LATENCY-2:0];
