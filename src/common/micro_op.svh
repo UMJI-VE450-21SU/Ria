@@ -4,6 +4,13 @@
 `include "defines.svh"
 `include "isa.svh"
 
+typedef struct packed{
+  inst_t                  inst; // fetched instruction
+  logic [`INST_WIDTH-1:0] PC;
+  logic [`INST_WIDTH-1:0] NPC;
+}ib_entry_t;
+
+
 typedef struct packed {
   logic iq_int;
   logic iq_mem;

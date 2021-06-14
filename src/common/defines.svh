@@ -3,12 +3,11 @@
 
 `define INST_NUM          40
 `define INST_WIDTH        32
-`define INST_PACK         128
-`define INST_INDEX_SIZE   32
 `define INST_FETCH_NUM    4
-`define IB_SIZE           16
-`define IB_ADDR           4
+`define INST_PACK         `INST_WIDTH * `INST_FETCH_NUM
 
+`define IB_SIZE           16
+`define IB_ADDR           $log2(`IB_SIZE)
 `define DISPATCH_WIDTH      4
 
 `define ISSUE_WIDTH_INT     3
