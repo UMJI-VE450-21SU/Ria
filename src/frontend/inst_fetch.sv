@@ -27,7 +27,7 @@ module inst_fetch (
     output logic [`INST_WIDTH-1:0]      proc2Icache_addr, // one addr is enough
   // ======= inst buffer related =============
     output logic                        insts_out_valid,
-    output ib_entry_t [`INST_PACK-1:0]  insts_out
+    output ib_entry_t [`INST_FETCH_NUM-1:0]  insts_out
 );
 
 
