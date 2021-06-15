@@ -38,9 +38,9 @@ module issue_slot_int (
 
   always_ff @ (posedge clock) begin
     if (reset | clear) begin
-      uop       <= 0;
-    end else if (load & uop_in.valid) begin\
-      uop       <= uop_in;
+      uop <= 0;
+    end else if (load & uop_in.valid) begin
+      uop <= uop_in;
     end
   end
 
@@ -225,8 +225,6 @@ module issue_queue_int (
     .gnt_bus  (gnt_bus_out),
     .empty    (output_selector_alu_empty)
   );
-
-  assign clear = clear_alu | clear_br | clear_imul | clear_idiv;
   
   always_comb begin
     uop_out_count = 0;
@@ -242,31 +240,38 @@ module issue_queue_int (
     uop_out[0] = 0;
     uop_out[1] = 0;
     uop_out[2] = 0;
+    clear = 0;
     // Execution pipe 0 (ALU+Branch): Branch > ALU
     for (int j = 0; j < `IQ_INT_SIZE; j++) begin
       if (clear_br[j]) begin
         uop_out[0] = uop_to_issue[j];
+        clear[j] = 1;
         break;
       end else if (gnt_bus_out[0][j]) begin
         uop_out[0] = uop_to_issue[j];
+        clear[j] = 1;
       end
     end
     // Execution pipe 1 (ALU+IntMult): IntMult > ALU
     for (int j = 0; j < `IQ_INT_SIZE; j++) begin
       if (clear_imul[j]) begin
         uop_out[1] = uop_to_issue[j];
+        clear[j] = 1;
         break;
       end else if (gnt_bus_out[1][j]) begin
         uop_out[1] = uop_to_issue[j];
+        clear[j] = 1;
       end
     end
     // Execution pipe 1 (ALU+IntDiv): IntDiv > ALU
     for (int j = 0; j < `IQ_INT_SIZE; j++) begin
       if (clear_idiv[j]) begin
         uop_out[2] = uop_to_issue[j];
+        clear[j] = 1;
         break;
       end else if (gnt_bus_out[2][j]) begin
         uop_out[2] = uop_to_issue[j];
+        clear[j] = 1;
       end
     end
   end
