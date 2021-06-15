@@ -4,7 +4,6 @@
 module issue_slot_mem (
   input             clock,
   input             reset,
-  input             clear,
 
   // ctb = common tag bus
   input  [`ISSUE_WIDTH_MEM-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
@@ -13,6 +12,7 @@ module issue_slot_mem (
   input             load,
 
   input  micro_op_t uop_in,
+  input  micro_op_t uop_new,
   output micro_op_t uop,
 
   output            ready,
@@ -37,15 +37,17 @@ module issue_slot_mem (
   endgenerate
 
   always_ff @ (posedge clock) begin
-    if (reset | clear) begin
-      uop       <= 0;
-    end else if (load & uop_in.valid) begin\
-      uop       <= uop_in;
+    if (reset) begin
+      uop <= 0;
+    end else if (load & uop_in.valid) begin
+      uop <= uop_in;
+    end else begin
+      uop <= uop_new;
     end
   end
 
   always_ff @ (posedge clock) begin
-    if (reset | clear) begin
+    if (reset) begin
       rs1_ready <= 1'b0;
       rs2_ready <= 1'b0;
     end else if (load & uop_in.valid) begin
@@ -59,6 +61,61 @@ module issue_slot_mem (
 
   assign free = uop.valid;
   assign ready = rs1_ready & rs2_ready;
+
+endmodule
+
+
+module issue_queue_mem_output_selector (
+  input       [`IQ_MEM_SIZE-1:0]     ready,
+  input       [`IQ_MEM_SIZE-1:0]     is_store,
+  output reg  [`ISSUE_WIDTH_MEM-1:0] [$clog2(`IQ_MEM_SIZE)-1:0] sel,
+  output reg  [`ISSUE_WIDTH_MEM-1:0] sel_valid,
+);
+
+  logic [`ISSUE_WIDTH_MEM:0] [`IQ_MEM_SIZE-1:0] readys;
+
+  always_comb begin
+    readys[0] = ready;
+    for (int i = `ISSUE_WIDTH_MEM; i < `IQ_MEM_SIZE; i++) begin
+      if (is_store[i]) begin
+        readys[0][i] = 0;
+      end
+    end
+  end
+
+  generate
+    for (genvar i = 1; i < `ISSUE_WIDTH_MEM; i++) begin
+      assign readys[i] = readys[i-1] & ~(sel_valid[i-1] << sel[i-1]);
+    end
+  endgenerate
+
+  always_comb begin
+    for (int i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
+      sel_valid[i] = 1;
+      casez (readys[i])
+        16'b???????????????1: sel[i] = 4'b0000;
+        16'b??????????????10: sel[i] = 4'b0001;
+        16'b?????????????100: sel[i] = 4'b0010;
+        16'b????????????1000: sel[i] = 4'b0011;
+        16'b???????????10000: sel[i] = 4'b0100;
+        16'b??????????100000: sel[i] = 4'b0101;
+        16'b?????????1000000: sel[i] = 4'b0110;
+        16'b????????10000000: sel[i] = 4'b0111;
+        16'b???????100000000: sel[i] = 4'b1000;
+        16'b??????1000000000: sel[i] = 4'b1001;
+        16'b?????10000000000: sel[i] = 4'b1010;
+        16'b????100000000000: sel[i] = 4'b1011;
+        16'b???1000000000000: sel[i] = 4'b1100;
+        16'b??10000000000000: sel[i] = 4'b1101;
+        16'b?100000000000000: sel[i] = 4'b1110;
+        16'b1000000000000000: sel[i] = 4'b1111;
+        default: begin
+          sel[i] = 4'b0000;
+          sel_valid[i] = 0;
+        end
+      endcase
+    end
+  end
 
 endmodule
 
@@ -83,28 +140,29 @@ module issue_queue_mem (
 );
 
   logic [$clog2(`IQ_MEM_SIZE)-1:0]  uop_in_count, uop_out_count;
-  logic [$clog2(`IQ_MEM_SIZE)-1:0]  free_count;
-  reg   [$clog2(`IQ_MEM_SIZE)-1:0]  free_count_reg;
+  logic [$clog2(`IQ_MEM_SIZE)-1:0]  free_count, tail;
+  reg   [$clog2(`IQ_MEM_SIZE)-1:0]  free_count_reg, tail_reg;
+  logic [$clog2(`IQ_MEM_SIZE)-1:0]  compress_offset;
 
-  wire  [`DISPATCH_WIDTH-1:0] [`IQ_MEM_SIZE-1:0] gnt_bus_in;
-  wire  [`ISSUE_WIDTH_MEM-1:0][`IQ_MEM_SIZE-1:0] gnt_bus_out;
+  logic       [`IQ_MEM_SIZE-1:0]    free, load;
+  logic       [`IQ_MEM_SIZE-1:0]    ready, is_store, clear;
+  micro_op_t  [`IQ_MEM_SIZE-1:0]    uop_to_slot, uop_to_issue;
 
-  logic       [`IQ_MEM_SIZE-1:0]      free, load;
-
-  logic       [`IQ_MEM_SIZE-1:0]      ready, ready_alu, ready_br, ready_imul, ready_idiv;
-  logic       [`IQ_MEM_SIZE-1:0]      clear, clear_alu, clear_br, clear_imul, clear_idiv;
-
-  micro_op_t  [`IQ_MEM_SIZE-1:0]      uop_to_slot, uop_to_issue;
+  logic [`ISSUE_WIDTH_MEM-1:0] [$clog2(`IQ_MEM_SIZE)-1:0] output_sel;
+  logic [`ISSUE_WIDTH_MEM-1:0]                            output_sel_valid;
 
   // If #free slots < dispatch width, set the issue queue as full
   assign free_count = free_count_reg - uop_in_count + uop_out_count;
   assign iq_mem_full = free_count < `DISPATCH_WIDTH;
+  assign compress_offset = uop_out_count;
 
   always_ff @(posedge clock) begin
     if (reset) begin
       free_count_reg <= `IQ_MEM_SIZE;
+      tail_reg <= 0;
     end else begin
       free_count_reg <= free_count;
+      tail_reg <= tail;
     end
   end
 
@@ -113,160 +171,63 @@ module issue_queue_mem (
       issue_slot_mem issue_slot_mem_inst (
         .clock              (clock),
         .reset              (reset),
-        .clear              (clear[k]),
         .ctb_prf_int_index  (ctb_prf_int_index),
         .ctb_valid          (ctb_valid),
         .load               (load[k]),
         .uop_in             (uop_to_slot[k]),
+        .uop_new            (uop_to_issue[k + compress_offset]),
         .uop                (uop_to_issue[k]),
         .ready              (ready[k]),
         .free               (free[k])
       );
-      assign ready_alu[k]  = ready[k] & uop_to_issue[k].fu_code.fu_alu;
-      assign ready_br[k]   = ready[k] & uop_to_issue[k].fu_code.fu_br;
-      assign ready_imul[k] = ready[k] & uop_to_issue[k].fu_code.fu_mul;
-      assign ready_idiv[k] = ready[k] & uop_to_issue[k].fu_code.fu_div;
     end
   endgenerate
 
-  (* keep="soft" *)
-  wire [`IQ_MEM_SIZE-1:0] input_selector_gnt;
-  (* keep="soft" *)
-  wire                    input_selector_empty;
-
-  // Input selector
-  psel_gen #(
-    /*REQS=*/ `DISPATCH_WIDTH,
-    /*WIDTH=*/`IQ_MEM_SIZE
-  ) input_selector (
-    .req      (free),
-    .gnt      (input_selector_gnt),
-    .gnt_bus  (gnt_bus_in),
-    .empty    (input_selector_empty)
-  );
-
+  // Allocate input uops from tail - compress_offset
   always_comb begin
+    uop_to_slot = 0;
+    load = 0;
     uop_in_count = 0;
     for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
+      uop_to_slot[i + tail - compress_offset] = uop_in[i];
+      load[i + tail - compress_offset] = 1;
       if (uop_in[i].valid) begin
         uop_in_count = uop_in_count + 1;
       end
     end
   end
+  
+  // Outpu selector
+  issue_queue_mem_output_selector (
+    .ready      (ready),
+    .is_store   (is_store),
+    .sel        (output_sel),
+    .sel_valid  (output_sel_valid)
+  )
 
-  // Allocate input uops to each free issue slots
   always_comb begin
-    uop_to_slot = 0;
-    load = 0;
-    for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
-      for (int j = 0; j < `IQ_MEM_SIZE; j++) begin
-        if (gnt_bus_in[i][j] & uop_in[i].valid) begin
-          uop_to_slot[j] = uop_in[i];
-          load[j] = 1'b1;
-        end
-      end
+    for (int i = 0; i < `IQ_MEM_SIZE; i++) begin
+      is_store[i] = 1;  // todo: Add related field in uop definition
     end
   end
 
-
-  (* keep="soft" *)
-  wire [0:0] [`IQ_MEM_SIZE-1:0] output_selector_br_gnt_bus;
-  (* keep="soft" *)
-  wire output_selector_br_empty;
-  (* keep="soft" *)
-  wire [0:0] [`IQ_MEM_SIZE-1:0] output_selector_imul_gnt_bus;
-  (* keep="soft" *)
-  wire output_selector_imul_empty;
-  (* keep="soft" *)
-  wire [0:0] [`IQ_MEM_SIZE-1:0] output_selector_idiv_gnt_bus;
-  (* keep="soft" *)
-  wire output_selector_idiv_empty;
-  (* keep="soft" *)
-  wire output_selector_alu_empty;
-
-  // Output selector
-  // todo: Adjust for different execution pipes
-  psel_gen #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_MEM_SIZE
-  ) output_selector_br (
-    .req      (ready_br),
-    .gnt      (clear_br),
-    .gnt_bus  (output_selector_br_gnt_bus),
-    .empty    (output_selector_br_empty)
-  );
-
-  psel_gen #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_MEM_SIZE
-  ) output_selector_imul (
-    .req      (ready_imul),
-    .gnt      (clear_imul),
-    .gnt_bus  (output_selector_imul_gnt_bus),
-    .empty    (output_selector_imul_empty)
-  );
-
-  psel_gen #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_MEM_SIZE
-  ) output_selector_idiv (
-    .req      (ready_idiv),
-    .gnt      (clear_idiv),
-    .gnt_bus  (output_selector_idiv_gnt_bus),
-    .empty    (output_selector_idiv_empty)
-  );
-
-  psel_gen #(
-    /*REQS=*/ `ISSUE_WIDTH_MEM,
-    /*WIDTH=*/`IQ_MEM_SIZE
-  ) output_selector_alu (
-    .req      (ready_alu),
-    .gnt      (clear_alu),
-    .gnt_bus  (gnt_bus_out),
-    .empty    (output_selector_alu_empty)
-  );
-
-  assign clear = clear_alu | clear_br | clear_imul | clear_idiv;
-  
   always_comb begin
-    uop_out_count = 0;
-    for (int i = 0; i < `IQ_MEM_SIZE; i++) begin
-      if (clear[i]) begin
-        uop_out_count = uop_out_count + 1;
-      end
+    clear = 0;
+    for (int i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
+      clear[output_sel[i]] = output_sel_valid[i];
     end
   end
 
   // Select part of ready instructions to be issued
   always_comb begin
-    uop_out[0] = 0;
-    uop_out[1] = 0;
-    uop_out[2] = 0;
-    // Execution pipe 0 (ALU+Branch): Branch > ALU
-    for (int j = 0; j < `IQ_MEM_SIZE; j++) begin
-      if (clear_br[j]) begin
-        uop_out[0] = uop_to_issue[j];
-        break;
-      end else if (gnt_bus_out[0][j]) begin
-        uop_out[0] = uop_to_issue[j];
-      end
-    end
-    // Execution pipe 1 (ALU+IntMult): IntMult > ALU
-    for (int j = 0; j < `IQ_MEM_SIZE; j++) begin
-      if (clear_imul[j]) begin
-        uop_out[1] = uop_to_issue[j];
-        break;
-      end else if (gnt_bus_out[1][j]) begin
-        uop_out[1] = uop_to_issue[j];
-      end
-    end
-    // Execution pipe 1 (ALU+IntDiv): IntDiv > ALU
-    for (int j = 0; j < `IQ_MEM_SIZE; j++) begin
-      if (clear_idiv[j]) begin
-        uop_out[2] = uop_to_issue[j];
-        break;
-      end else if (gnt_bus_out[2][j]) begin
-        uop_out[2] = uop_to_issue[j];
+    uop_out = 0;
+    uop_out_count = 0;
+    for (int i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
+      for (int j = 0; j < `IQ_MEM_SIZE; j++) begin
+        if (clear[j]) begin
+          uop_out[i] = uop_to_issue[j];
+          uop_out_count = uop_out_count + 1;
+        end
       end
     end
   end
