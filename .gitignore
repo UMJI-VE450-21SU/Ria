@@ -6,3 +6,4 @@ obj_dir
 # Files
 
 *.out
+.DS_Store
