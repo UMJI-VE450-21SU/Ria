@@ -2,47 +2,43 @@
 // [Description]
 // when the instruction fetch is across the
 // boundary, two set of overhead need to be checked seperately. 
-// this module can output tags and states for two different lines.
-
-// This file is seperated from line data for individual access.
-// for example, cache coherency may be needed.
+// by arrange the tag position properly, we can achieve that
 
 // Expected memory useage: BRAM x 1 
-// 512bx72, each row contains two set of overhead. 
-
+// 512bx36b x 2, each row contains two set of overhead. 
 
 module cache_mem_overhead(
     input logic clk,
 
+    // read two at a time
     input laddr_t laddra, 
-    input logic wrap,
     input logic re,
-    output overhead_t [1:0] overhead_out[WAYS], 
-    // if not wrap, only the first overhead in each way will be used
+    input logic wrap,
+    output overhead_t [1:0] overhead_out, 
 
+    // write one at a time
     input laddr_t laddrb,
     input overhead_t overhead_in,
-    input logic [WAYS-1:0] we // only one change at a time. Use mask to do this 
+    input logic we
 );
-    (* ram_style = "block" *) overhead_t [1:0][LNUM/2-1:0] oram [$clog2(WAYS)];
+    // need additional one row
+    (* ram_style = "block" *) overhead_t [1:0][LNUM/2:0] oram;
 
-    wire [LADDRSZ-2:0] row_target_a = laddra[LADDRSZ-1:1];
-
-    // still need to review
-    always_ff @( posedge clk ) begin : read_access
-        for (int i = 0; i < WAYS; i++) begin
-           overhead_out[i][0] <= oram[i][9'(row_target_a + 9'(wrap))][0];
-           overhead_out[i][1] <= oram[i][row_target_a][1];
+    wire [LADDRSZ-2:0] row_target_a = laddra >> 1;
+    wire [LADDRSZ-2:0] row_target_b = laddrb >> 1;
+    always_ff @( posedge clk ) begin : overhead_access
+        if (we) begin
+            oram[row_target_b][!laddrb[0]] <= overhead_in;            
         end
-    end
-
-    wire [LADDRSZ-2:0] row_target_b = laddrb[LADDRSZ-1:1];
-    always_ff @( posedge clk ) begin : write_access
-        for (int i = 0; i < WAYS; i++) begin
-            if (we[i]) begin
-                oram[i][row_target_b][laddrb[0]] <= overhead_in;            
+        if (re) begin
+            if (wrap) begin
+                overhead_out[0] <= oram[row_target_a][1];
+                overhead_out[1] <= oram[row_target_a + 1][0];
+            end else begin
+                overhead_out[0] <= oram[row_target_a][0];
+                overhead_out[1] <= oram[row_target_a][1];
             end
-        end 
+        end
     end
     
 endmodule

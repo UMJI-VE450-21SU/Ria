@@ -1,4 +1,4 @@
-`include "AXI_DMEM_PROTOCOL.sv"
+`include "MPSOC_S_AXI4_HP_bus.sv"
 
 module PS_DDR_Controller_wrapper (
     MPSOC_S_AXI4_HP_bus.slave bus,

@@ -1,11 +1,10 @@
 `include "icache_pkg.sv"
 // [Description]
 // cache memory mapped to Xilinx's block ram in SDP mode
-// parameterized cache memory and support unaligned, cross
-// cache line boundary access (but still limited).
+// parameterized cache memory and support (limited) unaligned,
+// cross cache line boundary access.
 
-// The idea is similar to R10K's icache memory design, but at a 
-// higher level.
+// The idea is similar to R10K's icache memory design
 
 // Expected memory useage: 
 // cache line: BRAM x 16
@@ -18,12 +17,10 @@ module cache_mem_data (
     // [read]
     input laddr_t laddra, // line address & word address for read
     input waddr_t waddra,
-    output word_t [RBKSZ-1:0] dout,
-
-    ///// control /////
-
     input logic wrap,   // will the column wrap around? (WNUM - waddra < RBKSZ)
     input logic re,
+    output word_t [RBKSZ-1:0] dout,
+
     // [write]
     input laddr_t laddrb, // line address & word address for write
     input waddr_t waddrb,
