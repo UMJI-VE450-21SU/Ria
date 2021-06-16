@@ -96,35 +96,96 @@ module decode (
       end
       `RV32_LB: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_LD;
+        uop.mem_size          = MEM_BYTE;
+        uop.imm               = RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_LH: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_LD;
+        uop.mem_size          = MEM_HALF;
+        uop.imm               = RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_LW: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_LD;
+        uop.mem_size          = MEM_WORD;
+        uop.imm               = RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_LBU: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_LDU;
+        uop.mem_size          = MEM_BYTE;
+        uop.imm               = RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_LHU: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_LDU;
+        uop.mem_size          = MEM_HALF;
+        uop.imm               = RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_SB: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_ST;
+        uop.mem_size          = MEM_BYTE;
+        uop.imm               = RV32_signext_S_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_int_index = RV32_RS2(inst);
       end
       `RV32_SH: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_ST;
+        uop.mem_size          = MEM_HALF;
+        uop.imm               = RV32_signext_S_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_int_index = RV32_RS2(inst);
       end
       `RV32_SW: begin
         uop.iq_code           = IQ_MEM;
-        // todo
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_ST;
+        uop.mem_size          = MEM_WORD;
+        uop.imm               = RV32_signext_S_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = RV32_RS1(inst);
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_int_index = RV32_RS2(inst);
       end
       `RV32_ADDI: begin
         uop.iq_code           = IQ_INT;
