@@ -3,6 +3,8 @@
 
 `define FRONTEND_WIDTH      4
 
+`define MULT_LATENCY        5
+
 `define DECODE_WIDTH        `FRONTEND_WIDTH
 `define RENAME_WIDTH        `FRONTEND_WIDTH
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH
@@ -33,8 +35,13 @@
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
 `define PRF_FP_WAYS         2
 
-// NOP = ADDI x0, x0, 0CP_NUM
+typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
+typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
+
+typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
 typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
+
+typedef logic [`RAT_CP_INDEX_SIZE-1:0]  cp_index_t;
 
 // RISCV ISA SPEC
 typedef union packed {
