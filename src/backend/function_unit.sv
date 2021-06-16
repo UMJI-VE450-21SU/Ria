@@ -12,8 +12,8 @@ module alu (
   alu_type_t          fn;
   logic        [31:0] result;
 
-  assign signed_in1 = opa;
-  assign signed_in2 = opb;
+  assign signed_in1 = in1;
+  assign signed_in2 = in2;
 
   assign add  = in1 + in2;
   assign sub  = in1 - in2;
@@ -63,8 +63,8 @@ module branch (
   br_type_t           fn;
   logic               result;
 
-  assign signed_in1 = opa;
-  assign signed_in2 = opb;
+  assign signed_in1 = in1;
+  assign signed_in2 = in2;
 
   assign eq   = in1 == in2;
   assign ne   = in1 != in2;
@@ -88,5 +88,84 @@ module branch (
     else
       out <= result;
   end
+
+endmodule
+
+
+module imul (
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [31:0]       in1,
+  input  [31:0]       in2,
+  output logic [31:0] out                         // 5-cycle latency
+);
+
+  wire signed [31:0]      signed_in1, signed_in2; // for signed wire
+  wire signed [63:0]      final_product, product_0, product_1, product_2;
+  logic [1:0]             sign;
+  reg [`IMUL_LATENCY-1:0] range;                  // 1 if [63:32]
+  reg [`IMUL_LATENCY-1:0] sign_reg [1:0];
+  // every imul have a delay of 5 clock cycles
+
+  assign signed_in1 = in1;
+  assign signed_in2 = in2;
+
+  always_comb begin
+    case (uop.imul_type)
+      MULHU:      sign = 2'b00;  
+      MULHSU:     sign = 2'b01;
+      default:    sign = 2'b11;
+    endcase
+    case (sign_reg[`IMUL_LATENCY-1])
+      2'b0:   final_product = product_0;
+      2'b1:   final_product = product_1;
+      default:final_product = product_2;
+    endcase
+  end
+
+  assign out = range[`IMUL_LATENCY-1]? final_product[63:32]:final_product[31:0];
+
+  always_ff @(posedge clock) begin
+    if(reset) begin
+      range <= 0;
+      sign_reg <= 0;
+    end else begin
+      range[`IMUL_LATENCY-1:1] <= range[`IMUL_LATENCY-2:0];
+      range[0] <= (uop.imul_type ~= MULHU);
+      sign_reg[`IMUL_LATENCY-1:1] <= sign_reg[`IMUL_LATENCY-2:0];
+      sign_reg[0] <= sign;
+    end
+  end
+
+  // signed bits: 00
+  mult_gen_0 int_mult (
+    .CLK  (clock),
+    .A    (in1),
+    .B    (in2),
+    .SCLR (reset),                //sync clear
+    .CE   (~sign[1] & ~sign[0]),
+    .P    (product_0)
+  );
+
+  // signed bits: 01
+  mult_gen_1 int_mult_1 (
+    .CLK  (clock),
+    .A    (in1),
+    .B    (in2),
+    .SCLR (reset),                //sync clear
+    .CE   (~sign[1] & sign[0]),
+    .P    (product_1)
+  );
+
+  // signed bits: 11
+  mult_gen_0 int_mult_0 (
+    .CLK  (clock),
+    .A    (signed_in1),
+    .B    (signed_in2),
+    .SCLR (reset),                //sync clear
+    .CE   (sign[1] & sign[0]),
+    .P    (product_2)
+  );
 
 endmodule
