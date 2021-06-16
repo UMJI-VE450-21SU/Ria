@@ -16,7 +16,7 @@ module inst_fetch (
   // ======= basic ===========================
     input                               clock,
     input                               reset,
-    input                               stall,
+    input                               stall, // stall is effective in the next clock cycle
   // ======= branch predictor related ========
     input        [`INST_WIDTH-1:0]      pc_predicted,
     input                               take_branch,
@@ -26,8 +26,8 @@ module inst_fetch (
     input                               Icache2proc_data_valid,
     output logic [`INST_WIDTH-1:0]      proc2Icache_addr, // one addr is enough
   // ======= inst buffer related =============
-    output logic                        insts_out_valid,
-    output ib_entry_t [`INST_FETCH_NUM-1:0]  insts_out
+    output ib_entry_t [`INST_FETCH_NUM-1:0]   insts_out,
+    output logic                              insts_out_valid
 );
 
 
@@ -49,7 +49,6 @@ generate
   for(genvar i = 0; i < `INST_FETCH_NUM; i = i + 1) begin
     assign insts_out[i].inst = Icache2proc_data[(i+1)*`INST_WIDTH-1:i*`INST_WIDTH];
     assign insts_out[i].PC   = PC_reg + i*4;
-    assign insts_out[i].NPC  = PC_reg + (i+1)*4;
   end
 endgenerate
 

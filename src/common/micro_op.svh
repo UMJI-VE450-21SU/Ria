@@ -7,7 +7,6 @@
 typedef struct packed{
   inst_t                  inst; // fetched instruction
   logic [`INST_WIDTH-1:0] PC;
-  logic [`INST_WIDTH-1:0] NPC;
 }ib_entry_t;
 
 
