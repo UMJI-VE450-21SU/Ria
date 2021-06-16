@@ -48,6 +48,13 @@ typedef enum logic [3:0] {
   ALU_SRA  = 4'ha
 } alu_type_t;
 
+typedef enum logic [1:0] {
+  IMUL_MUL    = 2'h0,           // signed x signed
+  IMUL_MULH   = 2'h1,           // signed x signed
+  IMUL_MULHSU = 2'h2,           // unsigned x signed
+  IMUL_MULHU  = 2'h3            // unsigned x unsigned
+} imul_type_t;
+
 typedef enum logic [2:0] { 
   RS_INVALID    = 3'h0,
   RS_FROM_RF    = 3'h1,
@@ -67,6 +74,7 @@ typedef struct packed {
 
   br_type_t       br_type;
   alu_type_t      alu_type;
+  imul_type_t     imul_type;
 
   logic [31:0]    imm;
 

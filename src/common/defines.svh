@@ -33,6 +33,8 @@
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
 `define PRF_FP_WAYS         2
 
+`define IMUL_LATENCY        5
+
 typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
 typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
 
