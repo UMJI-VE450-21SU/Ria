@@ -55,6 +55,26 @@ typedef enum logic [1:0] {
   IMUL_MULHU  = 2'h3            // unsigned x unsigned
 } imul_type_t;
 
+typedef enum logic [1:0] {
+  IDIV_DIV    = 2'h0,
+  IDIV_DIVU   = 2'h1,
+  IDIV_REM    = 2'h2,
+  IDIV_REMU   = 2'h3
+} idiv_type_t;
+
+typedef enum logic [1:0] {
+  MEM_LD  = 2'h0,
+  MEM_LDU = 2'h1,
+  MEM_ST  = 2'h2
+} mem_type_t;
+
+typedef enum logic [1:0] {
+  MEM_BYTE  = 2'h0,
+  MEM_HALF  = 2'h1,
+  MEM_WORD  = 2'h2,
+  MEM_DWORD = 2'h3
+} mem_size_t;
+
 typedef enum logic [2:0] { 
   RS_INVALID    = 3'h0,
   RS_FROM_RF    = 3'h1,
@@ -75,6 +95,9 @@ typedef struct packed {
   br_type_t       br_type;
   alu_type_t      alu_type;
   imul_type_t     imul_type;
+  idiv_type_t     idiv_type;
+  mem_type_t      mem_type;
+  mem_size_t      mem_size;
 
   logic [31:0]    imm;
 
