@@ -8,9 +8,9 @@
 // Description: 
 // instruction buffer
 // Dependencies: 
-// ../common/defines.svh
+// ../common/micro_op.svh
 //////////////////////////////////////////////////////////////////////////////////
-`include "../common/defines.svh"
+`include "../common/micro_op.svh"
 
 module fetch_buffer(
     input                                   clk,
