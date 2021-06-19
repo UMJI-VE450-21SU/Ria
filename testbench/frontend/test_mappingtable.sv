@@ -19,6 +19,7 @@ reg  clock, reset, check, recover;
 
 reg  [`RAT_CP_INDEX_SIZE-1:0]                         check_idx;
 reg  [`RAT_CP_INDEX_SIZE-1:0]                         recover_idx;
+reg  [`ARF_INT_SIZE-1:0]                              arf_valid_recover;
 
 reg  [`RENAME_WIDTH-1:0]                              rd_valid;
 
@@ -36,7 +37,7 @@ wire [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]    prd;
 wire [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]    prev_rd;
 wire [`RENAME_WIDTH-1:0]                              prev_rd_valid;
 
-wire                                                  allocatable, ready;
+wire                                                  allocatable;
 
 always #half_clk_cycle clock = ~clock;
 
@@ -45,6 +46,7 @@ mappingtable UTT(
   .reset              (reset            ),
   .check              (check            ),
   .recover            (recover          ),
+  .arf_valid_recover  (arf_valid_recover),
   .check_idx          (check_idx        ),
   .recover_idx        (recover_idx      ),
   .rd_valid           (rd_valid         ),
@@ -58,12 +60,11 @@ mappingtable UTT(
   .prd                (prd              ),
   .prev_rd            (prev_rd          ),
   .prev_rd_valid      (prev_rd_valid    ),
-  .allocatable        (allocatable      ),
-  .ready              (ready            )
+  .allocatable        (allocatable      )
 );
 
 initial begin
-  #0 clock = 0; reset = 1; check = 0; recover = 0; check_idx = 0; recover_idx = 0;
+  #0 clock = 0; reset = 1; check = 0; recover = 0; check_idx = 0; recover_idx = 0; arf_valid_recover = 0;
   rd_valid = 0; rs1 = 0; rs2 = 0; rd = 0; replace_req = 0; replace_prf = 0;
   #2 reset = 0;
   #2 rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
