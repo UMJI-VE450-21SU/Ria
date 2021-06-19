@@ -15,7 +15,7 @@ module if_stage (
     output logic [`INST_WIDTH-1:0]      proc2Icache_addr, // one addr is enough
   // ======= inst buffer related =============
     output ib_entry_t [`INST_FETCH_NUM-1:0] insts_out,
-    output logic                            valid,
+    output logic                            valid
 );
 
     ib_entry_t [`INST_FETCH_NUM-1:0]    insts;

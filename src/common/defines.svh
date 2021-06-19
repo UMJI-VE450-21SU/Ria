@@ -7,7 +7,7 @@
 `define INST_PACK         `INST_WIDTH * `INST_FETCH_NUM
 
 `define IB_SIZE           16
-`define IB_ADDR           $log2(`IB_SIZE)
+`define IB_ADDR           4
 `define DISPATCH_WIDTH      4
 
 `define ISSUE_WIDTH_INT     3

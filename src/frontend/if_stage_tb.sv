@@ -24,13 +24,15 @@ module if_stage_tb();
     .Icache2proc_data_valid,
     .proc2Icache_addr, // one addr is enough
     .insts_out,
-    .valid,
+    .valid
     );
 
     always begin
         #5;
         clock = ~clock;
     end
+    
+
     
     initial begin
         clock = 0;
@@ -42,7 +44,10 @@ module if_stage_tb();
         Icache2proc_data_valid = 0;
         @(negedge clock);
         reset = 0;
+        Icache2proc_data = `INST_PACK'habcdef0123456789;
+        Icache2proc_data_valid = 1;
         @(negedge clock);
+        Icache2proc_data = `INST_PACK'h0123456789abcdef;
         @(negedge clock);
         @(negedge clock);
         @(negedge clock);

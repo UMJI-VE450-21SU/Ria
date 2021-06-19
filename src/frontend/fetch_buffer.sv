@@ -25,7 +25,7 @@ module fetch_buffer(
     output logic                            full
 );
 
-logic [`INST_FETCH_NUM-1:0] full_hub;
+logic [`INST_FETCH_NUM-1:0] ready_hub;
 logic [`INST_FETCH_NUM-1:0] valid_hub;
 
 fifo #(
@@ -36,13 +36,14 @@ fifo #(
     .rst(reset),
     .enq_valid(insts_in_valid),
     .enq_data(insts_in),
-    .enq_ready(full_hub),
+    .enq_ready(ready_hub),
     .deq_valid(valid_hub),
     .deq_data(insts_out),
     .deq_ready(insts_in_valid)
 );
 
-assign full = full_hub[0];
+assign full = ~ready_hub[0];
 assign valid = valid_hub[0];
 
 endmodule
+
