@@ -15,11 +15,12 @@
 module mappingtable_tb;
 parameter half_clk_cycle = 1;
 
-reg  clock, reset, check, recover;
+reg  clock, reset, check, recover, stall;
 
 reg  [`RAT_CP_INDEX_SIZE-1:0]                         check_idx;
+reg  [`RENAME_WIDTH-1:0]                              check_flag;
 reg  [`RAT_CP_INDEX_SIZE-1:0]                         recover_idx;
-reg  [`ARF_INT_SIZE-1:0]                              arf_valid_recover;
+reg  [`ARF_INT_SIZE-1:0]                              arf_recover;
 
 reg  [`RENAME_WIDTH-1:0]                              rd_valid;
 
@@ -44,10 +45,12 @@ always #half_clk_cycle clock = ~clock;
 mappingtable UTT(
   .clock              (clock            ),
   .reset              (reset            ),
+  .stall              (stall            ),
   .check              (check            ),
   .recover            (recover          ),
-  .arf_valid_recover  (arf_valid_recover),
+  .arf_recover        (arf_recover      ),
   .check_idx          (check_idx        ),
+  .check_flag         (check_flag       ),
   .recover_idx        (recover_idx      ),
   .rd_valid           (rd_valid         ),
   .rs1                (rs1              ),
@@ -64,14 +67,18 @@ mappingtable UTT(
 );
 
 initial begin
-  #0 clock = 0; reset = 1; check = 0; recover = 0; check_idx = 0; recover_idx = 0; arf_valid_recover = 0;
+  #0 clock = 0; reset = 1; check = 0; recover = 0; check_flag = 0;
+  check_idx = 0; recover_idx = 0; arf_recover = 0; stall = 0;
   rd_valid = 0; rs1 = 0; rs2 = 0; rd = 0; replace_req = 0; replace_prf = 0;
   #2 reset = 0;
+  #2 rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864; stall = 1;
+  #4 rd_valid = 4'b0; rs1 = 20'h8864; rs2 = 20'h8864; rd = 0; stall = 0;
   #2 rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
   #10 rd_valid = 4'b0; rs1 = 20'h8864; rs2 = 20'h8864; rd = 0;
   #2 replace_req = 4'b1111; replace_prf = 24'h420C4;
   #2 check = 1; check_idx = 2'b1; replace_req = 4'b0; replace_prf = 24'h0;
-  #2 check = 0; rd_valid = 4'b1111; rs1 = 0; rs2 = 0; rd = 20'h8864;
+  check_flag = 4'b0010; rd_valid = 4'b1101; rd = 20'h8864;
+  #2 check = 0; rd_valid = 4'b1111; rs1 = 0; rs2 = 0;
   #2 rd_valid = 4'b0;
   #2 recover = 1; rd_valid = 4'b0; recover_idx = 2'b1;
   #10 $stop;

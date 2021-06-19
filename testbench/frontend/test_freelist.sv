@@ -15,7 +15,7 @@
 module freelist_tb;
 parameter half_clk_cycle = 1;
 
-reg  clock, reset, recover;
+reg  clock, reset, recover, stall;
 
 reg  [`PRF_INT_SIZE-1:0]                         recover_fl;
 
@@ -30,6 +30,7 @@ wire                                                  allocatable;
 freelist_int UTT(
   .clock              (clock            ),
   .reset              (reset            ),
+  .stall              (stall            ),
   .recover            (recover          ),
   .recover_fl         (recover_fl       ),
   .prf_replace_valid  (replace_valid    ),
@@ -42,15 +43,16 @@ freelist_int UTT(
 always #half_clk_cycle clock = ~clock;
 
 initial begin
-  #0 clock = 0; reset = 1; recover = 0; recover_fl = 0; replace_valid = 0; prf_replace = 0; prf_req = 0;
+  #0 clock = 0; reset = 1; recover = 0; recover_fl = 0;
+  replace_valid = 0; prf_replace = 0; prf_req = 0; stall = 0;
   #2 reset = 0;
   #2 prf_req = 4'b1111; replace_valid = 4'b0;
   #2 prf_replace = 18'b1; replace_valid = 4'b0001;
   #2 prf_req = 4'b0;
   #2 replace_valid = 4'b0;
   #4 prf_req = 4'b0011; replace_valid = 4'b0;
-  #10 prf_replace = 18'b000000000010000001; replace_valid = 4'b0011;
-  #4 replace_valid = 4'b0;
+  #10 prf_replace = 18'b000000000010000001; replace_valid = 4'b0011; stall = 1;
+  #4 replace_valid = 4'b0; stall = 0;
   #10 prf_replace = 18'b001100000010000001; replace_valid = 4'b0111;
   #2 replace_valid = 4'b0;
   #48 prf_req = 4'b0;

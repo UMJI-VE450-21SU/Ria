@@ -15,13 +15,15 @@
 module mappingtable (
   input         clock,
   input         reset,
+  input         stall,
 
   input         check,
   input         recover,
 
   input         cp_index_t                                      check_idx,
+  input         [`RENAME_WIDTH-1:0]                             check_flag,
   input         cp_index_t                                      recover_idx,
-  input         [`ARF_INT_SIZE-1:0]                             arf_valid_recover,
+  input         [`ARF_INT_SIZE-1:0]                             arf_recover,
 
   input         [`RENAME_WIDTH-1:0]                             rd_valid,
 
@@ -43,9 +45,9 @@ module mappingtable (
 );
 
   // I/O for Mapping Table
-  reg   [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb[`ARF_INT_SIZE-1:0];
+  reg   [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb      [`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp_in;
-  logic [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb_next[`ARF_INT_SIZE-1:0];
+  logic [`PRF_INT_INDEX_SIZE-1:0]                       mapping_tb_next [`ARF_INT_SIZE-1:0];
   logic [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   mapping_tb_cp;
 
   // I/O for Free List
@@ -68,6 +70,7 @@ checkpoint_int int_checkpoint(
 freelist_int  int_freelist(
   .clock              (clock            ),
   .reset              (reset            ),
+  .stall              (stall            ),
   .recover            (recover          ),
   .recover_fl         (recover_fl       ),
   .prf_replace_valid  (replace_req      ),
@@ -77,35 +80,34 @@ freelist_int  int_freelist(
   .allocatable        (allocatable      )
 );
 
-  genvar j;
-  generate
-    for (j = 0; j < `ARF_INT_SIZE; j = j + 1 )  begin
-      assign mapping_tb_cp_in[j] = mapping_tb[j];
-    end
-  endgenerate
-
   always_comb begin
     // Prepare input for Free List
-    arf_valid_next  = arf_valid;
-    prev_rd         = 0;
-    prev_rd_valid   = 0;
+    arf_valid_next    = arf_valid;
+    prev_rd           = 0;
+    prev_rd_valid     = 0;
+    mapping_tb_cp_in  = 0;
     for (int i = 0; i < `PRF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i]  = mapping_tb[i];
       prd[i]              = 0;
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
+      if (check_flag[i]) begin
+        for (int j = 0; j < `ARF_INT_SIZE; j = j + 1 ) begin
+          mapping_tb_cp_in[j] = mapping_tb_next[j];
+        end
+      end
       if (rd_valid[i]) begin
         // WAW: Return Previous PRF
         prev_rd[i] = mapping_tb_next[rd[i]];
         if (arf_valid_next[prev_rd[i]]) begin
           prev_rd_valid[i] = 1;
         end
-        mapping_tb_next[rd[i]]        = prf_out[i];
-        prd[i]                        = prf_out[i];
-        arf_valid_next[prf_out[i]]    = 1;
+        mapping_tb_next[rd[i]]      = prf_out[i];
+        prd[i]                      = prf_out[i];
+        arf_valid_next[prf_out[i]]  = 1;
       end
-      prs1[i]     = mapping_tb_next[rs1[i]];
-      prs2[i]     = mapping_tb_next[rs2[i]];
+      prs1[i] = mapping_tb_next[rs1[i]];
+      prs2[i] = mapping_tb_next[rs2[i]];
     end
   end
 
@@ -119,8 +121,8 @@ freelist_int  int_freelist(
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_cp[i];
       end
-      arf_valid <= arf_valid_recover;
-    end else begin
+      arf_valid <= arf_recover;
+    end else if (!stall) begin
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_next[i];
       end

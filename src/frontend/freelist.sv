@@ -15,6 +15,7 @@
 module freelist_int (
   input       clock,
   input       reset,
+  input       stall,
 
   input       recover,
   input       [`PRF_INT_SIZE-1:0]                             recover_fl,
@@ -102,7 +103,7 @@ module freelist_int (
     end else if (recover) begin
       free_list <= recover_fl;
       free_num  <= recover_fl_num;
-    end else begin
+    end else if (!stall) begin
       free_list <= free_list_next;
       free_num  <= free_num_next;
     end
