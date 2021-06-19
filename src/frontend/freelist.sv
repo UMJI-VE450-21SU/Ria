@@ -62,6 +62,7 @@ module freelist_int (
         free_num_next += 1;
         free_list_next[prf_replace[i]] = 0;
       end
+      prf_out[i] = 0;
     end
     for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
       if (prf_req[i]) begin
