@@ -22,14 +22,10 @@ module checkpoint_int (
   input       cp_index_t                                      recover_idx,
 
   input       [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_in,
-  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out,
-
-  input       [`PRF_INT_SIZE-1:0]                             valid_in,
-  output logic[`PRF_INT_SIZE-1:0]                             valid_out
+  output logic[`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint_out
 );
 
   reg     [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`RAT_CP_SIZE-1:0];
-  reg     [`PRF_INT_SIZE-1:0]                             valid_cp[`RAT_CP_SIZE-1:0];
 
 
   initial begin
@@ -39,17 +35,14 @@ module checkpoint_int (
   end
 
   assign checkpoint_out = checkpoint[recover_idx];
-  assign valid_out      = valid_cp[recover_idx];
 
   always_ff @(posedge clock) begin
     if (reset) begin
       for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
         checkpoint[i]       <= 0;
-        valid_cp[i]         <= 0;
       end
     end if (check) begin
       checkpoint[check_idx] <= checkpoint_in;
-      valid_cp[check_idx]   <= valid_in;
     end
   end
 
