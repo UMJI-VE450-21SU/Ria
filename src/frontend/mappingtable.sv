@@ -86,11 +86,11 @@ freelist_int  int_freelist(
     prev_rd           = 0;
     prev_rd_valid     = 0;
     mapping_tb_cp_in  = 0;
-    for (int i = 0; i < `RENAME_WIDTH; i = i + 1 )  begin
+    for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i]  = mapping_tb[i];
-      prd[i]              = 0;
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
+      prd[i]              = 0;
       if (check_flag[i]) begin
         for (int j = 0; j < `ARF_INT_SIZE; j = j + 1 ) begin
           mapping_tb_cp_in[j] = mapping_tb_next[j];
