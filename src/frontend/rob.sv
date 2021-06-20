@@ -95,6 +95,7 @@ module rob (
         end
       end
     end
+    ready_next = 1;
   end
 
   always_ff @(posedge clock) begin
