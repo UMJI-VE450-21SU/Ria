@@ -72,6 +72,7 @@ cache_mem_overhead cache_overhead (
 
     .laddra(addr.laddr),
     .re(overhead_re),
+    .wrap(wrap),
     .overhead_out(overhead_out),
 
     .laddrb(overhead_laddr_w),
@@ -123,24 +124,121 @@ icache_control cache_control (
     .mem_read_resp_ready(mem_read_resp_ready)
 );
 
-logic ACLK, ARESETn;
+////// interface between AXI //////
+logic [5:0] ARID;
+logic [48:0] ARADDR;
+logic [7:0] ARLEN;
+logic [2:0] ARSIZE;
+logic [1:0] ARBURST;
 
-MPSOC_S_AXI4_HP_bus axi_bus(ACLK, ARESETn);
+logic ARLOCK;
+logic [3:0] ARCACHE;
+logic [2:0] ARPROT;
+logic [3:0] ARQOS;
+logic ARUSER;
 
-AXI_writer_reader axi_writer_reader(
-    .clk(clk),
-    .ACLK(ACLK),
+logic ARVALID;
+logic ARREADY;
 
-    .axi_bus(axi_bus.master),
+// R channel (RESP, S -> M), IP lists 6 signals
+logic [5:0] RID; // no use
+logic [63:0] RDATA;
+logic [1:0] RRESP; // no use
 
-    .mem_read_channel(mem_read_channel.slave)
+logic RLAST;
+
+logic RVALID;
+logic RREADY;
+
+AXI_reader axi_writer_reader(
+
+    // channel to the control
+    .mem_read_req_addr(mem_read_req_addr),
+    .mem_read_req_ready(mem_read_req_ready),
+    .mem_read_req_valid(mem_read_req_valid),
+
+    .mem_read_resp_data(mem_read_resp_data),
+    .mem_read_resp_valid(mem_read_resp_valid),
+    .mem_read_resp_ready(mem_read_resp_ready),
+
+
+    // channel to the AXI
+    .ARID(ARID),
+    .ARADDR(ARADDR),
+    .ARLEN(ARLEN),
+    .ARSIZE(ARSIZE),
+    .ARBURST(ARBURST),
+
+    .ARLOCK(ARLOCK),
+    .ARCACHE(ARCACHE),
+    .ARPROT(ARPROT),
+    .ARQOS(ARQOS),
+    .ARUSER(ARUSER),
+
+    .ARVALID(ARVALID),
+    .ARREADY(ARREADY),
+
+    // R channel (RESP, S -> M), IP lists 6 signals
+    .RID(RID), // no use
+    .RDATA(RDATA),
+    .RRESP(RRESP),
+
+    .RLAST(RLAST),
+
+    .RVALID(RVALID),
+    .RREADY(RREADY)
 );
 
-PS_DDR_Controller_wrapper ps_ddr_controller_wrapper(
-    .bus(axi_bus.slave),
+logic axi_clk;
+assign axi_clk = clk;
+logic axi_rstn;
+assign axi_rstn = ~rst;
 
-    .ACLK(ACLK),
-    .ARESETn(ARESETn)
+
+axi_vip_0 axi_slave_verification (
+  .aclk(axi_clk),
+  .aresetn(axi_rstn),
+  .s_axi_awid(0),
+  .s_axi_awaddr(0),
+  .s_axi_awlen(0),
+  .s_axi_awsize(0),
+  .s_axi_awburst(0),
+  .s_axi_awlock(0),
+  .s_axi_awcache(0),
+  .s_axi_awprot(0),
+  .s_axi_awregion(0),
+  .s_axi_awqos(0),
+  .s_axi_awuser(0),
+  .s_axi_awvalid(0),
+  .s_axi_awready(),
+  .s_axi_wdata(0),
+  .s_axi_wstrb(0),
+  .s_axi_wlast(0),
+  .s_axi_wvalid(0),
+  .s_axi_wready(),
+  .s_axi_bid(),
+  .s_axi_bresp(),
+  .s_axi_bvalid(),
+  .s_axi_bready(0),
+  .s_axi_arid(ARID),
+  .s_axi_araddr(ARADDR),
+  .s_axi_arlen(ARLEN),
+  .s_axi_arsize(ARSIZE),
+  .s_axi_arburst(ARBURST),
+  .s_axi_arlock(ARLOCK),
+  .s_axi_arcache(ARCACHE),
+  .s_axi_arprot(ARPROT),
+  .s_axi_arregion(0),
+  .s_axi_arqos(ARQOS),
+  .s_axi_aruser(ARUSER),
+  .s_axi_arvalid(ARVALID),
+  .s_axi_arready(ARREADY),
+  .s_axi_rid(RID),
+  .s_axi_rdata(RDATA),
+  .s_axi_rresp(RRESP),
+  .s_axi_rlast(RLAST),
+  .s_axi_rvalid(RVALID),
+  .s_axi_rready(RREADY)
 );
     
 endmodule

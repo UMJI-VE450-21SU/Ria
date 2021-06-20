@@ -1,7 +1,8 @@
-`ifndef ICACHE_PKG
-`define ICACHE_PKG
 
-package icache_pkg;
+`ifndef DCACHE_PKG
+`define DCACHE_PKG
+
+package dcache_pkg;
 
     ////////////////////
     // cache parameters
@@ -9,14 +10,9 @@ package icache_pkg;
 
     // cache line parameters
     parameter WDSZ = 32;     // the address size == a word
-    parameter LADDRSZ = 10;  // row addr size, defualt to 1K lines, 10 bits
+    parameter LADDRSZ = 8;  // row addr size, defualt to 1K lines, 10 bits (the vivado cannot handle?)
     parameter WADDRSZ = 6;   // column addr size, default to 64 byte line, 6 bit
     parameter BADDRSZ = $clog2(32/4); // bits for word
-    // I give up on making the WAYS to be configurable
-    // it may result in too many block ram to be used and have poor
-    // performance, My main concern is the routing
-    // also it take much more effort to get the alignment problem correct
-    // parameter WAYS = 1;      // associativity
     parameter TAGSZ = WDSZ - LADDRSZ - WADDRSZ - BADDRSZ; // remaining is the tag
     parameter LNUM = 1 << LADDRSZ;     // # of sets, should at least have two sets
     parameter WNUM = 1 << WADDRSZ;     // # of column (word)
@@ -35,7 +31,7 @@ package icache_pkg;
 
     // width
     // read block size
-    parameter RBKSZ = 4;     
+    parameter RBKSZ = 2;     
     // write block size, should equals to AXI bus width
     parameter WBKSZ = AXI_WIDTH / WDSZ;     
 
@@ -65,6 +61,6 @@ package icache_pkg;
     
 endpackage
 
-import icache_pkg::*;
+import dcache_pkg::*;
 
 `endif
