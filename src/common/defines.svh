@@ -3,6 +3,14 @@
 
 `define FRONTEND_WIDTH      4
 
+`define INST_NUM            40
+`define INST_WIDTH          32
+`define INST_FETCH_NUM      `FRONTEND_WIDTH
+`define INST_PACK           `INST_WIDTH * `INST_FETCH_NUM
+
+`define IB_SIZE             16
+`define IB_ADDR             4
+
 `define DECODE_WIDTH        `FRONTEND_WIDTH
 `define RENAME_WIDTH        `FRONTEND_WIDTH
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH

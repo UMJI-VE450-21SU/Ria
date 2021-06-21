@@ -4,6 +4,11 @@
 `include "defines.svh"
 `include "isa.svh"
 
+typedef struct packed{
+  inst_t                  inst; // fetched instruction
+  logic [`INST_WIDTH-1:0] PC;
+} ib_entry_t;
+
 typedef enum logic [1:0] {
   IQ_X    = 2'h0,
   IQ_INT  = 2'h1,
