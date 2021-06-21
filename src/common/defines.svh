@@ -42,12 +42,11 @@
 
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
-`define PRF_INT_WAYS        3
-`define PRF_INT_WAYS_SIZE   2  // log2(PRF_INT_WAYS)
+`define PRF_INT_WAYS        `ISSUE_WIDTH_INT
 
 `define PRF_FP_SIZE         64
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
-`define PRF_FP_WAYS         2
+`define PRF_FP_WAYS         `ISSUE_WIDTH_FP
 
 `define IMUL_LATENCY        5
 
@@ -128,7 +127,6 @@ typedef union packed {
     logic [6:0]  opcode;
   } sys;
 } inst_t;
-
 
 
 `endif  // __DEFINES_SVH__

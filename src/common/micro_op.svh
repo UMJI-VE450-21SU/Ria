@@ -96,6 +96,7 @@ typedef enum logic [2:0] {
 
 typedef struct packed {
   logic [31:0]    pc;
+  logic [31:0]    npc;          // Next PC = PC +2/+4
   inst_t          inst;
 
   cp_index_t      cp_index;
