@@ -91,6 +91,7 @@ typedef enum logic [2:0] {
 
 typedef struct packed {
   logic [31:0]    pc;
+  rob_index_t     rob_index;
   inst_t          inst;
   iq_code_t       iq_code;      // which issue unit do we use?
   fu_code_t       fu_code;      // which functional unit do we use?
