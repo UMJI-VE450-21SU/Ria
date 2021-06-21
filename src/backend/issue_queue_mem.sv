@@ -1,4 +1,9 @@
-`include "micro_op.svh"
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Issue Queue for Memory Access
+// Author:  Li Shi
+// Date:    2021/06/14
+
+`include "../common/micro_op.svh"
 
 `timescale 1ns / 1ps
 module issue_slot_mem (

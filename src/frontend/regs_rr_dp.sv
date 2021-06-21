@@ -5,7 +5,7 @@
 
 `include "../common/micro_op.svh"
 
-module regs_id_rr (
+module regs_rr_dp (
   input  clock,
   input  reset,
   input  clear,
