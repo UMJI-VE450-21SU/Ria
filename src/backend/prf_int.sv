@@ -17,12 +17,13 @@ module prf_int_data (
   output logic [`PRF_INT_WAYS-1:0] [31:0]               rs2_data
 );
 
-  reg   [`PRF_INT_SIZE-1:0] [31:0]                rf;
-  logic [`PRF_INT_SIZE-1:0] [31:0]                rf_next;
+  // multi-bank register file
+  reg   [31:0] rf [`PRF_INT_WAYS][`PRF_INT_SIZE-1:0];
 
-  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_WAYS-1:0]   rs1_from_rd;
-  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_WAYS-1:0]   rs2_from_rd;
+  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_WAYS-1:0] rs1_from_rd;
+  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_WAYS-1:0] rs2_from_rd;
 
+  // generate bypass logic (rs1/rs2 <- rd)
   generate
     for(genvar i = 0; i < `PRF_INT_WAYS; i++) begin
       for(genvar j = 0; j < `PRF_INT_WAYS; j++) begin
@@ -34,8 +35,8 @@ module prf_int_data (
 
   always_comb begin
     for (int i = 0; i < `PRF_INT_WAYS; i++) begin
-      rs1_data[i] = rf[rs1_index[i]];
-      rs2_data[i] = rf[rs2_index[i]];
+      rs1_data[i] = rf[i][rs1_index[i]];
+      rs2_data[i] = rf[i][rs2_index[i]];
       for (int j = 0; j < `PRF_INT_WAYS; j++) begin
         if(rs1_from_rd[i][j])
           rs1_data[i] = rd_data[j];  
@@ -45,19 +46,16 @@ module prf_int_data (
     end
   end
 
-  always_comb begin
-    rf_next = rf;
-    for (int i = 0; i < `PRF_INT_WAYS; i++) begin
-      if (rd_en[i])
-        rf_next[rd_index[i]] = rd_data[i];
-    end
-  end
-
   always_ff @(posedge clock) begin
     if (reset) begin
-      rf <= 0;
+      for (int i = 0; i < `PRF_INT_WAYS; i++)
+        for (int j = 0; j < `PRF_INT_SIZE; j++)
+          rf[i][j] <= 0;
     end else begin
-      rf <= rf_next;
+      for (int i = 0; i < `PRF_INT_WAYS; i++)
+        if (rd_en[i])
+          for (int j = 0; j < `PRF_INT_WAYS; j++)
+            rf[j][rd_index[i]] <= rd_data[i];
     end
   end
 
@@ -73,7 +71,7 @@ module prf_int (
   input  [`PRF_INT_WAYS-1:0] [31:0]                     rd_data,
   input  [`PRF_INT_WAYS-1:0]                            rd_en,
   
-  output micro_op_t [`PRF_INT_WAYS]                     uop_out,
+  output micro_op_t [`PRF_INT_WAYS-1:0]                 uop_out,
   output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs1_data,
   output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs2_data,
 );
