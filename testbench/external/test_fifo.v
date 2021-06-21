@@ -3,7 +3,7 @@
 `define CLOCK_PERIOD 10 
 `define CLOCK_FREQ 100_000_000
 
-module fifo_testbench();
+module test_fifo;
     localparam WIDTH = 32;
     localparam LOGDEPTH = 3;
     localparam DEPTH = (1 << LOGDEPTH);

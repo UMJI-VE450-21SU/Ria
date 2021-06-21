@@ -1,18 +1,11 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Project Name: RIA
-// Create Date: 2021/06/02
-// Contributor: Jian Shi
-// Reviewer: Li Shi, Yiqiu Sun, Yichao Yuan, Zhiyuan Liu
-// Module Name: freelist_int, freelist_fp
-// Target Devices: free list
-// Description: 
-// free list for Physical Register File
-// Dependencies: 
-// src/common/micro_op.svh
-//////////////////////////////////////////////////////////////////////////////////
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Free List for Physical Register File
+// Author:  Jian Shi
+// Date:    2021/06/02
+
 `include "../common/micro_op.svh"
 
-module freelist_int (
+module free_list_int (
   input       clock,
   input       reset,
   input       stall,

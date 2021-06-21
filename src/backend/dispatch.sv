@@ -1,6 +1,11 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Dispatch
+// Author:  Li Shi
+// Date:    2021/06/01
+
 `include "common/micro_op.svh"
 
-module dispatch_selector(
+module dispatch_selector (
   input       [`DISPATCH_WIDTH-1:0] ready,
   output reg  [`DISPATCH_WIDTH-1:0] [$clog2(`DISPATCH_WIDTH)-1:0] sel,
   output reg  [`DISPATCH_WIDTH-1:0] sel_valid,

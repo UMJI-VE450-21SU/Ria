@@ -26,19 +26,6 @@ module test_dispatch;
     $finish;
   end
 
-  // integer i;
-  // task print_info;
-  //   begin
-  //     $display("free: %b", req);
-  //     $display("gnts: %b", gnt);
-
-  //     for(i=0; i<REQS; i=i+1) begin
-  //       $display("gnt%1d: %b", i, gnt_bus[i]);
-  //     end
-  //     $display("");
-  //   end
-  // endtask
-
   initial begin
     $dumpfile("logs/dump.vcd");
     $dumpvars();

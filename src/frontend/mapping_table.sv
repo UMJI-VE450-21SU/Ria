@@ -1,18 +1,11 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Project Name: RIA
-// Create Date: 2021/06/05
-// Contributor: Jian Shi
-// Reviewer: 
-// Module Name: mappingtable
-// Target Devices: mapping table
-// Description: 
-// Record Mapping Relation between PRF & ARF; SRAM-Based RAT;
-// Dependencies: 
-// src/common/micro_op.svh, src/frontend/freelist.sv, src/frontend/checkpoint.sv
-//////////////////////////////////////////////////////////////////////////////////
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Mapping Table (Mapping Relation between PRF & ARF; SRAM-Based RAT)
+// Author:  Jian Shi
+// Date:    2021/06/05
+
 `include "../common/micro_op.svh"
 
-module mappingtable (
+module mapping_table (
   input         clock,
   input         reset,
   input         stall,
@@ -57,7 +50,7 @@ module mappingtable (
   reg   [`ARF_INT_SIZE-1:0]                             arf_valid;
   logic [`ARF_INT_SIZE-1:0]                             arf_valid_next;
 
-checkpoint_int int_checkpoint(
+checkpoint_int int_checkpoint (
   .clock              (clock            ),
   .reset              (reset            ),
   .check              (check            ),
@@ -67,7 +60,7 @@ checkpoint_int int_checkpoint(
   .checkpoint_out     (mapping_tb_cp    )
 );
 
-freelist_int  int_freelist(
+free_list_int int_free_list (
   .clock              (clock            ),
   .reset              (reset            ),
   .stall              (stall            ),

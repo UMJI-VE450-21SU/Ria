@@ -1,56 +1,51 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Project Name: RIA
-// Create Date: 2021/06/01
-// Contributor: Yiqiu Sun
-// Reviewer: 
-// Module Name: instruction fetch
-// Target Devices: fetch the instruction
-// Description: 
-// instruction fetch
-// Dependencies: 
-// ../common/defines.svh
-//////////////////////////////////////////////////////////////////////////////////
-`include "../common/defines.svh"
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Instruction Fetch
+// Author:  Yiqiu Sun
+// Date:    2021/06/01
+
+`include "../common/micro_op.svh"
 
 module inst_fetch (
   // ======= basic ===========================
-    input                               clock,
-    input                               reset,
-    input                               stall, // stall is effective in the next clock cycle
+  input                                 clock,
+  input                                 reset,
+  input                                 stall,              // stall is effective in the next clock cycle
   // ======= branch predictor related ========
-    input        [`INST_WIDTH-1:0]      pc_predicted,
-    input                               take_branch,
-    input        [`INST_WIDTH-1:0]      branch_pc,
+  input        [31:0]                   pc_predicted,
+  input                                 branch_taken,
+  input        [31:0]                   branch_pc,
   // ======= cache related ===================
-    input        [`INST_PACK-1:0]       Icache2proc_data,
-    input                               Icache2proc_data_valid,
-    output logic [`INST_WIDTH-1:0]      proc2Icache_addr, // one addr is enough
+  input        [31:0]                   icache2core_data,
+  input                                 icache2core_data_valid,
+  output logic [31:0]                   core2icache_addr,   // one addr is enough
   // ======= inst buffer related =============
-    output ib_entry_t [`INST_FETCH_NUM-1:0]   insts_out,
-    output logic                              insts_out_valid
+  output fb_entry_t [`FECTH_WIDTH-1:0]  insts_out,
+  output logic                          insts_out_valid
 );
 
+  reg [31:0]  pc_reg;
+  logic       pc_enable;
 
-reg [`INST_WIDTH-1:0] PC_reg;
-logic PC_enable;
+  assign pc_enable = ~stall & icache2core_data_valid;
 
-assign PC_enable = ~stall & Icache2proc_data_valid;
-
-always_ff @(posedge clock) begin
-  if(reset)       PC_reg <= 0; else
-  if(take_branch) PC_reg <= branch_pc; else
-  if(PC_enable)   PC_reg <= pc_predicted;
-end
-
-assign proc2Icache_addr = PC_reg;
-assign insts_out_valid = Icache2proc_data_valid & ~stall;
-
-generate
-  for(genvar i = 0; i < `INST_FETCH_NUM; i = i + 1) begin
-    assign insts_out[i].inst = Icache2proc_data[(i+1)*`INST_WIDTH-1:i*`INST_WIDTH];
-    assign insts_out[i].PC   = PC_reg + i*4;
+  always_ff @(posedge clock) begin
+    if (reset)
+      pc_reg <= 0;
+    else if (branch_taken)
+      pc_reg <= branch_pc;
+    else if (pc_enable)
+      pc_reg <= pc_predicted;
   end
-endgenerate
+
+  assign core2icache_addr = pc_reg;
+  assign insts_out_valid = icache2core_data_valid & ~stall;
+
+  generate
+    for(genvar i = 0; i < `FECTH_WIDTH; i++) begin
+      assign insts_out[i].inst = icache2core_data[(i+1)*32-1:i*32];
+      assign insts_out[i].pc   = pc_reg + i * 4;
+    end
+  endgenerate
 
 endmodule
 

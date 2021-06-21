@@ -1,15 +1,8 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Project Name: RIA
-// Create Date: 2021/05/23
-// Contributor: Jian Shi
-// Reviewer: 
-// Module Name: rat
-// Target Devices: register renaming
-// Description: 
-// rename ARF to PRF
-// Dependencies: 
-// src/common/micro_op.svh, src/frontend/mappingtable.sv
-//////////////////////////////////////////////////////////////////////////////////
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  RAT (Register Renaming from ARF to PRF)
+// Author:  Jian Shi
+// Date:    2021/05/23
+
 `include "../common/micro_op.svh"
 
 module rat (
@@ -70,29 +63,29 @@ module rat (
   logic [`RENAME_WIDTH-1:0]                             prev_rd_valid;
   logic                                                 mp_allocatable;
 
-mappingtable mapping_tb(
-  .clock          (clock                ),
-  .reset          (reset                ),
-  .stall          (stall                ),
-  .check          (check                ),
-  .recover        (recover_locker       ),
-  .check_idx      (check_idx            ),
-  .check_flag     (check_flag           ),
-  .recover_idx    (recover_index_locker ),
-  .arf_recover    (arf_recover_locker   ),
-  .rd_valid       (rd_valid             ),
-  .rs1            (rs1                  ),
-  .rs2            (rs2                  ),
-  .rd             (rd                   ),
-  .replace_req    (replace_req          ),
-  .replace_prf    (replace_prf          ),
-  .prs1           (prs1                 ),
-  .prs2           (prs2                 ),
-  .prd            (prd                  ),
-  .prev_rd        (prev_rd              ),
-  .prev_rd_valid  (prev_rd_valid        ),
-  .allocatable    (mp_allocatable       )
-);
+  mapping_table mapping_tb(
+    .clock          (clock                ),
+    .reset          (reset                ),
+    .stall          (stall                ),
+    .check          (check                ),
+    .recover        (recover_locker       ),
+    .check_idx      (check_idx            ),
+    .check_flag     (check_flag           ),
+    .recover_idx    (recover_index_locker ),
+    .arf_recover    (arf_recover_locker   ),
+    .rd_valid       (rd_valid             ),
+    .rs1            (rs1                  ),
+    .rs2            (rs2                  ),
+    .rd             (rd                   ),
+    .replace_req    (replace_req          ),
+    .replace_prf    (replace_prf          ),
+    .prs1           (prs1                 ),
+    .prs2           (prs2                 ),
+    .prd            (prd                  ),
+    .prev_rd        (prev_rd              ),
+    .prev_rd_valid  (prev_rd_valid        ),
+    .allocatable    (mp_allocatable       )
+  );
 
   assign allocatable = mp_allocatable & checkable;
   assign stall = ~checkable;

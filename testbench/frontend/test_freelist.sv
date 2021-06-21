@@ -3,16 +3,16 @@
 // Create Date: 2021/06/01
 // Contributor: Jian Shi
 // Reviewer: 
-// Module Name: freelist_tb
+// Module Name: free_list_tb
 // Target Devices: testbench for free list
 // Description: 
 // testbench for free list
 // Dependencies: 
-// src/frontend/freelist.sv
+// src/frontend/free_list.sv
 //////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 1ps
 
-module freelist_tb;
+module free_list_tb;
 parameter half_clk_cycle = 1;
 
 reg  clock, reset, recover, stall;
@@ -27,7 +27,7 @@ reg  [`RENAME_WIDTH-1:0]                              prf_req;
 wire [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]    prf_out;
 wire                                                  allocatable;
 
-freelist_int UTT(
+free_list_int UTT(
   .clock              (clock            ),
   .reset              (reset            ),
   .stall              (stall            ),

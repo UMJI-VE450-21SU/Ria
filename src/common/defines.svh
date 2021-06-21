@@ -1,20 +1,24 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Header:  Project Macros Definition
+// Author:  Yiqiu Sun, Li Shi, Jian Shi
+// Date:    2021/05/19
+
 `ifndef __DEFINES_SVH__
 `define __DEFINES_SVH__
 
-`define FRONTEND_WIDTH      4
-
 `define INST_NUM            40
-`define INST_WIDTH          32
-`define INST_FETCH_NUM      `FRONTEND_WIDTH
-`define INST_PACK           `INST_WIDTH * `INST_FETCH_NUM
 
-`define IB_SIZE             16
-`define IB_ADDR             4
-
+`define FRONTEND_WIDTH      4
+`define FETCH_WIDTH         `FRONTEND_WIDTH
 `define DECODE_WIDTH        `FRONTEND_WIDTH
 `define RENAME_WIDTH        `FRONTEND_WIDTH
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH
 `define COMMIT_WIDTH        `FRONTEND_WIDTH
+
+`define INST_PACK           32 * `FETCH_WIDTH
+
+`define FB_SIZE             16
+`define FB_ADDR             4
 
 `define ROB_SIZE            64
 `define ROB_INDEX_SIZE      6   // log2(ROB_SIZE)

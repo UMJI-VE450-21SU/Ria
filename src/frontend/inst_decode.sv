@@ -1,6 +1,12 @@
-`include "micro_op.svh"
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Instruction Decode
+// Author:  Li Shi
+// Date:    2021/06/02
+
+`include "../common/micro_op.svh"
 
 module decode (
+  input  [31:0]     pc,
   input  [31:0]     inst,
   input             valid,
   output micro_op_t uop
@@ -8,6 +14,7 @@ module decode (
 
   always_comb begin
     uop = 0;
+    uop.pc    = pc;
     uop.inst  = inst;
     uop.valid = valid;
     casez (inst) 
@@ -410,4 +417,22 @@ module decode (
     endcase
   end
     
+endmodule
+
+module inst_decode (
+  input                                 clock,
+  input                                 reset,
+
+  input  fb_entry_t [`FECTH_WIDTH-1:0]  insts,
+  input             [`FECTH_WIDTH-1:0]  insts_valid,
+  output micro_op_t [`DECODE_WIDTH-1:0] uops
+)
+
+  decode decode_inst [`DECODE_WIDTH-1:0] (
+    .pc     (insts.pc),
+    .inst   (insts.inst),
+    .valid  (insts_valid),
+    .uop    (uops)
+  );
+
 endmodule

@@ -1,15 +1,8 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Project Name: RIA
-// Create Date: 2021/06/02
-// Contributor: Jian Shi
-// Reviewer: Li Shi, Yiqiu Sun, Yichao Yuan, Zhiyuan Liu
-// Module Name: checkpoint_int, checkpoint_fp
-// Target Devices: check point table
-// Description: 
-// check point table for mapping table
-// Dependencies: 
-// src/common/micro_op.svh
-//////////////////////////////////////////////////////////////////////////////////
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Checkpoint Table (for Mapping Table)
+// Author:  Jian Shi
+// Date:    2021/06/02
+
 `include "../common/micro_op.svh"
 
 module checkpoint_int (

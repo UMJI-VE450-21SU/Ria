@@ -1,13 +1,18 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Header:  Micro-operation (uop) Definition
+// Author:  Yiqiu Sun, Li Shi, Jian Shi
+// Date:    2021/05/19
+
 `ifndef __MICRO_OP_SVH__
 `define __MICRO_OP_SVH__
 
 `include "defines.svh"
 `include "isa.svh"
 
-typedef struct packed{
-  inst_t                  inst; // fetched instruction
-  logic [`INST_WIDTH-1:0] PC;
-} ib_entry_t;
+typedef struct packed {
+  logic [31:0]  pc;
+  inst_t        inst;   // fetched instruction
+} fb_entry_t;
 
 typedef enum logic [1:0] {
   IQ_X    = 2'h0,
@@ -91,12 +96,13 @@ typedef enum logic [2:0] {
 
 typedef struct packed {
   logic [31:0]    pc;
-  rob_index_t     rob_index;
   inst_t          inst;
-  iq_code_t       iq_code;      // which issue unit do we use?
-  fu_code_t       fu_code;      // which functional unit do we use?
 
   cp_index_t      cp_index;
+  rob_index_t     rob_index;
+
+  iq_code_t       iq_code;      // which issue unit do we use?
+  fu_code_t       fu_code;      // which functional unit do we use?
 
   br_type_t       br_type;
   alu_type_t      alu_type;
