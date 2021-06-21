@@ -46,6 +46,7 @@ module rob (
 
   logic                                     recover_locker;
   micro_op_t                                uop_recover_locker;
+  rob_index_t                               recover_index;
 
   micro_op_t                                uop_retire_locker [`RENAME_WIDTH-1:0];
   micro_op_t                                uop_in_locker     [`RENAME_WIDTH-1:0];
@@ -64,6 +65,14 @@ module rob (
     for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
       update_list[i]  = 0;
       uop_out_next[i] = uop_in_locker[i];
+    end
+    if (recover_locker) begin
+      recover_index = uop_recover_locker.rob_index;
+      if (recover_index >= rob_head_next) begin
+        rob_size_next = recover_index - rob_head_next + 1;
+      end else begin
+        rob_size_next = `ROB_SIZE + recover_index - rob_head_next + 1;
+      end
     end
     for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
       // A finished Instruction
