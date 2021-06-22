@@ -116,13 +116,15 @@ module rob (
       rob_size <= rob_size_next;
     end
     if (input_valid & ready) begin
-      recover_locker      <= recover;
-      uop_recover_locker  <= uop_recover;
-      uop_retire_locker   <= uop_retire;
-      uop_in_locker       <= uop_in;
-      retire_valid_locker <= retire_valid;
-      in_valid_locker     <= in_valid;
-      ready               <= 0;
+      recover_locker        <= recover;
+      uop_recover_locker    <= uop_recover;
+      retire_valid_locker   <= retire_valid;
+      in_valid_locker       <= in_valid;
+      ready                 <= 0;
+      for (int i = 0; i < `RENAME_WIDTH; ++i ) begin
+        uop_retire_locker[i]  <= uop_retire[i];
+        uop_in_locker[i]      <= uop_in[i];
+      end
     end else begin
       ready <= ready_next;
     end
