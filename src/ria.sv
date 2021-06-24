@@ -10,9 +10,7 @@ module ria (
   // ======= icache related ==================
   input        [31:0]  icache2core_data,
   input                icache2core_data_valid,
-  output logic [31:0]  core2icache_addr,
-
-  
+  output logic [31:0]  core2icache_addr
 );
 
   logic except;
