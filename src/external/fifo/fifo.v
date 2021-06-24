@@ -82,8 +82,12 @@ module fifo #(
     wire fifo_one_element;
     assign fifo_one_element = (wptr == rptr_next);
 
-    wire addr_collision_val;
-    REGISTER #(.N(1)) addr_collision(.q(addr_collision_val), .d(enq_fire & (rptr_next == wptr)), .clk(clk));
+    wire addr_collision_val, addr_collision_next;
+    REGISTER #(.N(1)) addr_collision(.q(addr_collision_val), .d(addr_collision_next), .clk(clk));
+    assign addr_collision_next = enq_fire & (rptr_next == wptr);
+    
+    wire last_deq_fire_val;
+    REGISTER #(.N(1)) last_deq_fire(.q(last_deq_fire_val), .d(deq_fire), .clk(clk));
     
     wire [WIDTH-1: 0] read_buffer_reg_val, read_buffer_reg_next;
     wire read_buffer_reg_ce, read_buffer_reg_rst;
@@ -92,13 +96,10 @@ module fifo #(
     .q(read_buffer_reg_val), .d(read_buffer_reg_next), .rst(read_buffer_reg_rst),
     .ce(read_buffer_reg_ce), .clk(clk)
     );
-    assign read_buffer_reg_ce = deq_fire | (enq_fire & fifo_empty) | (addr_collision_val & deq_fire);
-    assign read_buffer_reg_next = (fifo_empty || addr_collision_val) ? enq_data : buffer_q0;
+    assign read_buffer_reg_ce = (!deq_fire & last_deq_fire_val) | (enq_fire & fifo_empty) | (addr_collision_next & deq_fire);
+    assign read_buffer_reg_next = (fifo_empty || addr_collision_next) ? enq_data : buffer_q0;
     assign read_buffer_reg_rst = rst;
-    
-    wire last_deq_fire_val;
-    REGISTER #(.N(1)) last_deq_fire(.q(last_deq_fire_val), .d(deq_fire), .clk(clk));
-    
+
     assign deq_data = (last_deq_fire_val & ~addr_collision_val) ? buffer_q0 : read_buffer_reg_val; // deq_data
     assign deq_valid  = ~fifo_empty; 
     assign enq_ready  = ~fifo_full; 
