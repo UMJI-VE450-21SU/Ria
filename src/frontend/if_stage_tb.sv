@@ -32,7 +32,11 @@ module if_stage_tb();
         clock = ~clock;
     end
     
-
+    integer f1;
+    always @(posedge clock) begin
+        f1 = $fopen("result.txt","a");
+        $fwrite(f1,"%x\n",insts_out[0].inst);
+    end
     
     initial begin
         clock = 0;
@@ -45,13 +49,16 @@ module if_stage_tb();
         @(negedge clock);
         reset = 0;
         Icache2proc_data = `INST_PACK'habcdef0123456789;
+        Icache2proc_data[31:0]=32'habcdef01;
         Icache2proc_data_valid = 1;
         @(negedge clock);
         Icache2proc_data = `INST_PACK'h0123456789abcdef;
-        @(negedge clock);
-        @(negedge clock);
-        @(negedge clock);
+        Icache2proc_data[31:0]=32'h12345678;
 
+        @(negedge clock);
+        @(negedge clock);
+        @(negedge clock);
+            $fclose(f1);
 
         $finish;
     end
