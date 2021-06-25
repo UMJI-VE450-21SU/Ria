@@ -31,7 +31,7 @@ typedef enum logic [2:0] {
   BR_LT   = 3'h3,
   BR_GE   = 3'h4,
   BR_LTU  = 3'h5,
-  BR_GEU  = 3'h6,
+  BR_GEU  = 3'h6
 } br_type_t;
 
 typedef enum logic [3:0] {
@@ -56,12 +56,12 @@ typedef enum logic [1:0]{
 } mult_type_t;
 
 typedef enum logic [2:0] { 
-  RS_INVALID    = 3'h0;
-  RS_FROM_RF    = 3'h1;
-  RS_FROM_IMM   = 3'h2;
-  RS_FROM_ZERO  = 3'h3;
-  RS_FROM_PC    = 3'h4;
-  RS_FROM_NPC   = 3'h5;  // PC +2/+4
+  RS_INVALID    = 3'h0,
+  RS_FROM_RF    = 3'h1,
+  RS_FROM_IMM   = 3'h2,
+  RS_FROM_ZERO  = 3'h3,
+  RS_FROM_PC    = 3'h4,
+  RS_FROM_NPC   = 3'h5          // PC +2/+4
 } rs_source_t;
 
 typedef struct packed {
@@ -69,7 +69,9 @@ typedef struct packed {
   inst_t          inst;
   iq_code_t       iq_code;      // which issue unit do we use?
   fu_code_t       fu_code;      // which functional unit do we use?
-  
+
+  cp_index_t      cp_index;
+
   br_type_t       br_type;
   alu_type_t      alu_type;
   mult_type_t     mult_type;
