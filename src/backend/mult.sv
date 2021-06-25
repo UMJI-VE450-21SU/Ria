@@ -51,7 +51,7 @@ mult_gen_0 int_mult(
     .A(in1),
     .B(in2),
     .SCLR(reset),//sync clear
-    .CE(~sign[1] & ~sign[0]),
+    .CE(~sign[1] & ~sign[0] & uop.valid),
     .P(product_0)
 );
 
@@ -61,7 +61,7 @@ mult_gen_1 int_mult_1(
     .A(in1),
     .B(in2),
     .SCLR(reset),//sync clear
-    .CE(~sign[1] & sign[0]),
+    .CE(~sign[1] & sign[0] & uop.valid),
     .P(product_1)
 );
 
@@ -71,7 +71,7 @@ mult_gen_0 int_mult_0(
     .A(signed_opa),
     .B(signed_opb),
     .SCLR(reset),//sync clear
-    .CE(sign[1] & sign[0]),
+    .CE(sign[1] & sign[0] & uop.valid),
     .P(product_2)
 );
 

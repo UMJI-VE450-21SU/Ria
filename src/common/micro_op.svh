@@ -72,6 +72,7 @@ typedef struct packed {
   
   br_type_t       br_type;
   alu_type_t      alu_type;
+  mult_type_t     mult_type;
 
   logic [31:0]    imm;
 
