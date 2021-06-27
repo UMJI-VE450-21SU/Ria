@@ -19,6 +19,7 @@ module rat (
 
   input   recover,
   input   [`ARF_INT_SIZE-1:0]               arf_recover,
+  input   [`PRF_INT_SIZE-1:0]               prf_recover,
   input   [`RENAME_WIDTH-1:0]               retire_valid,
 
   input   micro_op_t                        pc_recover,
@@ -80,6 +81,7 @@ mappingtable mapping_tb(
   .check_flag     (check_flag           ),
   .recover_idx    (recover_index_locker ),
   .arf_recover    (arf_recover_locker   ),
+  .prf_recover    (prf_recover_locker   ),
   .rd_valid       (rd_valid             ),
   .rs1            (rs1                  ),
   .rs2            (rs2                  ),
@@ -141,6 +143,7 @@ mappingtable mapping_tb(
       if (ready) begin
         recover_locker        <= recover;
         arf_recover_locker    <= arf_recover;
+        prf_recover_locker    <= prf_recover;
         retire_valid_locker   <= retire_valid;
         recover_index_locker  <= pc_recover.cp_index;
         for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
