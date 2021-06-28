@@ -12,6 +12,7 @@ module rat (
 
   input   recover,
   input   [`ARF_INT_SIZE-1:0]               arf_recover,
+  input   [`PRF_INT_SIZE-1:0]               prf_recover,
   input   [`RENAME_WIDTH-1:0]               retire_valid,
 
   input   micro_op_t                        pc_recover,
@@ -63,29 +64,30 @@ module rat (
   logic [`RENAME_WIDTH-1:0]                             prev_rd_valid;
   logic                                                 mp_allocatable;
 
-  mapping_table mapping_tb(
-    .clock          (clock                ),
-    .reset          (reset                ),
-    .stall          (stall                ),
-    .check          (check                ),
-    .recover        (recover_locker       ),
-    .check_idx      (check_idx            ),
-    .check_flag     (check_flag           ),
-    .recover_idx    (recover_index_locker ),
-    .arf_recover    (arf_recover_locker   ),
-    .rd_valid       (rd_valid             ),
-    .rs1            (rs1                  ),
-    .rs2            (rs2                  ),
-    .rd             (rd                   ),
-    .replace_req    (replace_req          ),
-    .replace_prf    (replace_prf          ),
-    .prs1           (prs1                 ),
-    .prs2           (prs2                 ),
-    .prd            (prd                  ),
-    .prev_rd        (prev_rd              ),
-    .prev_rd_valid  (prev_rd_valid        ),
-    .allocatable    (mp_allocatable       )
-  );
+mappingtable mapping_tb(
+  .clock          (clock                ),
+  .reset          (reset                ),
+  .stall          (stall                ),
+  .check          (check                ),
+  .recover        (recover_locker       ),
+  .check_idx      (check_idx            ),
+  .check_flag     (check_flag           ),
+  .recover_idx    (recover_index_locker ),
+  .arf_recover    (arf_recover_locker   ),
+  .prf_recover    (prf_recover_locker   ),
+  .rd_valid       (rd_valid             ),
+  .rs1            (rs1                  ),
+  .rs2            (rs2                  ),
+  .rd             (rd                   ),
+  .replace_req    (replace_req          ),
+  .replace_prf    (replace_prf          ),
+  .prs1           (prs1                 ),
+  .prs2           (prs2                 ),
+  .prd            (prd                  ),
+  .prev_rd        (prev_rd              ),
+  .prev_rd_valid  (prev_rd_valid        ),
+  .allocatable    (mp_allocatable       )
+);
 
   assign allocatable = mp_allocatable & checkable;
   assign stall = ~checkable;
@@ -134,6 +136,7 @@ module rat (
       if (ready) begin
         recover_locker        <= recover;
         arf_recover_locker    <= arf_recover;
+        prf_recover_locker    <= prf_recover;
         retire_valid_locker   <= retire_valid;
         recover_index_locker  <= pc_recover.cp_index;
         for (int i = 0; i < `RENAME_WIDTH; ++i )  begin

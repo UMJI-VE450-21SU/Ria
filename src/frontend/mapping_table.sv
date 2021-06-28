@@ -17,6 +17,7 @@ module mapping_table (
   input         [`RENAME_WIDTH-1:0]                             check_flag,
   input         cp_index_t                                      recover_idx,
   input         [`ARF_INT_SIZE-1:0]                             arf_recover,
+  input         [`PRF_INT_SIZE-1:0]                             prf_recover,
 
   input         [`RENAME_WIDTH-1:0]                             rd_valid,
 
@@ -65,7 +66,7 @@ free_list_int int_free_list (
   .reset              (reset            ),
   .stall              (stall            ),
   .recover            (recover          ),
-  .recover_fl         (recover_fl       ),
+  .recover_fl         (prf_recover      ),
   .prf_replace_valid  (replace_req      ),
   .prf_replace        (replace_prf      ),
   .prf_req            (rd_valid         ),
@@ -97,7 +98,7 @@ free_list_int int_free_list (
         end
         mapping_tb_next[rd[i]]      = prf_out[i];
         prd[i]                      = prf_out[i];
-        arf_valid_next[prf_out[i]]  = 1;
+        arf_valid_next[rd[i]]       = 1;
       end
       prs1[i] = mapping_tb_next[rs1[i]];
       prs2[i] = mapping_tb_next[rs2[i]];
