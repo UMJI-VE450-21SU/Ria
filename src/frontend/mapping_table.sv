@@ -51,28 +51,28 @@ module mapping_table (
   reg   [`ARF_INT_SIZE-1:0]                             arf_valid;
   logic [`ARF_INT_SIZE-1:0]                             arf_valid_next;
 
-checkpoint_int int_checkpoint (
-  .clock              (clock            ),
-  .reset              (reset            ),
-  .check              (check            ),
-  .check_idx          (check_idx        ),
-  .recover_idx        (recover_idx      ),
-  .checkpoint_in      (mapping_tb_cp_in ),
-  .checkpoint_out     (mapping_tb_cp    )
-);
+  checkpoint_int int_checkpoint (
+    .clock              (clock            ),
+    .reset              (reset            ),
+    .check              (check            ),
+    .check_idx          (check_idx        ),
+    .recover_idx        (recover_idx      ),
+    .checkpoint_in      (mapping_tb_cp_in ),
+    .checkpoint_out     (mapping_tb_cp    )
+  );
 
-free_list_int int_free_list (
-  .clock              (clock            ),
-  .reset              (reset            ),
-  .stall              (stall            ),
-  .recover            (recover          ),
-  .recover_fl         (prf_recover      ),
-  .prf_replace_valid  (replace_req      ),
-  .prf_replace        (replace_prf      ),
-  .prf_req            (rd_valid         ),
-  .prf_out            (prf_out          ),
-  .allocatable        (allocatable      )
-);
+  free_list_int int_free_list (
+    .clock              (clock            ),
+    .reset              (reset            ),
+    .stall              (stall            ),
+    .recover            (recover          ),
+    .recover_fl         (prf_recover      ),
+    .prf_replace_valid  (replace_req      ),
+    .prf_replace        (replace_prf      ),
+    .prf_req            (rd_valid         ),
+    .prf_out            (prf_out          ),
+    .allocatable        (allocatable      )
+  );
 
   always_comb begin
     // Prepare input for Free List

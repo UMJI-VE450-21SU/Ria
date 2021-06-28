@@ -1,15 +1,8 @@
-//////////////////////////////////////////////////////////////////////////////////
-// Project Name: RIA
-// Create Date: 2021/06/08
-// Contributor: Jian Shi
-// Reviewer: 
-// Module Name: rob
-// Target Devices: reorder buffer
-// Description: 
-// track the state of all inflight instructions in the pipeline
-// Dependencies: 
-// src/common/micro_op.svh
-//////////////////////////////////////////////////////////////////////////////////
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Re-order Buffer (Track all inflight instructions in the pipeline)
+// Author:  Jian Shi
+// Date:    2021/06/08
+
 `include "../common/micro_op.svh"
 
 module rob (

@@ -13,7 +13,7 @@ module fetch_buffer (
   input                                 insts_in_valid,
 
   output fb_entry_t [`FECTH_WIDTH-1:0]  insts_out,
-  output logic [`FECTH_WIDTH-1:0]       valid,
+  output logic      [`FECTH_WIDTH-1:0]  insts_out_valid,
 
   output logic                          full  // Connect to inst_fetch
 );
@@ -29,14 +29,12 @@ module fetch_buffer (
     .enq_valid  (insts_in_valid),
     .enq_data   (insts_in),
     .enq_ready  (ready_hub),
-    .deq_valid  (valid),
+    .deq_valid  (insts_out_valid),
     .deq_data   (insts_out),
     .deq_ready  (insts_in_valid)
   );
 
   assign full = (~ready_hub != 0);
-  // at least one of the fb is not ready
-  // Why only one scalar valid signal, not a vector? - solved
 
 endmodule
 
