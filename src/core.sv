@@ -10,15 +10,18 @@ module core (
   // ======= icache related ==================
   input        [31:0]  icache2core_data,
   input                icache2core_data_valid,
-  output logic [31:0]  core2icache_addr
+  output logic [31:0]  core2icache_addr,
+
+  // ======= dcache related ==================
+  input        [31:0]  dcache2core_data,
+  input                dcache2core_data_valid,
+  output logic [31:0]  core2dcache_data,
+  output logic [31:0]  core2dcache_data_we,
+  input  logic         dcache2core_data_w_ack,
+  output logic [31:0]  core2dcache_addr,
 );
 
-  logic except;
   logic stall;
-  logic recover;
-
-  micro_op_t                      uop_recover;
-
 
   /* Stage 1: IF - Instruction Fetch */
 
@@ -115,6 +118,8 @@ module core (
   /* Stage 4: RR - Register Renaming */
 
   micro_op_t  [`RENAME_WIDTH-1:0] rr_uops_out;
+  logic                           recover;
+  micro_op_t                      uop_recover;
   logic       [`ARF_INT_SIZE-1:0] arf_recover;
   logic       [`PRF_INT_SIZE-1:0] prf_recover;
   logic                           rr_allocatable;
@@ -163,36 +168,176 @@ module core (
 
   /* DP ~ IS Pipeline Registers */
 
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_int,
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_mem,
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_fp,
-  micro_op_t [`DISPATCH_WIDTH-1:0] is_uop_to_int,
-  micro_op_t [`DISPATCH_WIDTH-1:0] is_uop_to_mem,
-  micro_op_t [`DISPATCH_WIDTH-1:0] is_uop_to_fp
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_int;
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_mem;
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_fp;
+  micro_op_t [`DISPATCH_WIDTH-1:0] is_int_uop_in;
+  micro_op_t [`DISPATCH_WIDTH-1:0] is_mem_uop_in;
+  micro_op_t [`DISPATCH_WIDTH-1:0] is_fp_uop_in;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
-      is_uop_to_int <= 0;
-      is_uop_to_mem <= 0;
-      is_uop_to_fp  <= 0;
+      is_int_uop_in <= 0;
+      is_mem_uop_in <= 0;
+      is_fp_uop_in  <= 0;
     end else if (!stall) begin
-      is_uop_to_int <= dp_uop_to_int;
-      is_uop_to_mem <= dp_uop_to_mem;
-      is_uop_to_fp  <= dp_uop_to_fp;
+      is_int_uop_in <= dp_uop_to_int;
+      is_mem_uop_in <= dp_uop_to_mem;
+      is_fp_uop_in  <= dp_uop_to_fp;
     end
   end
 
   /* Stage 6: IS - Issue */
 
+  logic [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index;
+  logic [`ISSUE_WIDTH_INT-1:0]      ctb_valid;
+
+  logic      [`ISSUE_WIDTH_INT-1:0] ex_int_busy;
+  micro_op_t [`ISSUE_WIDTH_INT-1:0] is_int_uop_out;
+  logic                             iq_int_full;
+
+  issue_queue_int is_int (
+    .clock              (clock),
+    .reset              (reset),
+    .ctb_prf_int_index  (ctb_prf_int_index),
+    .ctb_valid          (ctb_valid),
+    .ex_busy            (ex_int_busy),
+    .uop_in             (is_int_uop_in),
+    .uop_out            (is_int_uop_out),
+    .iq_int_full        (iq_int_full)
+  );
+
+  logic      [`ISSUE_WIDTH_MEM-1:0] ex_mem_busy;
+  micro_op_t [`ISSUE_WIDTH_MEM-1:0] is_mem_uop_out;
+  logic                             iq_mem_full;
+
+  issue_queue_mem is_mem (
+    .clock              (clock),
+    .reset              (reset),
+    .ctb_prf_int_index  (ctb_prf_int_index),
+    .ctb_valid          (ctb_valid),
+    .ex_busy            (ex_mem_busy),
+    .uop_in             (is_mem_uop_in),
+    .uop_out            (is_mem_uop_out),
+    .iq_mem_full        (iq_mem_full)
+  );
+
   /* IS ~ RF Pipeline Registers */
+
+  micro_op_t [`PRF_INT_WAYS-1:0] rf_int_uop_in;
+  // micro_op_t [`ISSUE_WIDTH_FP-1:0]  rf_fp_uop_in;
+
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      rf_int_uop_in <= 0;
+      rf_mem_uop_in <= 0;
+      // rf_fp_uop_in  <= 0;
+    end else if (!stall) begin
+      for (int i = 0; i < `ISSUE_WIDTH_INT; i++)
+        rf_int_uop_in[i] <= is_int_uop_out[i];
+      for (int i = 0; i < `ISSUE_WIDTH_MEM; i++)
+        rf_int_uop_in[i + `ISSUE_WIDTH_INT] <= is_mem_uop_out[i];
+    end
+  end
 
   /* Stage 7: RF - Register File */
 
+  logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0] rf_int_rd_index_in;
+  logic [`PRF_INT_WAYS-1:0] [31:0]  rf_int_rd_data_in; 
+  logic [`PRF_INT_WAYS-1:0]         rf_int_rd_en_in;
+
+  micro_op_t [`PRF_INT_WAYS-1:0]    rf_int_uop_out;
+  logic [`PRF_INT_WAYS-1:0][31:0]   rf_int_rs1_data_out;
+  logic [`PRF_INT_WAYS-1:0][31:0]   rf_int_rs2_data_out;
+
+  prf_int rf_int (
+    .clock    (clock),
+    .reset    (reset),
+    .uop_in   (rf_int_uop_in),
+    .rd_index (rf_int_rd_index_in),
+    .rd_data  (rf_int_rd_data_in),
+    .rd_en    (rf_int_rd_en_in),
+    .uop_out  (rf_int_uop_out),
+    .rs1_data (rf_int_rs1_data_out),
+    .rs2_data (rf_int_rs2_data_out)
+  );
+
   /* RF ~ EX Pipeline Registers */
+
+  micro_op_t [`ISSUE_WIDTH_INT-1:0]  ex_int_uop_in;
+  logic [`ISSUE_WIDTH_INT-1:0][31:0] ex_int_rs1_data_in;
+  logic [`ISSUE_WIDTH_INT-1:0][31:0] ex_int_rs2_data_in;
+  micro_op_t [`ISSUE_WIDTH_MEM-1:0]  ex_mem_uop_in;
+  logic [`ISSUE_WIDTH_MEM-1:0][31:0] ex_mem_rs1_data_in;
+  logic [`ISSUE_WIDTH_MEM-1:0][31:0] ex_mem_rs2_data_in;
+
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      ex_int_uop_in      <= 0;
+      ex_int_rs1_data_in <= 0;
+      ex_int_rs2_data_in <= 0;
+      ex_mem_uop_in      <= 0;
+      ex_mem_rs1_data_in <= 0;
+      ex_mem_rs2_data_in <= 0;
+    end else if (!stall) begin
+      for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
+        ex_int_uop_in[i]      <= rf_int_uop_out[i];
+        ex_int_rs1_data_in[i] <= rf_int_rs1_data_out[i];
+        ex_int_rs2_data_in[i] <= rf_int_rs2_data_out[i];
+      end
+      for (int i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
+        ex_mem_uop_in[i]      <= rf_int_uop_out[i + `ISSUE_WIDTH_INT];
+        ex_mem_rs1_data_in[i] <= rf_int_rs1_data_out[i + `ISSUE_WIDTH_INT];
+        ex_mem_rs2_data_in[i] <= rf_int_rs2_data_out[i + `ISSUE_WIDTH_INT];
+      end
+    end
+  end
 
   /* Stage 8: EX - Execution */
 
-  /* EX ~ CM Pipeline Registers */
+  micro_op_t [`ISSUE_WIDTH_INT-1:0]  ex_int_uop_out;
+  logic [`ISSUE_WIDTH_INT-1:0][31:0] ex_int_rd_data_out;
+
+  pipe_0 pipe_0 (
+    .clock    (clock                 ),
+    .reset    (reset                 ),
+    .uop      (ex_int_uop_in      [0]),
+    .in1      (ex_int_rs1_data_in [0]),
+    .in2      (ex_int_rs2_data_in [0]),
+    .uop_out  (ex_int_uop_out     [0]),
+    .out      (ex_int_rd_data_out [0]),
+    .busy     (ex_int_busy        [0])
+  );
+
+  pipe_1 pipe_1 (
+    .clock    (clock                 ),
+    .reset    (reset                 ),
+    .uop      (ex_int_uop_in      [1]),
+    .in1      (ex_int_rs1_data_in [1]),
+    .in2      (ex_int_rs2_data_in [1]),
+    .uop_out  (ex_int_uop_out     [1]),
+    .out      (ex_int_rd_data_out [1]),
+    .busy     (ex_int_busy        [1])
+  );
+
+  pipe_2 pipe_2 (
+    .clock    (clock                 ),
+    .reset    (reset                 ),
+    .uop      (ex_int_uop_in      [2]),
+    .in1      (ex_int_rs1_data_in [2]),
+    .in2      (ex_int_rs2_data_in [2]),
+    .uop_out  (ex_int_uop_out     [2]),
+    .out      (ex_int_rd_data_out [2]),
+    .busy     (ex_int_busy        [2])
+  );
+
+  /* EX ~ WB Pipeline Registers */
+
+
+
+  /* Stage 9: WB - Write Back */
+
+  /* WB ~ CM Pipeline Registers */
 
   /* RR ~ CM Pipeline Registers */
 
@@ -211,7 +356,7 @@ module core (
     end
   end
 
-  /* Stage 9: CM - Commit */
+  /* Stage 10: CM - Commit */
 
   micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;
   logic                           cm_allocatable;
