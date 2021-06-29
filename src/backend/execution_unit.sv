@@ -4,7 +4,7 @@ module pipe_0 (
   input  micro_op_t uop,
   input  [31:0]     in1,
   input  [31:0]     in2,
-  output micro_op_t uop_completed,
+  output micro_op_t uop_out,
   output [31:0]     out,
   output            busy,
 )
@@ -32,9 +32,9 @@ module pipe_0 (
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      uop_completed <= 0;
+      uop_out <= 0;
     end else begin
-      uop_completed <= uop;
+      uop_out <= uop;
     end
   end
 
@@ -52,7 +52,7 @@ module pipe_1 (
   input  micro_op_t uop,
   input  [31:0]     in1,
   input  [31:0]     in2,
-  output micro_op_t uop_completed,
+  output micro_op_t uop_out,
   output [31:0]     out,
   output            busy,
 )
@@ -113,7 +113,7 @@ module pipe_2 (
   input  micro_op_t uop,
   input  [31:0]     in1,
   input  [31:0]     in2,
-  output micro_op_t uop_completed,
+  output micro_op_t uop_out,
   output [31:0]     out,
   output            busy,
 )

@@ -42,11 +42,11 @@
 
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
-`define PRF_INT_WAYS        (`ISSUE_WIDTH_INT + 1)
+`define PRF_INT_WAYS        (`ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM)
 
 `define PRF_FP_SIZE         64
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
-`define PRF_FP_WAYS         (`ISSUE_WIDTH_FP + 1)
+`define PRF_FP_WAYS         (`ISSUE_WIDTH_FP + `ISSUE_WIDTH_MEM)
 
 `define IMUL_LATENCY        5
 

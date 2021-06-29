@@ -18,7 +18,7 @@ module prf_int_data (
 );
 
   // multi-bank register file
-  reg   [31:0] rf [`PRF_INT_WAYS][`PRF_INT_SIZE-1:0];
+  reg   [31:0] rf [`PRF_INT_WAYS-1:0][`PRF_INT_SIZE-1:0];
 
   logic [`PRF_INT_WAYS-1:0] [`PRF_INT_WAYS-1:0] rs1_from_rd;
   logic [`PRF_INT_WAYS-1:0] [`PRF_INT_WAYS-1:0] rs2_from_rd;
@@ -65,7 +65,7 @@ endmodule
 module prf_int (
   input                                                 clock,
   input                                                 reset,
-  input  micro_op_t [`PRF_INT_WAYS]                     uop_in,
+  input  micro_op_t [`PRF_INT_WAYS-1:0]                 uop_in,
 
   input  [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0]  rd_index,
   input  [`PRF_INT_WAYS-1:0] [31:0]                     rd_data,
@@ -134,5 +134,7 @@ module prf_int (
     .rs1_data   (rs1_data_tmp),
     .rs2_data   (rs2_data_tmp)
   );
+
+  assign uop_out = uop_in;
 
 endmodule
