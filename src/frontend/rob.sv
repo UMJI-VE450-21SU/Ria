@@ -12,16 +12,16 @@ module rob (
 
   input                                     recover,
   input   micro_op_t                        uop_recover,
-  input   micro_op_t  [`RENAME_WIDTH-1:0]   uop_retire,
-  input               [`RENAME_WIDTH-1:0]   retire_valid,
-  input   micro_op_t  [`RENAME_WIDTH-1:0]   uop_in,
-  input               [`RENAME_WIDTH-1:0]   in_valid,
+  input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
+  input               [`COMMIT_WIDTH-1:0]   retire_valid,
+  input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_in,
+  input               [`COMMIT_WIDTH-1:0]   in_valid,
 
-  output  micro_op_t  [`RENAME_WIDTH-1:0]   uop_out,
+  output  micro_op_t  [`COMMIT_WIDTH-1:0]   uop_out,
   output  reg         [`ARF_INT_SIZE-1:0]   arf_recover,
   output  reg         [`PRF_INT_SIZE-1:0]   prf_recover,
-  output  reg         [`RENAME_WIDTH-1:0]   retire_ready,
-  output  reg         [`RENAME_WIDTH-1:0]   out_valid,
+  output  reg         [`COMMIT_WIDTH-1:0]   retire_ready,
+  output  reg         [`COMMIT_WIDTH-1:0]   out_valid,
   output  reg                               ready,
   output  logic                             allocatable
 );
@@ -35,9 +35,9 @@ module rob (
   logic         [`ROB_INDEX_SIZE:0]         rob_size_next;
 
   logic                                     ready_next;
-  logic         [`RENAME_WIDTH-1:0]         retire_ready_next;
-  logic         [`RENAME_WIDTH-1:0]         out_valid_next;
-  micro_op_t    [`RENAME_WIDTH-1:0]         uop_out_next;
+  logic         [`COMMIT_WIDTH-1:0]         retire_ready_next;
+  logic         [`COMMIT_WIDTH-1:0]         out_valid_next;
+  micro_op_t    [`COMMIT_WIDTH-1:0]         uop_out_next;
   logic         [`ARF_INT_SIZE-1:0]         arf_recover_next;
   logic         [`PRF_INT_SIZE-1:0]         prf_recover_next;
 
@@ -45,12 +45,12 @@ module rob (
   micro_op_t                                uop_recover_locker;
   rob_index_t                               recover_index;
 
-  micro_op_t                                uop_retire_locker [`RENAME_WIDTH-1:0];
-  micro_op_t                                uop_in_locker     [`RENAME_WIDTH-1:0];
-  reg           [`RENAME_WIDTH-1:0]         retire_valid_locker;
-  reg           [`RENAME_WIDTH-1:0]         in_valid_locker;
+  micro_op_t                                uop_retire_locker [`COMMIT_WIDTH-1:0];
+  micro_op_t                                uop_in_locker     [`COMMIT_WIDTH-1:0];
+  reg           [`COMMIT_WIDTH-1:0]         retire_valid_locker;
+  reg           [`COMMIT_WIDTH-1:0]         in_valid_locker;
 
-  rob_index_t                               update_list       [`RENAME_WIDTH-1:0];
+  rob_index_t                               update_list       [`COMMIT_WIDTH-1:0];
 
   always_comb begin
     rob_head_next     = rob_head;
@@ -61,7 +61,7 @@ module rob (
     allocatable       = 1;
     arf_recover_next  = 1;
     prf_recover_next  = 1;
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
       update_list[i]  = 0;
       uop_out_next[i] = uop_in_locker[i];
     end
@@ -80,7 +80,7 @@ module rob (
         end
       end
     end
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
       // A finished Instruction
       if (retire_valid_locker[i]) begin
         // An Instruction to retire
@@ -93,7 +93,7 @@ module rob (
         end
       end
     end
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
       // An Instrcution to store
       if (in_valid_locker[i]) begin
         // Have empty space to store
@@ -127,7 +127,7 @@ module rob (
       retire_valid_locker   <= retire_valid;
       in_valid_locker       <= in_valid;
       ready                 <= 0;
-      for (int i = 0; i < `RENAME_WIDTH; ++i ) begin
+      for (int i = 0; i < `COMMIT_WIDTH; ++i ) begin
         uop_retire_locker[i]  <= uop_retire[i];
         uop_in_locker[i]      <= uop_in[i];
       end
@@ -137,7 +137,7 @@ module rob (
     if (ready_next) begin
       retire_ready        <= retire_ready_next;
       out_valid           <= out_valid_next;
-      for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+      for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
         if (out_valid_next[i]) begin
           op_list[update_list[i]] <= uop_out[i];
         end

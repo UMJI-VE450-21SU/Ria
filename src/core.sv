@@ -15,6 +15,9 @@ module core (
 
   logic except;
   logic stall;
+  logic recover;
+
+  micro_op_t                      uop_recover;
 
 
   /* Stage 1: IF - Instruction Fetch */
@@ -97,32 +100,36 @@ module core (
   /* ID ~ RR Pipeline Registers */
 
   micro_op_t [`RENAME_WIDTH-1:0] rr_uops_in;
+  logic      [`RENAME_WIDTH-1:0] rr_insts_in_valid;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
-      rr_uops_in <= 0;
+      rr_uops_in        <= 0;
+      rr_insts_in_valid <= 0;
     end else if (!stall) begin
-      rr_uops_in <= id_uops_out;
+      rr_uops_in        <= id_uops_out;
+      rr_insts_in_valid <= id_insts_in_valid;
     end
   end
 
   /* Stage 4: RR - Register Renaming */
 
-  micro_op_t [`RENAME_WIDTH-1:0] rr_uops_out;
-  logic rr_allocatable;
-  logic rr_ready;
+  micro_op_t  [`RENAME_WIDTH-1:0] rr_uops_out;
+  logic       [`ARF_INT_SIZE-1:0] arf_recover;
+  logic       [`PRF_INT_SIZE-1:0] prf_recover;
+  logic                           rr_allocatable;
+  logic                           rr_ready;
 
-  // todo: check i/o connnections @Jian
   rat rr (
     .clock        (clock),
     .reset        (reset),
     .input_valid  (1),
-    .recover      (0),
-    .arf_recover  (0),
-    .prf_recover  (0),
-    .retire_valid (0),
-    .pc_recover   (0),
-    .pc_retire    (0),
+    .recover      (recover),
+    .arf_recover  (arf_recover),
+    .prf_recover  (prf_recover),
+    .retire_valid (retire_valid),
+    .uop_recover  (uop_recover),
+    .uop_retire   (uop_retire),
     .uop_in       (rr_uops_in),
     .uop_out      (rr_uops_out),
     .allocatable  (rr_allocatable),
@@ -187,26 +194,48 @@ module core (
 
   /* EX ~ CM Pipeline Registers */
 
+  /* RR ~ CM Pipeline Registers */
+
+  micro_op_t [`RENAME_WIDTH-1:0] cm_uops_in;
+  logic      [`COMMIT_WIDTH-1:0] cm_insts_in_valid;
+  logic      [`RENAME_WIDTH-1:0] cm_retire_valid;
+  micro_op_t [`RENAME_WIDTH-1:0] cm_uop_retire;
+
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      cm_uops_in        <= 0;
+      cm_insts_in_valid <= 0;
+    end else if (!stall) begin
+      cm_uops_in        <= rr_uops_out;
+      cm_insts_in_valid <= rr_insts_in_valid;
+    end
+  end
+
   /* Stage 9: CM - Commit */
 
-  // todo: check i/o connnections @Jian
+  micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;
+  logic                           cm_allocatable;
+  logic                           cm_ready;
+  logic       [`COMMIT_WIDTH-1:0] cm_out_valid;
+  logic       [`COMMIT_WIDTH-1:0] cm_retire_ready;
+
   rob cm (
     .clock        (clock),
     .reset        (reset),
-    .input_valid  (1),
-    .recover      (0),
-    .uop_recover  (0),
-    .uop_retire   (0),
-    .retire_valid (0),
-    .uop_in       (0),
-    .in_valid     (0),
-    .uop_out      (0),
-    .arf_recover  (0),
-    .prf_recover  (0),
-    .retire_ready (0),
-    .out_valid    (0),
-    .ready        (0),
-    .allocatable  (0)
+    .input_valid  (rr_ready),
+    .recover      (recover),
+    .uop_recover  (uop_recover),
+    .uop_retire   (cm_uop_retire),
+    .retire_valid (cm_retire_valid),
+    .uop_in       (cm_uops_in),
+    .in_valid     (cm_insts_in_valid),
+    .uop_out      (cm_uops_out),
+    .arf_recover  (arf_recover),
+    .prf_recover  (prf_recover),
+    .retire_ready (cm_retire_ready),
+    .out_valid    (cm_out_valid),
+    .ready        (cm_ready),
+    .allocatable  (cm_allocatable)
   );
 
 endmodule

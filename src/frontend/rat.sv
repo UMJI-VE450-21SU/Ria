@@ -15,8 +15,8 @@ module rat (
   input   [`PRF_INT_SIZE-1:0]               prf_recover,
   input   [`RENAME_WIDTH-1:0]               retire_valid,
 
-  input   micro_op_t                        pc_recover,
-  input   micro_op_t   [`RENAME_WIDTH-1:0]  pc_retire,
+  input   micro_op_t                        uop_recover,
+  input   micro_op_t   [`RENAME_WIDTH-1:0]  uop_retire,
   input   micro_op_t   [`RENAME_WIDTH-1:0]  uop_in,
   output  micro_op_t   [`RENAME_WIDTH-1:0]  uop_out,
 
@@ -138,10 +138,10 @@ module rat (
         arf_recover_locker    <= arf_recover;
         prf_recover_locker    <= prf_recover;
         retire_valid_locker   <= retire_valid;
-        recover_index_locker  <= pc_recover.cp_index;
+        recover_index_locker  <= uop_recover.cp_index;
         for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
-          retire_index_locker[i]    <= pc_retire[i].cp_index;
-          retire_br_type_locker[i]  <= pc_retire[i].br_type;
+          retire_index_locker[i]    <= uop_retire[i].cp_index;
+          retire_br_type_locker[i]  <= uop_retire[i].br_type;
           if (recover) begin
             br_type_locker[i]           <= BR_X;
             rd_valid[i]                 <= 0;
