@@ -18,7 +18,7 @@ module core (
   output logic [63:0]  core2dcache_data,
   output logic         core2dcache_data_we,
   output mem_size_t    core2dcache_data_size,
-  input                dcache2core_data_w_ack,
+  input                dcache2core_data_w_ack, // todo: remove this
   output logic [31:0]  core2dcache_addr
 );
 
@@ -72,7 +72,7 @@ module core (
     .insts_out        (fb_insts_out),
     .insts_out_valid  (fb_insts_out_valid),
     .full             (fb_full)
-  );
+  );  // todo: consider 8 in + 4 out for C extension?
 
   /* FB ~ ID Pipeline Registers */
 
@@ -297,6 +297,7 @@ module core (
   micro_op_t [`ISSUE_WIDTH_INT-1:0]  ex_int_uop_out;
   logic [`ISSUE_WIDTH_INT-1:0][31:0] ex_int_rd_data_out;
 
+  // ALU + BR
   pipe_0 pipe_0 (
     .clock    (clock                 ),
     .reset    (reset                 ),
@@ -308,6 +309,7 @@ module core (
     .busy     (ex_int_busy        [0])
   );
 
+  // ALU + IMUL
   pipe_1 pipe_1 (
     .clock    (clock                 ),
     .reset    (reset                 ),
@@ -319,6 +321,7 @@ module core (
     .busy     (ex_int_busy        [1])
   );
 
+  // ALU + IDIV
   pipe_2 pipe_2 (
     .clock    (clock                 ),
     .reset    (reset                 ),
@@ -333,6 +336,7 @@ module core (
   micro_op_t [`ISSUE_WIDTH_MEM-1:0]  ex_mem_uop_out;
   logic [`ISSUE_WIDTH_MEM-1:0][31:0] ex_mem_rd_data_out;
 
+  // LOAD / STORE
   pipe_3 pipe_3 (
     .clock                  (clock                 ),
     .reset                  (reset                 ),
@@ -351,11 +355,15 @@ module core (
     .core2dcache_addr       (core2dcache_addr      )
   );
 
+  // todo: Consider add open-source fpu in pipe 4/5
+
   /* EX ~ WB Pipeline Registers */
 
 
 
   /* Stage 9: WB - Write Back */
+
+  // todo: Connect execution units results to PRF write port
 
   /* WB ~ CM Pipeline Registers */
 
@@ -398,5 +406,7 @@ module core (
     .ready        (cm_ready),
     .allocatable  (cm_allocatable)
   );
+
+  // todo: connect pipe 0 output to recover signal
 
 endmodule
