@@ -180,7 +180,7 @@
 
 // RV32D
 `define RV32_FLD        `RV32_I_t(`RV32_OP_LOAD_FP, 3'b011)
-`define RV32_FSW        `RV32_S_t(`RV32_OP_STORE_FP, 3'b011)
+`define RV32_FSD        `RV32_S_t(`RV32_OP_STORE_FP, 3'b011)
 `define RV32_FMADD_D    
 `define RV32_FMSUB_D    
 `define RV32_FNMSUB_D   
