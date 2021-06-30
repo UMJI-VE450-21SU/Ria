@@ -13,12 +13,13 @@ module core (
   output logic [31:0]  core2icache_addr,
 
   // ======= dcache related ==================
-  input        [31:0]  dcache2core_data,
+  input        [63:0]  dcache2core_data,
   input                dcache2core_data_valid,
-  output logic [31:0]  core2dcache_data,
-  output logic [31:0]  core2dcache_data_we,
-  input  logic         dcache2core_data_w_ack,
-  output logic [31:0]  core2dcache_addr,
+  output logic [63:0]  core2dcache_data,
+  output logic         core2dcache_data_we,
+  output mem_size_t    core2dcache_data_size,
+  input                dcache2core_data_w_ack,
+  output logic [31:0]  core2dcache_addr
 );
 
   logic stall;
@@ -40,7 +41,7 @@ module core (
     .icache2core_data_valid (icache2core_data_valid),
     .core2icache_addr       (core2icache_addr),
     .insts_out              (if_insts_out),
-    .insts_out_valid        (if_insts_out_valid),
+    .insts_out_valid        (if_insts_out_valid)
   );
 
   /* IF ~ FB Pipeline Registers */
@@ -329,6 +330,27 @@ module core (
     .uop_out  (ex_int_uop_out     [2]),
     .out      (ex_int_rd_data_out [2]),
     .busy     (ex_int_busy        [2])
+  );
+
+  micro_op_t [`ISSUE_WIDTH_MEM-1:0]  ex_mem_uop_out;
+  logic [`ISSUE_WIDTH_MEM-1:0][31:0] ex_mem_rd_data_out;
+
+  pipe_3 pipe_3 (
+    .clock                  (clock                 ),
+    .reset                  (reset                 ),
+    .uop                    (ex_mem_uop_in      [0]),
+    .in1                    (ex_mem_rs1_data_in [0]),
+    .in2                    (ex_mem_rs2_data_in [0]),
+    .uop_out                (ex_mem_uop_out     [0]),
+    .out                    (ex_mem_rd_data_out [0]),
+    .busy                   (ex_mem_busy        [0]),
+    .dcache2core_data       (dcache2core_data      ),
+    .dcache2core_data_valid (dcache2core_data_valid),
+    .core2dcache_data       (core2dcache_data      ),
+    .core2dcache_data_we    (core2dcache_data_we   ),
+    .core2dcache_data_size  (core2dcache_data_size ),
+    .dcache2core_data_w_ack (dcache2core_data_w_ack),
+    .core2dcache_addr       (core2dcache_addr      )
   );
 
   /* EX ~ WB Pipeline Registers */
