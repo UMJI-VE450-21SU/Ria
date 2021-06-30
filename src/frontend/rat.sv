@@ -20,28 +20,28 @@ module rat (
 
   output  micro_op_t   [`RENAME_WIDTH-1:0]  uop_out,
 
-  output  logic                             allocatable,
+  output  reg                               allocatable,
   output  reg                               ready
 );
 
   // Info for check point table
-  cp_index_t                      check_head;
-  reg   [`RAT_CP_INDEX_SIZE:0]    check_size;
+  cp_index_t                              check_head;
+  reg           [`RAT_CP_INDEX_SIZE:0]    check_size;
 
-  cp_index_t                      check_head_next;
-  logic [`RAT_CP_INDEX_SIZE:0]    check_size_next;
+  cp_index_t                              check_head_next;
+  logic         [`RAT_CP_INDEX_SIZE:0]    check_size_next;
 
-  reg                             recover_locker;
-  reg   [`ARF_INT_SIZE-1:0]       arf_recover_locker;
-  reg   [`PRF_INT_SIZE-1:0]       prf_recover_locker;
+  reg                                     recover_locker;
+  reg           [`ARF_INT_SIZE-1:0]       arf_recover_locker;
+  reg           [`PRF_INT_SIZE-1:0]       prf_recover_locker;
 
-  micro_op_t                      uop_recover_locker;
-  micro_op_t                      uop_retire_locker [`COMMIT_WIDTH-1:0];
+  micro_op_t                              uop_recover_locker;
+  micro_op_t    uop_retire_locker         [`COMMIT_WIDTH-1:0];
 
-  micro_op_t                      uop_in_locker     [`RENAME_WIDTH-1:0];
+  micro_op_t    uop_in_locker             [`RENAME_WIDTH-1:0];
 
-  micro_op_t                      uop_buffer        [`RENAME_WIDTH-1:0];
-  micro_op_t                      uop_buffer_next   [`RENAME_WIDTH-1:0];
+  micro_op_t    uop_buffer                [`RENAME_WIDTH-1:0];
+  micro_op_t    uop_buffer_next           [`RENAME_WIDTH-1:0];
 
   logic                                                 checkable;
 
@@ -66,7 +66,8 @@ module rat (
 
   logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd;
   logic [`RENAME_WIDTH-1:0]                             prev_rd_valid;
-  logic                                                 mp_allocatable;
+  logic                                                 mp_allocatable;z
+  logic                                                 allocatable_next;
 
   mapping_table mapping_tb(
     .clock          (clock                ),
@@ -93,8 +94,8 @@ module rat (
     .allocatable    (mp_allocatable       )
   );
 
-  assign allocatable = mp_allocatable & checkable;
-  assign stall = ~checkable;
+  assign allocatable_next = mp_allocatable & checkable;
+  assign stall            = ~checkable;
 
   always_comb begin
     check           = 0;
@@ -108,7 +109,7 @@ module rat (
     rs1             = 0;
     rs2             = 0;
     rd              = 0;
-    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
+    for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       retire_req[i] = uop_retire_locker[i].valid & uop_retire_locker[i].rd_prf_int_index_prev_valid;
       retire_prf[i] = uop_retire_locker[i].rd_prf_int_index_prev;
       if (uop_retire_locker[i].valid & uop_retire_locker[i].br_type != BR_X) begin
@@ -123,7 +124,7 @@ module rat (
         check_size_next = `RAT_CP_SIZE + recover_idx - check_head_next + 1;
       end
     end else begin
-      for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+      for (int i = 0; i < `RENAME_WIDTH; ++i) begin
         if (uop_buffer[i].valid) begin
           // Meet Branch Prediction
           if (uop_buffer[i].br_type != BR_X) begin
@@ -146,7 +147,7 @@ module rat (
   end
 
   always_comb begin
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `RENAME_WIDTH; ++i) begin
       uop_buffer_next[i]                              = uop_buffer[i];
       uop_buffer_next[i].rs1_prf_int_index            = prs1[i];
       uop_buffer_next[i].rs2_prf_int_index            = prs2[i];
@@ -170,19 +171,20 @@ module rat (
       uop_recover_locker  <= uop_recover;
       arf_recover_locker  <= arf_recover;
       prf_recover_locker  <= prf_recover;
-      for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+      for (int i = 0; i < `RENAME_WIDTH; ++i) begin
         uop_buffer[i] <= uop_in[i];
       end
-      for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
+      for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
         uop_retire_locker[i] <= uop_retire[i];
       end
       ready <= 0;
     end else begin
       ready <= 1;
     end
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `RENAME_WIDTH; ++i) begin
       uop_out[i] <= uop_buffer_next[i];
     end
+    allocatable <= allocatable_next;
   end
 
 endmodule

@@ -37,7 +37,7 @@ module free_list_int (
 
   always_comb begin
     recover_fl_num = 0;
-    for (int i = 0; i < `PRF_INT_SIZE; ++i )  begin
+    for (int i = 0; i < `PRF_INT_SIZE; ++i) begin
       if (recover_fl[i] == 0) begin
         recover_fl_num += 1;
       end
@@ -50,24 +50,24 @@ module free_list_int (
     req_count       = 0;
     req_idx         = 0;
     req_idx_next    = 0;
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `RENAME_WIDTH; ++i) begin
       prf_out[i] = 0;
       prf_out_next[i] = 0;
     end
-    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
+    for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       if (prf_retire_valid[i]) begin
         free_num_next += 1;
         free_list_next[prf_retire[i]] = 0;
       end
     end
-    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+    for (int i = 0; i < `RENAME_WIDTH; ++i) begin
       if (prf_req[i]) begin
         req_count += 1;
       end
     end
 
     if (req_count <= free_num_next) begin
-      for (int i = 0; i < `PRF_INT_SIZE; ++i )  begin
+      for (int i = 0; i < `PRF_INT_SIZE; ++i) begin
         if (free_list_next[i] == 0) begin
           prf_out_next[req_idx] = i;
           req_idx += 1;
@@ -76,7 +76,7 @@ module free_list_int (
           break;
         end
       end
-      for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+      for (int i = 0; i < `RENAME_WIDTH; ++i) begin
         if (prf_req[i]) begin
           prf_out[i] = prf_out_next[req_idx_next];
           free_list_next[prf_out_next[req_idx_next]] = 1;
