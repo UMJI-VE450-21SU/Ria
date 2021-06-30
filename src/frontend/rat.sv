@@ -56,8 +56,8 @@ module rat (
   reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2;
   reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd;
 
-  logic [`RENAME_WIDTH-1:0]                             retire_req;
-  logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf;
+  logic [`COMMIT_WIDTH-1:0]                             retire_req;
+  logic [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf;
 
   logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs1;
   logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs2;
@@ -82,8 +82,8 @@ module rat (
     .rs1            (rs1                  ),
     .rs2            (rs2                  ),
     .rd             (rd                   ),
-    .replace_req    (replace_req          ),
-    .replace_prf    (replace_prf          ),
+    .retire_req     (retire_req           ),
+    .retire_prf     (retire_prf           ),
     .prs1           (prs1                 ),
     .prs2           (prs2                 ),
     .prd            (prd                  ),
@@ -102,26 +102,52 @@ module rat (
     check_size_next = check_size;
     check_idx       = 0;
     check_flag      = 0;
+    recover_idx     = uop_recover_locker.cp_index;
+    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
+      retire_req[i] = uop_retire_locker[i].valid & uop_retire_locker[i].rd_prf_int_index_prev_valid;
+      retire_prf[i] = uop_retire_locker[i].rd_prf_int_index_prev;
+      if (uop_retire_locker[i].valid & uop_retire_locker[i].br_type != BR_X) begin
+        check_head_next += 1;
+        check_size_next -= 1;
+      end
+    end
     if (recover_locker) begin
-      if (recover_index_locker >= check_head_next) begin
-        check_size_next = recover_index_locker - check_head_next + 1;
+      if (recover_idx >= check_head_next) begin
+        check_size_next = recover_idx - check_head_next + 1;
       end else begin
-        check_size_next = `RAT_CP_SIZE + recover_index_locker - check_head_next + 1;
+        check_size_next = `RAT_CP_SIZE + recover_idx - check_head_next + 1;
       end
     end else begin
       for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
-        // Meet Branch Prediction
-        if (in_br_type_locker[i] != BR_X) begin
-          // Have empty space for prediction
-          if (check_size_next < `RAT_CP_SIZE) begin
-            check         = 1;
-            check_idx     = check_head_next + check_size_next;
-            check_flag[i] = 1;
-          end else begin
-            checkable = 0;
+        if (uop_buffer[i].valid) begin
+          // Meet Branch Prediction
+          if (uop_buffer[i].br_type != BR_X) begin
+            // Have empty space for prediction
+            if (check_size_next < `RAT_CP_SIZE) begin
+              check         = 1;
+              check_idx     = check_head_next + check_size_next;
+              check_flag[i] = 1;
+            end else begin
+              checkable = 0;
+            end
           end
+          rd_valid[i] = uop_buffer[i].rd_valid;
+          rs1[i]      = uop_buffer[i].rs1_arf_int_index;
+          rs2[i]      = uop_buffer[i].rs2_arf_int_index;
+          rd[i]       = uop_buffer[i].rd_arf_int_index;
         end
       end
+    end
+  end
+
+  always_comb begin
+    for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+      uop_buffer_next[i]                              = uop_buffer[i];
+      uop_buffer_next[i].rs1_prf_int_index            = prs1[i];
+      uop_buffer_next[i].rs2_prf_int_index            = prs2[i];
+      uop_buffer_next[i].rd_prf_int_index             = prd[i];
+      uop_buffer_next[i].rd_prf_int_index_prev        = prev_rd[i];
+      uop_buffer_next[i].rd_prf_int_index_prev_valid  = prev_rd_valid[i];
     end
   end
 
@@ -134,21 +160,18 @@ module rat (
       check_head <= check_head_next;
       check_size <= check_size_next;
     end
-    if (input_valid) begin
-      if (ready) begin
-        recover_locker      <= recover;
-        arf_recover_locker  <= arf_recover;
-        prf_recover_locker  <= prf_recover;
-        for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
-          uop_buffer[i] <= uop_in[i];
-        end
-        for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
-          uop_retire_locker[i] <= uop_retire[i];
-        end
-        ready <= 0;
-      end else begin
-        ready <= 1;
+    if (input_valid & ready) begin
+      recover_locker      <= recover;
+      uop_recover_locker  <= uop_recover;
+      arf_recover_locker  <= arf_recover;
+      prf_recover_locker  <= prf_recover;
+      for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+        uop_buffer[i] <= uop_in[i];
       end
+      for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
+        uop_retire_locker[i] <= uop_retire[i];
+      end
+      ready <= 0;
     end else begin
       ready <= 1;
     end

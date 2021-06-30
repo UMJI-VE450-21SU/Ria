@@ -13,8 +13,8 @@ module free_list_int (
   input       recover,
   input       [`PRF_INT_SIZE-1:0]                             recover_fl,
 
-  input       [`RENAME_WIDTH-1:0]                             prf_retire_valid,
-  input       [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_retire,
+  input       [`COMMIT_WIDTH-1:0]                             prf_retire_valid,
+  input       [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_retire,
 
   input       [`RENAME_WIDTH-1:0]                             prf_req,
   output reg  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prf_out,
@@ -51,12 +51,14 @@ module free_list_int (
     req_idx         = 0;
     req_idx_next    = 0;
     for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
+      prf_out[i] = 0;
+      prf_out_next[i] = 0;
+    end
+    for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
       if (prf_retire_valid[i]) begin
         free_num_next += 1;
         free_list_next[prf_retire[i]] = 0;
       end
-      prf_out[i] = 0;
-      prf_out_next[i] = 0;
     end
     for (int i = 0; i < `RENAME_WIDTH; ++i )  begin
       if (prf_req[i]) begin
