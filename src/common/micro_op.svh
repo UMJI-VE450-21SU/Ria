@@ -131,6 +131,7 @@ typedef struct packed {
   logic           rd_valid;
 
   logic           valid;
+  logic           complete;
 } micro_op_t;
 
 `endif  // __MICRO_OP_SVH__

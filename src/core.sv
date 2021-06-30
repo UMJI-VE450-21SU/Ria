@@ -104,19 +104,17 @@ module core (
   /* ID ~ RR Pipeline Registers */
 
   micro_op_t [`RENAME_WIDTH-1:0] rr_uops_in;
-  logic      [`RENAME_WIDTH-1:0] rr_insts_in_valid;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       rr_uops_in        <= 0;
-      rr_insts_in_valid <= 0;
     end else if (!stall) begin
       rr_uops_in        <= id_uops_out;
-      rr_insts_in_valid <= id_insts_in_valid;
     end
   end
 
   /* Stage 4: RR - Register Renaming */
+  // TODO: @Jian remove `in_valid` for Rename part
 
   micro_op_t  [`RENAME_WIDTH-1:0] rr_uops_out;
   logic                           recover;
@@ -364,17 +362,14 @@ module core (
   /* RR ~ CM Pipeline Registers */
 
   micro_op_t [`RENAME_WIDTH-1:0] cm_uops_in;
-  logic      [`COMMIT_WIDTH-1:0] cm_insts_in_valid;
   logic      [`RENAME_WIDTH-1:0] cm_retire_valid;
   micro_op_t [`RENAME_WIDTH-1:0] cm_uop_retire;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       cm_uops_in        <= 0;
-      cm_insts_in_valid <= 0;
     end else if (!stall) begin
       cm_uops_in        <= rr_uops_out;
-      cm_insts_in_valid <= rr_insts_in_valid;
     end
   end
 
@@ -395,7 +390,6 @@ module core (
     .uop_retire   (cm_uop_retire),
     .retire_valid (cm_retire_valid),
     .uop_in       (cm_uops_in),
-    .in_valid     (cm_insts_in_valid),
     .uop_out      (cm_uops_out),
     .arf_recover  (arf_recover),
     .prf_recover  (prf_recover),

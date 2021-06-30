@@ -72,7 +72,7 @@ module rob (
       end else begin
         rob_size_next = `ROB_SIZE + recover_index - rob_head_next + 1;
       end
-      for (int i = 0; i < MAX; ++i )  begin
+      for (int i = 0; i < rob_size_next; ++i )  begin
         if (op_list[rob_head_next + i].rd_valid) begin
           arf_recover_next[op_list[rob_head_next + i].rd_arf_int_index]       = 1;
           prf_recover_next[op_list[rob_head_next + i].rd_prf_int_index]       = 1;

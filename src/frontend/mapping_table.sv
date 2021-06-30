@@ -25,8 +25,8 @@ module mapping_table (
   input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2,
   input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd,
 
-  input         [`RENAME_WIDTH-1:0]                             replace_req,
-  input         [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   replace_prf,
+  input         [`RENAME_WIDTH-1:0]                             retire_req,
+  input         [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf,
 
   output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs1,
   output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs2,
@@ -67,8 +67,8 @@ module mapping_table (
     .stall              (stall            ),
     .recover            (recover          ),
     .recover_fl         (prf_recover      ),
-    .prf_replace_valid  (replace_req      ),
-    .prf_replace        (replace_prf      ),
+    .prf_retire_valid   (retire_req       ),
+    .prf_retire         (retire_prf       ),
     .prf_req            (rd_valid         ),
     .prf_out            (prf_out          ),
     .allocatable        (allocatable      )
