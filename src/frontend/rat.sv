@@ -13,10 +13,11 @@ module rat (
   input                                     recover,
   input   [`ARF_INT_SIZE-1:0]               arf_recover,
   input   [`PRF_INT_SIZE-1:0]               prf_recover,
-
   input   micro_op_t                        uop_recover,
+
   input   micro_op_t   [`COMMIT_WIDTH-1:0]  uop_retire,
   input   micro_op_t   [`RENAME_WIDTH-1:0]  uop_in,
+
   output  micro_op_t   [`RENAME_WIDTH-1:0]  uop_out,
 
   output  logic                             allocatable,
@@ -51,10 +52,10 @@ module rat (
   logic [`RENAME_WIDTH-1:0]                             check_flag;
   cp_index_t                                            recover_idx;
 
-  reg   [`RENAME_WIDTH-1:0]                             rd_valid;
-  reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs1;
-  reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2;
-  reg   [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd;
+  logic [`RENAME_WIDTH-1:0]                             rd_valid;
+  logic [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs1;
+  logic [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2;
+  logic [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd;
 
   logic [`COMMIT_WIDTH-1:0]                             retire_req;
   logic [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf;
@@ -103,6 +104,10 @@ module rat (
     check_idx       = 0;
     check_flag      = 0;
     recover_idx     = uop_recover_locker.cp_index;
+    rd_valid        = 0;
+    rs1             = 0;
+    rs2             = 0;
+    rd              = 0;
     for (int i = 0; i < `COMMIT_WIDTH; ++i )  begin
       retire_req[i] = uop_retire_locker[i].valid & uop_retire_locker[i].rd_prf_int_index_prev_valid;
       retire_prf[i] = uop_retire_locker[i].rd_prf_int_index_prev;

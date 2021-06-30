@@ -112,6 +112,9 @@ typedef struct packed {
   mem_type_t      mem_type;
   mem_size_t      mem_size;
 
+  logic [31:0]    pred_br;
+  logic [31:0]    real_br;
+
   logic [31:0]    imm;
 
   rs_source_t     rs1_source;
