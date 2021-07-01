@@ -3,6 +3,8 @@
 // Author:  Li Shi, Jian Shi, Yichao Yuan, Yiqiu Sun, Zhiyuan Liu
 // Date:    2021/06/21
 
+`include "common/micro_op.svh"
+
 module core (
   input clock,
   input reset,
@@ -22,7 +24,7 @@ module core (
 );
 
   logic                           stall;
-
+  logic                           clear;
   logic                           recover;
   logic       [`ARF_INT_SIZE-1:0] arf_recover;
   logic       [`PRF_INT_SIZE-1:0] prf_recover;
@@ -31,11 +33,11 @@ module core (
 
   /* Stage 1: IF - Instruction Fetch */
 
-  fb_entry_t [`FECTH_WIDTH-1:0] if_insts_out;
+  fb_entry_t [`FETCH_WIDTH-1:0] if_insts_out;
   logic                         if_insts_out_valid;
   logic                         fb_full;
 
-  inst_fetch if (
+  inst_fetch if0 (
     .clock                  (clock),
     .reset                  (reset),
     .stall                  (stall | fb_full),
@@ -51,7 +53,7 @@ module core (
 
   /* IF ~ FB Pipeline Registers */
 
-  fb_entry_t [`FECTH_WIDTH-1:0] fb_insts_in;
+  fb_entry_t [`FETCH_WIDTH-1:0] fb_insts_in;
   logic                         fb_insts_in_valid;
 
   always_ff @(posedge clock) begin
@@ -66,8 +68,8 @@ module core (
 
   /* Stage 2: FB - Fetch Buffer */
 
-  fb_entry_t [`FECTH_WIDTH-1:0] fb_insts_out;
-  logic      [`FECTH_WIDTH-1:0] fb_insts_out_valid;
+  fb_entry_t [`FETCH_WIDTH-1:0] fb_insts_out;
+  logic      [`FETCH_WIDTH-1:0] fb_insts_out_valid;
 
   fetch_buffer fb (
     .clock            (clock),
@@ -160,9 +162,6 @@ module core (
 
   /* DP ~ IS Pipeline Registers */
 
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_int;
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_mem;
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_fp;
   micro_op_t [`DISPATCH_WIDTH-1:0] is_int_uop_in;
   micro_op_t [`DISPATCH_WIDTH-1:0] is_mem_uop_in;
   micro_op_t [`DISPATCH_WIDTH-1:0] is_fp_uop_in;
@@ -222,7 +221,6 @@ module core (
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       rf_int_uop_in <= 0;
-      rf_mem_uop_in <= 0;
       // rf_fp_uop_in  <= 0;
     end else if (!stall) begin
       for (int i = 0; i < `ISSUE_WIDTH_INT; i++)
@@ -372,12 +370,12 @@ module core (
 
   // Note: ex_***_uop_out and ex_***_rd_data_out are sequential logics
   generate
-    for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
+    for (genvar i = 0; i < `ISSUE_WIDTH_INT; i++) begin
       assign rf_int_rd_index_in[i] = ex_int_uop_out[i].rd_prf_int_index;
       assign rf_int_rd_data_in [i] = ex_int_rd_data_out[i];
       assign rf_int_rd_en_in   [i] = ex_int_uop_out[i].rd_valid;
     end
-    for (int i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
+    for (genvar i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
       assign rf_int_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
       assign rf_int_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
       assign rf_int_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_valid;
