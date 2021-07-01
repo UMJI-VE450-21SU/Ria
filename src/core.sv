@@ -18,7 +18,6 @@ module core (
   output logic [63:0]  core2dcache_data,
   output logic         core2dcache_data_we,
   output mem_size_t    core2dcache_data_size,
-  input                dcache2core_data_w_ack, // todo: remove this
   output logic [31:0]  core2dcache_addr
 );
 
@@ -345,26 +344,68 @@ module core (
     .core2dcache_data       (core2dcache_data      ),
     .core2dcache_data_we    (core2dcache_data_we   ),
     .core2dcache_data_size  (core2dcache_data_size ),
-    .dcache2core_data_w_ack (dcache2core_data_w_ack),
     .core2dcache_addr       (core2dcache_addr      )
   );
 
   // todo: Consider add open-source fpu in pipe 4/5
 
   /* EX ~ WB Pipeline Registers */
+  
+  micro_op_t [`COMMIT_WIDTH-1:0] wb_uops_in;
 
-
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      wb_uops_in <= 0;
+    end else if (!stall) begin
+      for (int i = 0; i < `ISSUE_WIDTH_INT; i++)
+        wb_uops_in[i] <= ex_int_uop_out[i];
+      for (int i = 0; i < `ISSUE_WIDTH_MEM; i++)
+        wb_uops_in[i + `ISSUE_WIDTH_INT] <= ex_mem_uop_out[i];
+      // for (int i = 0; i < `ISSUE_WIDTH_FP; i++)
+      //   wb_uops_in[i + `ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM] <= ex_fp_uop_out[i];
+    end
+  end
 
   /* Stage 9: WB - Write Back */
 
-  // todo: Connect execution units results to PRF write port
+  micro_op_t [`COMMIT_WIDTH-1:0] wb_uops_out;
+
+  // Note: ex_***_uop_out and ex_***_rd_data_out are sequential logics
+  generate
+    for (int i = 0; i < `ISSUE_WIDTH_INT; i++) begin
+      assign rf_int_rd_index_in[i] = ex_int_uop_out[i].rd_prf_int_index;
+      assign rf_int_rd_data_in [i] = ex_int_rd_data_out[i];
+      assign rf_int_rd_en_in   [i] = ex_int_uop_out[i].rd_valid;
+    end
+    for (int i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
+      assign rf_int_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
+      assign rf_int_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
+      assign rf_int_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_valid;
+    end
+  endgenerate
+
+  always_ff @(posedge clock) begin
+    if (reset)
+      wb_uops_out <= 0;
+    else
+      wb_uops_out <= wb_uops_in;
+  end
 
   /* WB ~ CM Pipeline Registers */
+
+  micro_op_t [`COMMIT_WIDTH-1:0]  cm_uops_complete;
+
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      cm_uops_complete <= 0;
+    end else if (!stall) begin
+      cm_uops_complete <= wb_uops_out;
+    end
+  end
 
   /* RR ~ CM Pipeline Registers */
 
   logic                           cm_in_valid;
-  micro_op_t [`COMMIT_WIDTH-1:0]  cm_uop_complete;
   micro_op_t [`RENAME_WIDTH-1:0]  cm_uops_in;
 
   assign cm_in_valid  = rr_ready & rr_allocatable;
@@ -372,15 +413,15 @@ module core (
 
   /* Stage 10: CM - Commit */
 
-  micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;
-  logic                           cm_allocatable;
-  logic                           cm_ready;
+  micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;    // todo: connect to where?
+  logic                           cm_allocatable; // todo: connect to where?
+  logic                           cm_ready;       // todo: connect to where?
 
   rob cm (
     .clock        (clock            ),
     .reset        (reset            ),
     .input_valid  (cm_in_valid      ),
-    .uop_complete (cm_uop_complete  ),
+    .uop_complete (cm_uops_complete ),
     .uop_in       (cm_uops_in       ),
     .uop_out      (cm_uops_out      ),
     .recover      (recover          ),
