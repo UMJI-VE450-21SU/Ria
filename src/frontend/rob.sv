@@ -15,8 +15,9 @@ module rob (
 
   output  micro_op_t  [`RENAME_WIDTH-1:0]   uop_out,
 
-  output                                    recover,
+  output  reg                               recover,
   output  micro_op_t                        uop_recover,
+  output  micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
   output  reg         [`ARF_INT_SIZE-1:0]   arf_recover,
   output  reg         [`PRF_INT_SIZE-1:0]   prf_recover,
 
@@ -36,6 +37,7 @@ module rob (
 
   micro_op_t    uop_out_next                [`RENAME_WIDTH-1:0];
   logic                                     recover_next;
+  micro_op_t    uop_retire_next             [`COMMIT_WIDTH-1:0];
   micro_op_t                                uop_recover_next;
   logic         [`ARF_INT_SIZE-1:0]         arf_recover_next;
   logic         [`PRF_INT_SIZE-1:0]         prf_recover_next;
@@ -48,15 +50,19 @@ module rob (
     rob_head_next       = rob_head;
     rob_size_next       = rob_size;
     recover_next        = 0;
+    uop_recover_next    = 0;
     arf_recover_next    = 1;
     prf_recover_next    = 1;
     allocatable_next    = 1;
     rob_size_increment  = 0;
+    for (int i = 0; i < `ROB_SIZE; ++i) begin
+      op_list_next[i] = op_list[i];
+    end
     for (int i = 0; i < `RENAME_WIDTH; ++i) begin
       uop_out_next[i] = uop_in[i];
     end
-    for (int i = 0; i < `ROB_SIZE; ++i) begin
-      op_list_next[i] = op_list[i];
+    for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
+      uop_retire_next[i] = 0;
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // Update completed uop
@@ -68,7 +74,7 @@ module rob (
           // A Mis-Prediction uop
           if (uop_complete_locker[i].exp_br != uop_complete_locker[i].real_br) begin
             recover_next      = 1;
-            uop_recover_next  = op_complete_locker[i];
+            uop_recover_next  = uop_complete_locker[i];
             // todo: Send `prediction miss` signal to `branch prediction`
           end else begin
             // todo: Send `prediction hit` signal to `branch prediction`
@@ -76,11 +82,11 @@ module rob (
         end
       end
     end
-    for (int i = 0; i < rob_size; ++i) begin
+    for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // A retirable uop
       if (op_list_next[rob_head + i].complete) begin
-          rob_head_next += 1;
-          rob_size_next -= 1;
+        rob_head_next += 1;
+        rob_size_next -= 1;
       end else begin
         break;
       end
@@ -143,6 +149,9 @@ module rob (
     if (ready) begin
       for (int i = 0; i < `ROB_SIZE; ++i) begin
         op_list[i] <= op_list_next[i];
+      end
+      for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
+        uop_retire[i] <= uop_retire_next[i];
       end
     end
   end

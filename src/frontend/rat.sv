@@ -15,10 +15,10 @@ module rat (
   input   [`PRF_INT_SIZE-1:0]               prf_recover,
   input   micro_op_t                        uop_recover,
 
-  input   micro_op_t   [`COMMIT_WIDTH-1:0]  uop_retire,
-  input   micro_op_t   [`RENAME_WIDTH-1:0]  uop_in,
+  input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
+  input   micro_op_t  [`RENAME_WIDTH-1:0]   uop_in,
 
-  output  micro_op_t   [`RENAME_WIDTH-1:0]  uop_out,
+  output  micro_op_t  [`RENAME_WIDTH-1:0]   uop_out,
 
   output  reg                               allocatable,
   output  reg                               ready
