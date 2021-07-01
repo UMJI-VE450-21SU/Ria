@@ -7,3 +7,8 @@ obj_dir
 
 *.out
 .DS_Store
+.tags
+.elf
+.bin
+.hex
+.mif
