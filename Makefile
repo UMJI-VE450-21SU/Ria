@@ -1,8 +1,7 @@
-######################################################################
-#
-# UM-SJTU JI VE450 2021 Summer Capstone Design Project
-#
-######################################################################
+# Project: RISC-V SoC Microarchitecture Design & Optimization
+#          GNU Makefile
+# Author:  Yichao Yuan, Li Shi
+# Date:    2021/07/02
 
 ifneq ($(words $(CURDIR)),1)
  $(error Unsupported: GNU Make cannot build in directories containing spaces, build elsewhere: '$(CURDIR)')
@@ -43,7 +42,8 @@ VERILATOR_FLAGS += --coverage
 #VERILATOR_FLAGS += --gdbbt
 
 # Input files for Verilator
-VERILATOR_INPUT = playground/top.sv playground/mux_4x1.sv playground/sim_main.cpp
+VERILATOR_SRC = $(wildcard src/common/*.svh src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
+SIM_SRC = sim/sim_main.cpp
 
 ######################################################################
 default: run
@@ -51,7 +51,7 @@ default: run
 run:
 	@echo
 	@echo "-- VERILATE ----------------"
-	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INPUT)
+	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_SRC) $(SIM_SRC)
 
 	@echo
 	@echo "-- BUILD -------------------"
@@ -88,3 +88,10 @@ show-config:
 maintainer-copy::
 clean mostlyclean distclean maintainer-clean::
 	-rm -rf obj_dir logs *.log *.dmp *.vpd coverage.dat core
+
+WAVEFORM_VIEWER := gtkwave
+
+.PHONY: view-waveform
+
+view-waveform:
+	$(WAVEFORM_VIEWER) logs/vlt_dump.vcd	
