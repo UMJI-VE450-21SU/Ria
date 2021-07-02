@@ -107,7 +107,7 @@ module pipe_1 (
   );
 
   assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out});
+               ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out);
 
   assign busy = 1'b0;
 
@@ -159,7 +159,8 @@ module pipe_2 (
     .out      (alu_out)
   );
 
-  idiv idiv_inst (
+  // todo: Add a idiv module
+  imul idiv_inst (
     .clock    (clock),
     .reset    (reset),
     .uop      (uop),
@@ -168,8 +169,8 @@ module pipe_2 (
     .out      (idiv_out)
   );
 
-  assign out = ({32{uop_fifo[0].fu_code == FU_ALU}} & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IDIV} & idiv_out});
+  assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
+               ({32{uop_fifo[0].fu_code == FU_IDIV}} & idiv_out);
 
   assign busy = 1'b0;
 

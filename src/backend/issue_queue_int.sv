@@ -26,8 +26,10 @@ module issue_slot_int (
 
   wire [`ISSUE_WIDTH_INT-1:0] rs1_index_match_ctb;
   wire [`ISSUE_WIDTH_INT-1:0] rs2_index_match_ctb;
-  wor                         rs1_from_ctb_valid;
-  wor                         rs2_from_ctb_valid;
+  wire [`ISSUE_WIDTH_INT-1:0] rs1_from_ctb;
+  wire [`ISSUE_WIDTH_INT-1:0] rs2_from_ctb;
+  wire                        rs1_from_ctb_valid;
+  wire                        rs2_from_ctb_valid;
 
   logic rs1_ready;
   logic rs2_ready;
@@ -36,10 +38,13 @@ module issue_slot_int (
     for (genvar i = 0; i < `ISSUE_WIDTH_INT; i++) begin
       assign rs1_index_match_ctb[i] = (uop_in.rs1_prf_int_index == ctb_prf_int_index[i]);
       assign rs2_index_match_ctb[i] = (uop_in.rs2_prf_int_index == ctb_prf_int_index[i]);
-      assign rs1_from_ctb_valid     = (~rs1_ready & ctb_valid[i] & rs1_index_match_ctb[i]);
-      assign rs2_from_ctb_valid     = (~rs2_ready & ctb_valid[i] & rs2_index_match_ctb[i]);
+      assign rs1_from_ctb[i]         = (~rs1_ready & ctb_valid[i] & rs1_index_match_ctb[i]);
+      assign rs2_from_ctb[i]        = (~rs2_ready & ctb_valid[i] & rs2_index_match_ctb[i]);
     end
   endgenerate
+
+  assign rs1_from_ctb_valid = |rs1_from_ctb;
+  assign rs2_from_ctb_valid = |rs2_from_ctb;
 
   always_ff @ (posedge clock) begin
     if (reset | clear) begin
@@ -127,10 +132,10 @@ module issue_queue_int (
         .ready              (ready[k]),
         .free               (free[k])
       );
-      assign ready_alu[k]  = ready[k] & uop_to_issue[k].fu_code.fu_alu;
-      assign ready_br[k]   = ready[k] & uop_to_issue[k].fu_code.fu_br;
-      assign ready_imul[k] = ready[k] & uop_to_issue[k].fu_code.fu_mul;
-      assign ready_idiv[k] = ready[k] & uop_to_issue[k].fu_code.fu_div;
+      assign ready_alu[k]  = ready[k] & (uop_to_issue[k].fu_code == FU_ALU);
+      assign ready_br[k]   = ready[k] & (uop_to_issue[k].fu_code == FU_BR);
+      assign ready_imul[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IMUL);
+      assign ready_idiv[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IDIV);
     end
   endgenerate
 

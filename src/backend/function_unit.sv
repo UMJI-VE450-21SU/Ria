@@ -28,16 +28,16 @@ module alu (
 
   assign fn = uop.alu_type;
 
-  assign result = ({32{fn == FN_ADD}}  & add [31:0]) |
-                  ({32{fn == FN_SUB}}  & sub [31:0]) |
-                  ({32{fn == FN_SLT}}  & slt [31:0]) |
-                  ({32{fn == FN_SLTU}} & sltu[31:0]) |
-                  ({32{fn == FN_XOR}}  & lxor[31:0]) |
-                  ({32{fn == FN_OR}}   & lor [31:0]) |
-                  ({32{fn == FN_AND}}  & land[31:0]) |
-                  ({32{fn == FN_SLL}}  & sll [31:0]) |
-                  ({32{fn == FN_SRL}}  & srl [31:0]) |
-                  ({32{fn == FN_SRA}}  & sra [31:0]);
+  assign result = ({32{fn == ALU_ADD}}  & add [31:0]) |
+                  ({32{fn == ALU_SUB}}  & sub [31:0]) |
+                  ({32{fn == ALU_SLT}}  & slt [31:0]) |
+                  ({32{fn == ALU_SLTU}} & sltu[31:0]) |
+                  ({32{fn == ALU_XOR}}  & lxor[31:0]) |
+                  ({32{fn == ALU_OR}}   & lor [31:0]) |
+                  ({32{fn == ALU_AND}}  & land[31:0]) |
+                  ({32{fn == ALU_SLL}}  & sll [31:0]) |
+                  ({32{fn == ALU_SRL}}  & srl [31:0]) |
+                  ({32{fn == ALU_SRA}}  & sra [31:0]);
 
   always_ff @(posedge clock) begin
     if (reset)
@@ -113,14 +113,14 @@ module imul (
 
   always_comb begin
     case (uop.imul_type)
-      MULHU:      sign = 2'b00;  
-      MULHSU:     sign = 2'b01;
-      default:    sign = 2'b11;
+      IMUL_MULHU:   sign = 2'b00;  
+      IMUL_MULHSU:  sign = 2'b01;
+      default:      sign = 2'b11;
     endcase
     case (sign_reg[`IMUL_LATENCY-1])
-      2'b0:   final_product = product_0;
-      2'b1:   final_product = product_1;
-      default:final_product = product_2;
+      2'b0:    final_product = product_0;
+      2'b1:    final_product = product_1;
+      default: final_product = product_2;
     endcase
   end
 
@@ -132,7 +132,7 @@ module imul (
       sign_reg <= 0;
     end else begin
       range[`IMUL_LATENCY-1:1] <= range[`IMUL_LATENCY-2:0];
-      range[0] <= (uop.imul_type ~= MULHU);
+      range[0] <= (uop.imul_type != IMUL_MULHU);
       sign_reg[`IMUL_LATENCY-1:1] <= sign_reg[`IMUL_LATENCY-2:0];
       sign_reg[0] <= sign;
     end
