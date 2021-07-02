@@ -8,7 +8,7 @@
 module dispatch_selector (
   input       [`DISPATCH_WIDTH-1:0] ready,
   output reg  [`DISPATCH_WIDTH-1:0] [$clog2(`DISPATCH_WIDTH)-1:0] sel,
-  output reg  [`DISPATCH_WIDTH-1:0] sel_valid,
+  output reg  [`DISPATCH_WIDTH-1:0] sel_valid
 );
 
   wire [`DISPATCH_WIDTH:0] [`DISPATCH_WIDTH-1:0] readys;

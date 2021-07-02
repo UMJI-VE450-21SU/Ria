@@ -66,7 +66,7 @@ module rat (
 
   logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd;
   logic [`RENAME_WIDTH-1:0]                             prev_rd_valid;
-  logic                                                 mp_allocatable;z
+  logic                                                 mp_allocatable;
   logic                                                 allocatable_next;
 
   mapping_table mapping_tb(

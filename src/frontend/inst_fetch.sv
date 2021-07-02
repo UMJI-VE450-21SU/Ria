@@ -19,7 +19,7 @@ module inst_fetch (
   input                                 icache2core_data_valid,
   output logic [31:0]                   core2icache_addr,   // one addr is enough
   // ======= inst buffer related =============
-  output fb_entry_t [`FECTH_WIDTH-1:0]  insts_out,
+  output fb_entry_t [`FETCH_WIDTH-1:0]  insts_out,
   output logic                          insts_out_valid
 );
 
@@ -41,11 +41,10 @@ module inst_fetch (
   assign insts_out_valid = icache2core_data_valid & ~stall;
 
   generate
-    for(genvar i = 0; i < `FECTH_WIDTH; i++) begin
+    for (genvar i = 0; i < `FETCH_WIDTH; i++) begin
       assign insts_out[i].inst = icache2core_data[(i+1)*32-1:i*32];
       assign insts_out[i].pc   = pc_reg + i * 4;
     end
   endgenerate
 
 endmodule
-

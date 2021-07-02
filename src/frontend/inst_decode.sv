@@ -423,10 +423,10 @@ module inst_decode (
   input                                 clock,
   input                                 reset,
 
-  input  fb_entry_t [`FECTH_WIDTH-1:0]  insts,
-  input             [`FECTH_WIDTH-1:0]  insts_valid,
+  input  fb_entry_t [`FETCH_WIDTH-1:0]  insts,
+  input             [`FETCH_WIDTH-1:0]  insts_valid,
   output micro_op_t [`DECODE_WIDTH-1:0] uops
-)
+);
 
   decode decode_inst [`DECODE_WIDTH-1:0] (
     .pc     (insts.pc),

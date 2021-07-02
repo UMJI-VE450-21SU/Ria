@@ -73,7 +73,7 @@ module prf_int (
   
   output micro_op_t [`PRF_INT_WAYS-1:0]                 uop_out,
   output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs1_data,
-  output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs2_data,
+  output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs2_data
 );
 
   logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0] rs1_index, rs2_index;

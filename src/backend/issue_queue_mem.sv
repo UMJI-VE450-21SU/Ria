@@ -74,7 +74,7 @@ module issue_queue_mem_output_selector (
   input       [`IQ_MEM_SIZE-1:0]     ready,
   input       [`IQ_MEM_SIZE-1:0]     is_store,
   output reg  [`ISSUE_WIDTH_MEM-1:0] [$clog2(`IQ_MEM_SIZE)-1:0] sel,
-  output reg  [`ISSUE_WIDTH_MEM-1:0] sel_valid,
+  output reg  [`ISSUE_WIDTH_MEM-1:0] sel_valid
 );
 
   logic [`ISSUE_WIDTH_MEM:0] [`IQ_MEM_SIZE-1:0] readys;
@@ -203,12 +203,12 @@ module issue_queue_mem (
   end
   
   // Outpu selector
-  issue_queue_mem_output_selector (
+  issue_queue_mem_output_selector issue_queue_mem_output_selector (
     .ready      (ready),
     .is_store   (is_store),
     .sel        (output_sel),
     .sel_valid  (output_sel_valid)
-  )
+  );
 
   always_comb begin
     for (int i = 0; i < `IQ_MEM_SIZE; i++) begin
