@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/08
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module rob (
   input           clock,

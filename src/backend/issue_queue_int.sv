@@ -3,7 +3,7 @@
 // Author:  Li Shi
 // Date:    2021/05/28
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 `timescale 1ns / 1ps
 module issue_slot_int (

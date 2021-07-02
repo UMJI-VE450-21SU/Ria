@@ -3,7 +3,7 @@
 // Author:  Yiqiu Sun
 // Date:    2021/06/01
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module inst_fetch (
   // ======= basic ===========================

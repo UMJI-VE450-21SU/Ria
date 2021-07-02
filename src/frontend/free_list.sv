@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/02
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module free_list_int (
   input       clock,

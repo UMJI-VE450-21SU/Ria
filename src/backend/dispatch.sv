@@ -3,7 +3,7 @@
 // Author:  Li Shi
 // Date:    2021/06/01
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module dispatch_selector (
   input       [`DISPATCH_WIDTH-1:0] ready,

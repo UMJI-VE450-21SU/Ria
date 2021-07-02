@@ -3,7 +3,7 @@
 // Author:  Li Shi, Jian Shi, Yichao Yuan, Yiqiu Sun, Zhiyuan Liu
 // Date:    2021/06/21
 
-`include "common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module top (
   input clock,

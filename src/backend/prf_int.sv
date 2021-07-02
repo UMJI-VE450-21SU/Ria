@@ -3,7 +3,7 @@
 // Author:  Li Shi
 // Date:    2021/06/21
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module prf_int_data (
   input                                                 clock,

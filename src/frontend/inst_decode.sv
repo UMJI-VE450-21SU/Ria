@@ -3,7 +3,7 @@
 // Author:  Li Shi
 // Date:    2021/06/02
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module decode (
   input  [31:0]     pc,
