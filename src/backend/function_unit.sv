@@ -1,3 +1,8 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Function Units
+// Author:  Li Shi
+// Date:    2021/06/21
+
 module alu (
   input               clock,
   input               reset,
@@ -105,7 +110,7 @@ module imul (
   wire signed [63:0]      final_product, product_0, product_1, product_2;
   logic [1:0]             sign;
   reg [`IMUL_LATENCY-1:0] range;                  // 1 if [63:32]
-  reg [`IMUL_LATENCY-1:0] sign_reg [1:0];
+  reg [`IMUL_LATENCY-1:0] sign_reg;
   // every imul have a delay of 5 clock cycles
 
   assign signed_in1 = in1;
@@ -138,34 +143,14 @@ module imul (
     end
   end
 
-  // signed bits: 00
-  mult_gen_0 int_mult (
-    .CLK  (clock),
-    .A    (in1),
-    .B    (in2),
-    .SCLR (reset),                //sync clear
-    .CE   (~sign[1] & ~sign[0]),
-    .P    (product_0)
+  // todo: fix unsigned / signed issue
+  imul_unsigned int_mult (
+    .clock  (clock),
+    .A      (in1),
+    .B      (in2),
+    .RES    (product_0)
   );
-
-  // signed bits: 01
-  mult_gen_1 int_mult_1 (
-    .CLK  (clock),
-    .A    (in1),
-    .B    (in2),
-    .SCLR (reset),                //sync clear
-    .CE   (~sign[1] & sign[0]),
-    .P    (product_1)
-  );
-
-  // signed bits: 11
-  mult_gen_0 int_mult_0 (
-    .CLK  (clock),
-    .A    (signed_in1),
-    .B    (signed_in2),
-    .SCLR (reset),                //sync clear
-    .CE   (sign[1] & sign[0]),
-    .P    (product_2)
-  );
+  assign product_1 = product_0;
+  assign product_2 = product_0;
 
 endmodule

@@ -42,7 +42,7 @@ VERILATOR_FLAGS += --coverage
 #VERILATOR_FLAGS += --gdbbt
 
 # Input files for Verilator
-VERILATOR_SRC = $(wildcard src/common/*.svh src/external/*.sv src/external/fifo/*.v src/frontend/*.sv src/backend/*.sv src/*.sv)
+VERILATOR_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
 SIM_SRC = sim/sim_main.cpp
 
 ######################################################################
