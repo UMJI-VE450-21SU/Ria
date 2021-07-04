@@ -82,7 +82,7 @@ module issue_queue_mem_output_selector (
   output reg  [`ISSUE_WIDTH_MEM-1:0] sel_valid
 );
 
-  logic [`ISSUE_WIDTH_MEM:0] [`IQ_MEM_SIZE-1:0] readys;
+  logic [`ISSUE_WIDTH_MEM-1:0] [`IQ_MEM_SIZE-1:0] readys;
 
   always_comb begin
     readys[0] = ready;
@@ -149,10 +149,10 @@ module issue_queue_mem (
   output iq_mem_full
 );
 
-  logic [$clog2(`IQ_MEM_SIZE)-1:0]  uop_in_count, uop_out_count;
-  logic [$clog2(`IQ_MEM_SIZE)-1:0]  free_count, tail;
-  reg   [$clog2(`IQ_MEM_SIZE)-1:0]  free_count_reg, tail_reg;
-  logic [$clog2(`IQ_MEM_SIZE)-1:0]  compress_offset;
+  logic [$clog2(`IQ_MEM_SIZE):0]  uop_in_count, uop_out_count;
+  logic [$clog2(`IQ_MEM_SIZE):0]  free_count, tail;
+  reg   [$clog2(`IQ_MEM_SIZE):0]  free_count_reg, tail_reg;
+  logic [$clog2(`IQ_MEM_SIZE):0]  compress_offset;
 
   logic       [`IQ_MEM_SIZE-1:0]    free, load;
   logic       [`IQ_MEM_SIZE-1:0]    ready, is_store, clear;
@@ -199,15 +199,16 @@ module issue_queue_mem (
     load = 0;
     uop_in_count = 0;
     for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
-      uop_to_slot[i + tail - compress_offset] = uop_in[i];
-      load[i + tail - compress_offset] = 1;
+      uop_to_slot[i + tail_reg - compress_offset] = uop_in[i];
+      load[i + tail_reg - compress_offset] = 1;
       if (uop_in[i].valid) begin
         uop_in_count = uop_in_count + 1;
       end
     end
+    tail = tail_reg + uop_in_count - compress_offset;
   end
   
-  // Outpu selector
+  // Output selector
   issue_queue_mem_output_selector issue_queue_mem_output_selector (
     .ready      (ready),
     .is_store   (is_store),
@@ -217,7 +218,7 @@ module issue_queue_mem (
 
   always_comb begin
     for (int i = 0; i < `IQ_MEM_SIZE; i++) begin
-      is_store[i] = 1;  // todo: Add related field in uop definition
+      is_store[i] = (uop_to_issue[i].mem_type == MEM_ST);
     end
   end
 
