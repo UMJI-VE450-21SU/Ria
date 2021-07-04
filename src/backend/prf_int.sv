@@ -89,6 +89,7 @@ module prf_int (
         RS_FROM_ZERO: rs1_index[i] = 0;
         RS_FROM_PC  : rs1_index[i] = 0;
         RS_FROM_NPC : rs1_index[i] = 0;
+        default:      rs1_index[i] = 0;
       endcase
       case (uop_in[i].rs2_source)
         RS_INVALID  : rs2_index[i] = 0;
@@ -97,6 +98,7 @@ module prf_int (
         RS_FROM_ZERO: rs2_index[i] = 0;
         RS_FROM_PC  : rs2_index[i] = 0;
         RS_FROM_NPC : rs2_index[i] = 0;
+        default:      rs2_index[i] = 0;
       endcase
     end
   end
@@ -111,6 +113,7 @@ module prf_int (
         RS_FROM_ZERO: rs1_data[i] = 0;
         RS_FROM_PC  : rs1_data[i] = uop_in[i].pc;
         RS_FROM_NPC : rs1_data[i] = uop_in[i].npc;
+        default:      rs1_data[i] = 0;
       endcase
       case (uop_in[i].rs2_source)
         RS_INVALID  : rs2_data[i] = 0;
@@ -119,6 +122,7 @@ module prf_int (
         RS_FROM_ZERO: rs2_data[i] = 0;
         RS_FROM_PC  : rs2_data[i] = uop_in[i].pc;
         RS_FROM_NPC : rs2_data[i] = uop_in[i].npc;
+        default:      rs2_data[i] = 0;
       endcase
     end
   end
