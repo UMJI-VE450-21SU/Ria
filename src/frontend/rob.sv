@@ -34,6 +34,7 @@ module rob (
   rob_index_t                               rob_head_next;
   logic         [`ROB_INDEX_SIZE:0]         rob_size_next;
   logic         [`RENAME_WIDTH:0]           rob_size_increment;
+  logic                                     valid_tmp;
 
   micro_op_t    uop_out_next                [`RENAME_WIDTH-1:0];
   logic                                     recover_next;
@@ -46,7 +47,6 @@ module rob (
   micro_op_t    uop_complete_locker         [`COMMIT_WIDTH-1:0];
   micro_op_t    uop_in_locker               [`RENAME_WIDTH-1:0];
 
-  // todo: Latch inferred for signal 'top.core.cm.uop_complete_locker' (not all control paths of combinational always assign a value)
   always_comb begin
     rob_head_next       = rob_head;
     rob_size_next       = rob_size;
@@ -67,10 +67,10 @@ module rob (
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // Update completed uop
-      if (uop_complete_locker[i].valid) begin
-        // todo: Always_comb variable driven after use: 'uop_complete_locker'
-        uop_complete_locker[i].complete                 = 1;
-        op_list_next[uop_complete_locker[i].rob_index]  = uop_complete_locker[i];
+      valid_tmp = uop_complete_locker[i].valid;
+      if (valid_tmp) begin
+        op_list_next[uop_complete_locker[i].rob_index]            = uop_complete_locker[i];
+        op_list_next[uop_complete_locker[i].rob_index].complete   = 1;
         // A branch-type uop
         if (uop_complete_locker[i].br_type != BR_X) begin
           // A Mis-Prediction uop
@@ -113,7 +113,6 @@ module rob (
       if (allocatable_next) begin
         for (int i = 0; i < `RENAME_WIDTH; ++i) begin
           if (uop_in_locker[i].valid) begin
-            // todo: Bit extraction of array[63:0] requires 6 bit index, not 7 bits.
             op_list_next[rob_head_next + rob_size_next] = uop_in_locker[i];
             rob_size_next += 1;
           end

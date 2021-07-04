@@ -38,8 +38,6 @@ module rat (
   micro_op_t                              uop_recover_locker;
   micro_op_t    uop_retire_locker         [`COMMIT_WIDTH-1:0];
 
-  micro_op_t    uop_in_locker             [`RENAME_WIDTH-1:0];
-
   micro_op_t    uop_buffer                [`RENAME_WIDTH-1:0];
   micro_op_t    uop_buffer_next           [`RENAME_WIDTH-1:0];
 
