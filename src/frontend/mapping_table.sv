@@ -93,6 +93,7 @@ module mapping_table (
       if (rd_valid[i]) begin
         // WAW: Return Previous PRF
         prev_rd[i] = mapping_tb_next[rd[i]];
+        // todo: Bit extraction of var[31:0] requires 5 bit index, not 6 bits.
         if (arf_valid_next[prev_rd[i]]) begin
           prev_rd_valid[i] = 1;
         end

@@ -15,7 +15,7 @@ module inst_fetch (
   input                                 branch_taken,
   input        [31:0]                   branch_pc,
   // ======= cache related ===================
-  input        [31:0]                   icache2core_data,
+  input        [127:0]                  icache2core_data,
   input                                 icache2core_data_valid,
   output logic [31:0]                   core2icache_addr,   // one addr is enough
   // ======= inst buffer related =============

@@ -222,7 +222,7 @@ module pipe_3 (
     if (busy_reg) begin
       core2dcache_addr = in1 + uop.imm;
       if (is_st) begin
-        core2dcache_data = in2;
+        core2dcache_data = {32'b0, in2};
         core2dcache_data_we = 1;
       end
     end
@@ -269,7 +269,7 @@ module pipe_3 (
     if (reset)
       out <= 0;
     else
-      out <= data_out;
+      out <= data_out[31:0];
   end
 
   assign busy = busy_reg;

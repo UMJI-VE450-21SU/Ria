@@ -10,7 +10,7 @@ module core (
   input reset,
 
   // ======= icache related ==================
-  input        [31:0]  icache2core_data,
+  input        [127:0] icache2core_data,
   input                icache2core_data_valid,
   output logic [31:0]  core2icache_addr,
 
@@ -23,8 +23,8 @@ module core (
   output logic [31:0]  core2dcache_addr
 );
 
-  logic                           stall;
-  logic                           clear;
+  logic                           stall = 0;
+  logic                           clear = 0;
   logic                           recover;
   logic       [`ARF_INT_SIZE-1:0] arf_recover;
   logic       [`PRF_INT_SIZE-1:0] prf_recover;
@@ -164,17 +164,17 @@ module core (
 
   micro_op_t [`DISPATCH_WIDTH-1:0] is_int_uop_in;
   micro_op_t [`DISPATCH_WIDTH-1:0] is_mem_uop_in;
-  micro_op_t [`DISPATCH_WIDTH-1:0] is_fp_uop_in;
+  // micro_op_t [`DISPATCH_WIDTH-1:0] is_fp_uop_in;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       is_int_uop_in <= 0;
       is_mem_uop_in <= 0;
-      is_fp_uop_in  <= 0;
+      // is_fp_uop_in  <= 0;
     end else if (!stall) begin
       is_int_uop_in <= dp_uop_to_int;
       is_mem_uop_in <= dp_uop_to_mem;
-      is_fp_uop_in  <= dp_uop_to_fp;
+      // is_fp_uop_in  <= dp_uop_to_fp;
     end
   end
 
@@ -205,6 +205,7 @@ module core (
   issue_queue_mem is_mem (
     .clock              (clock),
     .reset              (reset),
+    // todo: fix common tag bus later
     .ctb_prf_int_index  (ctb_prf_int_index),
     .ctb_valid          (ctb_valid),
     .ex_busy            (ex_mem_busy),
@@ -424,6 +425,7 @@ module core (
     .uop_out      (cm_uops_out      ),
     .recover      (recover          ),
     .uop_recover  (uop_recover      ),
+    .uop_retire   (uop_retire       ),
     .arf_recover  (arf_recover      ),
     .prf_recover  (prf_recover      ),
     .allocatable  (cm_allocatable   ),

@@ -22,8 +22,8 @@ module alu (
 
   assign add  = in1 + in2;
   assign sub  = in1 - in2;
-  assign slt  = signed_in1 < signed_in2;
-  assign sltu = in1 < in2;
+  assign slt  = {32{signed_in1 < signed_in2}};
+  assign sltu = {32{in1 < in2}};
   assign lxor = in1 ^ in2;
   assign lor  = in1 | in2;
   assign land = in1 & in2;
@@ -65,7 +65,7 @@ module branch (
 
   logic signed [31:0] signed_in1, signed_in2;
   logic               eq, ne, lt, ge, ltu, geu;
-  br_type_t           fn;
+  br_type_t           br;
   logic               result;
 
   assign signed_in1 = in1;
@@ -106,11 +106,11 @@ module imul (
   output logic [31:0] out                         // 5-cycle latency
 );
 
-  wire signed [31:0]      signed_in1, signed_in2; // for signed wire
-  wire signed [63:0]      final_product, product_0, product_1, product_2;
-  logic [1:0]             sign;
-  reg [`IMUL_LATENCY-1:0] range;                  // 1 if [63:32]
-  reg [`IMUL_LATENCY-1:0] sign_reg;
+  logic signed [31:0]          signed_in1, signed_in2; // for signed wire
+  logic signed [63:0]          final_product, product_0, product_1, product_2;
+  logic [1:0]                  sign;
+  reg [`IMUL_LATENCY-1:0]      range;                  // 1 if [63:32]
+  reg [`IMUL_LATENCY-1:0][1:0] sign_reg;
   // every imul have a delay of 5 clock cycles
 
   assign signed_in1 = in1;

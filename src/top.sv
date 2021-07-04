@@ -10,7 +10,7 @@ module top (
   input reset,
 
   // ======= icache related ==================
-  input        [31:0]  icache2core_data,
+  input        [127:0] icache2core_data,
   input                icache2core_data_valid,
   output logic [31:0]  core2icache_addr,
 

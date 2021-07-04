@@ -69,7 +69,7 @@ module rat (
   logic                                                 mp_allocatable;
   logic                                                 allocatable_next;
 
-  mapping_table mapping_tb(
+  mapping_table mapping_table (
     .clock          (clock                ),
     .reset          (reset                ),
     .stall          (stall                ),
@@ -131,6 +131,7 @@ module rat (
             // Have empty space for prediction
             if (check_size_next < `RAT_CP_SIZE) begin
               check         = 1;
+              // todo: Operator ASSIGN expects 3 bits on the Assign RHS, but Assign RHS's ADD generates 4 bits.
               check_idx     = check_head_next + check_size_next;
               check_flag[i] = 1;
             end else begin
