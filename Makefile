@@ -41,6 +41,8 @@ VERILATOR_FLAGS += --coverage
 # Add this trace to get a backtrace in gdb
 #VERILATOR_FLAGS += --gdbbt
 
+VERILATOR_FLAGS += --top-module top
+
 # Input files for Verilator
 VERILATOR_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
 SIM_SRC = sim/sim_main.cpp
