@@ -178,14 +178,14 @@ endmodule
 
 // Pipe 3: Memory load/store
 module pipe_3 (
-  input             clock,
-  input             reset,
-  input  micro_op_t uop,
-  input  [31:0]     in1,
-  input  [31:0]     in2,
-  output micro_op_t uop_out,
-  output [31:0]     out,
-  output            busy,
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [31:0]       in1,
+  input  [31:0]       in2,
+  output micro_op_t   uop_out,
+  output logic [31:0] out,
+  output              busy,
 
   // ======= dcache related ==================
   input        [63:0]  dcache2core_data,
@@ -193,7 +193,6 @@ module pipe_3 (
   output logic [63:0]  core2dcache_data,
   output logic         core2dcache_data_we,
   output mem_size_t    core2dcache_data_size,
-  input                dcache2core_data_w_ack,
   output logic [31:0]  core2dcache_addr
 )
   
@@ -261,11 +260,17 @@ module pipe_3 (
       busy_reg <= 1;
     else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid)
       busy_reg <= 0;
-    else if (busy_reg & is_st & dcache2core_data_w_ack)
+    else if (busy_reg & is_st)
       busy_reg <= 0;
   end
 
-  assign out = data_out[31:0];
+  always_ff @(posedge clock) begin
+    if (reset)
+      out <= 0;
+    else
+      out <= data_out;
+  end
+
   assign busy = busy_reg;
 
 endmodule

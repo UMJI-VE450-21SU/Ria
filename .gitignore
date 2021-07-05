@@ -7,6 +7,7 @@ obj_dir
 
 *.out
 .DS_Store
+<<<<<<< HEAD
 .tags
 .elf
 .bin
@@ -14,3 +15,12 @@ obj_dir
 .mif
 .log
 .pb
+=======
+
+*.tags
+*.elf
+*.bin
+*.hex
+*.mif
+*.dump
+>>>>>>> 667890f757b4dc2eeec3ba7636a83a12e273517d
