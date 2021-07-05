@@ -160,6 +160,58 @@ module core (
     .uop_to_fp  (dp_uop_to_fp)
   );
 
+  wire [`DISPATCH_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0] set_busy_int_index;
+  wire [`DISPATCH_WIDTH-1:0]                          set_busy_int_valid;
+  wire [`DISPATCH_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0] set_busy_mem_index;
+  wire [`DISPATCH_WIDTH-1:0]                          set_busy_mem_valid;
+  wire [`PRF_INT_WAYS-1:0][`PRF_INT_INDEX_SIZE-1:0]   clear_busy_index;
+  wire [`PRF_INT_WAYS-1:0]                            clear_busy_valid;
+  wire [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]    rs1_int_index;
+  wire [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]    rs2_int_index;
+  wire [`IQ_INT_SIZE-1:0]                             rs1_int_busy;
+  wire [`IQ_INT_SIZE-1:0]                             rs2_int_busy;
+  wire [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]    rs1_mem_index;
+  wire [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]    rs2_mem_index;
+  wire [`IQ_MEM_SIZE-1:0]                             rs1_mem_busy;
+  wire [`IQ_MEM_SIZE-1:0]                             rs2_mem_busy;
+  
+  generate
+    for (genvar i = 0; i < `DISPATCH_WIDTH; i++) begin
+      assign set_busy_int_index[i] = dp_uop_to_int[i].rd_prf_int_index;
+      assign set_busy_int_valid[i] = dp_uop_to_int[i].rd_valid;
+      assign set_busy_mem_index[i] = dp_uop_to_mem[i].rd_prf_int_index;
+      assign set_busy_mem_valid[i] = dp_uop_to_mem[i].rd_valid;
+    end
+  endgenerate
+
+  scoreboard_int sb_int (
+    .clock            (clock),
+    .reset            (reset),
+    .clear            (clear),
+    .set_busy_index   (set_busy_int_index),
+    .set_busy_valid   (set_busy_int_valid),
+    .clear_busy_index (clear_busy_index),
+    .clear_busy_valid (clear_busy_valid),
+    .rs1_index        (rs1_int_index),
+    .rs2_index        (rs2_int_index),
+    .rs1_busy         (rs1_int_busy),
+    .rs2_busy         (rs2_int_busy)
+  );
+
+  scoreboard_mem sb_mem (
+    .clock            (clock),
+    .reset            (reset),
+    .clear            (clear),
+    .set_busy_index   (set_busy_mem_index),
+    .set_busy_valid   (set_busy_mem_valid),
+    .clear_busy_index (clear_busy_index),
+    .clear_busy_valid (clear_busy_valid),
+    .rs1_index        (rs1_mem_index),
+    .rs2_index        (rs2_mem_index),
+    .rs1_busy         (rs1_mem_busy),
+    .rs2_busy         (rs2_mem_busy)
+  );
+
   /* DP ~ IS Pipeline Registers */
 
   micro_op_t [`DISPATCH_WIDTH-1:0] is_int_uop_in;
@@ -180,38 +232,38 @@ module core (
 
   /* Stage 6: IS - Issue */
 
-  logic [`ISSUE_WIDTH_INT-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index;
-  logic [`ISSUE_WIDTH_INT-1:0]      ctb_valid;
-
   logic      [`ISSUE_WIDTH_INT-1:0] ex_int_busy;
   micro_op_t [`ISSUE_WIDTH_INT-1:0] is_int_uop_out;
   logic                             iq_int_full;
 
-  issue_queue_int is_int (
-    .clock              (clock),
-    .reset              (reset),
-    .ctb_prf_int_index  (ctb_prf_int_index),
-    .ctb_valid          (ctb_valid),
-    .ex_busy            (ex_int_busy),
-    .uop_in             (is_int_uop_in),
-    .uop_out            (is_int_uop_out),
-    .iq_int_full        (iq_int_full)
+  issue_queue_int iq_int (
+    .clock        (clock),
+    .reset        (reset),
+    .ex_busy      (ex_int_busy),
+    .rs1_index    (rs1_int_index),
+    .rs2_index    (rs2_int_index),
+    .rs1_busy     (rs1_int_busy),
+    .rs2_busy     (rs2_int_busy)
+    .uop_in       (is_int_uop_in),
+    .uop_out      (is_int_uop_out),
+    .iq_int_full  (iq_int_full)
   );
 
   logic      [`ISSUE_WIDTH_MEM-1:0] ex_mem_busy;
   micro_op_t [`ISSUE_WIDTH_MEM-1:0] is_mem_uop_out;
   logic                             iq_mem_full;
 
-  issue_queue_mem is_mem (
-    .clock              (clock),
-    .reset              (reset),
-    // todo: fix common tag bus later
-    .ctb_prf_int_index  (ctb_prf_int_index),
-    .ctb_valid          (ctb_valid),
-    .ex_busy            (ex_mem_busy),
-    .uop_in             (is_mem_uop_in),
-    .uop_out            (is_mem_uop_out),
-    .iq_mem_full        (iq_mem_full)
+  issue_queue_mem iq_mem (
+    .clock        (clock),
+    .reset        (reset),
+    .ex_busy      (ex_mem_busy),
+    .rs1_index    (rs1_mem_index),
+    .rs2_index    (rs2_mem_index),
+    .rs1_busy     (rs1_mem_busy),
+    .rs2_busy     (rs2_mem_busy)
+    .uop_in       (is_mem_uop_in),
+    .uop_out      (is_mem_uop_out),
+    .iq_mem_full  (iq_mem_full)
   );
 
   /* IS ~ RF Pipeline Registers */
@@ -375,11 +427,15 @@ module core (
       assign rf_int_rd_index_in[i] = ex_int_uop_out[i].rd_prf_int_index;
       assign rf_int_rd_data_in [i] = ex_int_rd_data_out[i];
       assign rf_int_rd_en_in   [i] = ex_int_uop_out[i].rd_valid;
+      assign clear_busy_index  [i] = ex_int_uop_out[i].rd_prf_int_index;
+      assign clear_busy_valid  [i] = ex_int_uop_out[i].rd_valid;
     end
     for (genvar i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
       assign rf_int_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
       assign rf_int_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
       assign rf_int_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_valid;
+      assign clear_busy_index  [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_prf_int_index;
+      assign clear_busy_valid  [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_valid;
     end
   endgenerate
 
