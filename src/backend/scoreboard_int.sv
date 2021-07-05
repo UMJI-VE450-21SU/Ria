@@ -16,8 +16,8 @@ module scoreboard_int (
   // Inquiry from issue queue slots
   input  [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
   input  [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
-  output [`IQ_INT_SIZE-1:0]                          rs1_busy,
-  output [`IQ_INT_SIZE-1:0]                          rs2_busy
+  output logic [`IQ_INT_SIZE-1:0]                    rs1_busy,
+  output logic [`IQ_INT_SIZE-1:0]                    rs2_busy
 );
 
   // multi-bank scoreboard

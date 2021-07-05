@@ -108,6 +108,7 @@ module pipe_1 (
 
   assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
                ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out);
+  assign uop_out = uop_fifo[0];
 
   assign busy = 1'b0;
 
@@ -171,6 +172,7 @@ module pipe_2 (
 
   assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
                ({32{uop_fifo[0].fu_code == FU_IDIV}} & idiv_out);
+  assign uop_out = uop_fifo[0];
 
   assign busy = 1'b0;
 
@@ -197,6 +199,7 @@ module pipe_3 (
   output logic [31:0]  core2dcache_addr
 );
   
+  micro_op_t uop_reg;
   wire input_valid = uop.valid & (uop.fu_code == FU_MEM);
   reg  is_ld, is_ldu, is_st;
   reg  busy_reg;
@@ -255,14 +258,17 @@ module pipe_3 (
 
   // actually a 2-state FSM (IDLE, BUSY)
   always_ff @(posedge clock) begin
-    if (reset)
+    if (reset) begin
       busy_reg <= 0;
-    else if (!busy_reg & input_valid)
+      uop_reg  <= 0;
+    end else if (!busy_reg & input_valid) begin
       busy_reg <= 1;
-    else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid)
+      uop_reg  <= uop;
+    end else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid) begin
       busy_reg <= 0;
-    else if (busy_reg & is_st)
+    end else if (busy_reg & is_st) begin
       busy_reg <= 0;
+    end
   end
 
   always_ff @(posedge clock) begin
@@ -271,6 +277,7 @@ module pipe_3 (
     else
       out <= data_out[31:0];
   end
+  assign uop_out = uop_reg;
 
   assign busy = busy_reg;
 

@@ -16,8 +16,8 @@ module scoreboard_mem (
   // Inquiry from issue queue slots
   input  [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
   input  [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
-  output [`IQ_MEM_SIZE-1:0]                          rs1_busy,
-  output [`IQ_MEM_SIZE-1:0]                          rs2_busy
+  output logic [`IQ_MEM_SIZE-1:0]                    rs1_busy,
+  output logic [`IQ_MEM_SIZE-1:0]                    rs2_busy
 );
 
   // multi-bank scoreboard

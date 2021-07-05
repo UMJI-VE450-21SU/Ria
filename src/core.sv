@@ -243,7 +243,7 @@ module core (
     .rs1_index    (rs1_int_index),
     .rs2_index    (rs2_int_index),
     .rs1_busy     (rs1_int_busy),
-    .rs2_busy     (rs2_int_busy)
+    .rs2_busy     (rs2_int_busy),
     .uop_in       (is_int_uop_in),
     .uop_out      (is_int_uop_out),
     .iq_int_full  (iq_int_full)
@@ -260,7 +260,7 @@ module core (
     .rs1_index    (rs1_mem_index),
     .rs2_index    (rs2_mem_index),
     .rs1_busy     (rs1_mem_busy),
-    .rs2_busy     (rs2_mem_busy)
+    .rs2_busy     (rs2_mem_busy),
     .uop_in       (is_mem_uop_in),
     .uop_out      (is_mem_uop_out),
     .iq_mem_full  (iq_mem_full)

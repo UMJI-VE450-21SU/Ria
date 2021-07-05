@@ -109,10 +109,10 @@ module issue_queue_int (
   input  clock,
   input  reset,
 
-  input  [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
-  input  [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
-  output [`IQ_INT_SIZE-1:0]                          rs1_busy,
-  output [`IQ_INT_SIZE-1:0]                          rs2_busy,
+  output [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
+  output [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
+  input  [`IQ_INT_SIZE-1:0]                          rs1_busy,
+  input  [`IQ_INT_SIZE-1:0]                          rs2_busy,
 
   input  [`ISSUE_WIDTH_INT-1:0]             ex_busy,
 
@@ -157,18 +157,18 @@ module issue_queue_int (
   generate
     for (genvar k = 0; k < `IQ_INT_SIZE; k++) begin
       issue_slot_int issue_slot_int_inst (
-        .clock              (clock),
-        .reset              (reset),
-        .clear              (clear[k]),
-        .load               (load[k]),
-        .uop_in             (uop_to_slot[k]),
-        .uop                (uop_to_issue[k]),
-        .rs1_index          (rs1_index[k]),
-        .rs2_index          (rs2_index[k]),
-        .rs1_busy           (rs1_busy[k]),
-        .rs2_busy           (rs2_busy[k]),
-        .ready              (ready[k]),
-        .free               (free[k])
+        .clock      (clock),
+        .reset      (reset),
+        .clear      (clear[k]),
+        .load       (load[k]),
+        .uop_in     (uop_to_slot[k]),
+        .uop        (uop_to_issue[k]),
+        .rs1_index  (rs1_index[k]),
+        .rs2_index  (rs2_index[k]),
+        .rs1_busy   (rs1_busy[k]),
+        .rs2_busy   (rs2_busy[k]),
+        .ready      (ready[k]),
+        .free       (free[k])
       );
       assign ready_alu[k]  = ready[k] & (uop_to_issue[k].fu_code == FU_ALU);
       assign ready_br[k]   = ready[k] & (uop_to_issue[k].fu_code == FU_BR);
