@@ -394,13 +394,7 @@ module core (
 
   micro_op_t [`COMMIT_WIDTH-1:0]  cm_uops_complete;
 
-  always_ff @(posedge clock) begin
-    if (reset | clear) begin
-      cm_uops_complete <= 0;
-    end else if (!stall) begin
-      cm_uops_complete <= wb_uops_out;
-    end
-  end
+  assign cm_uops_complete = wb_uops_out;
 
   /* RR ~ CM Pipeline Registers */
 
