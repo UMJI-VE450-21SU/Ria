@@ -62,6 +62,12 @@ VERILATOR_OPTIONS := input.vc
 # Input files for Verilator
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
+# the program to run
+SIMULATOR_PROG = prog/c_example.bin
+#SIMULATOR_PROG = myfile
+# the dmem init
+SIMULATOR_DATA_INIT = prog/c_example.bin
+
 ######################################################################
 default: run
 
@@ -86,12 +92,12 @@ run:
 	@echo "-- RUN ---------------------"
 	@rm -rf logs
 	@mkdir -p logs
-	obj_dir/Vtop +trace
+	obj_dir/Vcore_blank ${SIMULATOR_PROG} ${SIMULATOR_DATA_INIT} +trace
 
 	@echo
 	@echo "-- COVERAGE ----------------"
-	@rm -rf logs/annotated
-	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
+#	@rm -rf logs/annotated
+#	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
 
 	@echo
 	@echo "-- DONE --------------------"

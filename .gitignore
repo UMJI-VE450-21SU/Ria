@@ -12,3 +12,5 @@ obj_dir
 .bin
 .hex
 .mif
+.log
+.pb
