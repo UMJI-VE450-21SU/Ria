@@ -36,11 +36,13 @@ module core (
   fb_entry_t [`FETCH_WIDTH-1:0] if_insts_out;
   logic                         if_insts_out_valid;
   logic                         fb_full;
+  logic                         is_prediction;      // todo: Branch Prediction
+  logic                         prediction_hit;     // todo: Branch Prediction
 
-  inst_fetch if0 (
+  inst_fetch if (
     .clock                  (clock),
     .reset                  (reset),
-    .stall                  (stall | fb_full),
+    .stall                  (stall | fb_full | cm_allocatable | rr_allocatable),
     .pc_predicted           (0),
     .branch_taken           (0),
     .branch_pc              (0),
@@ -123,7 +125,7 @@ module core (
   rat rr (
     .clock        (clock          ),
     .reset        (reset          ),
-    .input_valid  (1              ),
+    .input_valid  (cm_allocatable ),
     .recover      (recover        ),
     .arf_recover  (arf_recover    ),
     .prf_recover  (prf_recover    ),
@@ -139,19 +141,19 @@ module core (
 
   micro_op_t [`DISPATCH_WIDTH-1:0] dp_uops_in;
 
-  always_ff @(posedge clock) begin
-    if (reset | clear) begin
-      dp_uops_in <= 0;
-    end else if (!stall) begin
-      dp_uops_in <= rr_uops_out;
-    end
-  end
+  micro_op_t  [`RENAME_WIDTH-1:0]   cm_uops_out;
+  logic                             cm_allocatable;
+  logic                             cm_ready;       // todo: connect to where?
+
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uops_in;
+
+  assign dp_uops_in = cm_uops_out;
 
   /* Stage 5: DP - Dispatch */
 
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_int;
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_mem;
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_fp;
+  micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_int;
+  micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_mem;
+  micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_fp;
 
   dispatch dp (
     .uop_in     (dp_uops_in),
@@ -412,24 +414,21 @@ module core (
 
   /* Stage 10: CM - Commit */
 
-  micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;    // todo: connect to where?
-  logic                           cm_allocatable; // todo: connect to where?
-  logic                           cm_ready;       // todo: connect to where?
-
   rob cm (
-    .clock        (clock            ),
-    .reset        (reset            ),
-    .input_valid  (cm_in_valid      ),
-    .uop_complete (cm_uops_complete ),
-    .uop_in       (cm_uops_in       ),
-    .uop_out      (cm_uops_out      ),
-    .recover      (recover          ),
-    .uop_recover  (uop_recover      ),
-    .uop_retire   (uop_retire       ),
-    .arf_recover  (arf_recover      ),
-    .prf_recover  (prf_recover      ),
-    .allocatable  (cm_allocatable   ),
-    .ready        (cm_ready         )
+    .clock          (clock            ),
+    .reset          (reset            ),
+    .input_valid    (cm_in_valid      ),
+    .uop_complete   (cm_uops_complete ),
+    .uop_in         (cm_uops_in       ),
+    .uop_out        (cm_uops_out      ),
+    .recover        (recover          ),
+    .uop_recover    (uop_recover      ),
+    .arf_recover    (arf_recover      ),
+    .prf_recover    (prf_recover      ),
+    .prediction     (is_prediction    ),
+    .prediction_hit (prediction_hit   ),
+    .allocatable    (cm_allocatable   ),
+    .ready          (cm_ready         )
   );
 
   // todo: connect pipe 0 output to recover signal
