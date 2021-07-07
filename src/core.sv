@@ -471,6 +471,7 @@ module core (
     .uop_out        (cm_uops_out      ),
     .recover        (recover          ),
     .uop_recover    (uop_recover      ),
+    .uop_retire     (uop_retire       ),
     .arf_recover    (arf_recover      ),
     .prf_recover    (prf_recover      ),
     .prediction     (is_prediction    ),
