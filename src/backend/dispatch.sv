@@ -3,15 +3,15 @@
 // Author:  Li Shi
 // Date:    2021/06/01
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module dispatch_selector (
   input       [`DISPATCH_WIDTH-1:0] ready,
   output reg  [`DISPATCH_WIDTH-1:0] [$clog2(`DISPATCH_WIDTH)-1:0] sel,
-  output reg  [`DISPATCH_WIDTH-1:0] sel_valid,
+  output reg  [`DISPATCH_WIDTH-1:0] sel_valid
 );
 
-  wire [`DISPATCH_WIDTH:0] [`DISPATCH_WIDTH-1:0] readys;
+  wire [`DISPATCH_WIDTH-1:0] [`DISPATCH_WIDTH-1:0] readys;
 
   assign readys[0] = ready;
   generate
@@ -84,9 +84,9 @@ module dispatch (
   // Send selected micro-ops to output
   generate
     for (genvar i = 0; i < `DISPATCH_WIDTH; i++) begin
-      assign uop_to_int[i] = uop_to_int_sel_valid ? uop_in[uop_to_int_sel[i]] : 0;
-      assign uop_to_mem[i] = uop_to_mem_sel_valid ? uop_in[uop_to_mem_sel[i]] : 0;
-      assign uop_to_fp[i]  = uop_to_fp_sel_valid  ? uop_in[uop_to_fp_sel[i]]  : 0;
+      assign uop_to_int[i] = uop_to_int_sel_valid[i] ? uop_in[uop_to_int_sel[i]] : 0;
+      assign uop_to_mem[i] = uop_to_mem_sel_valid[i] ? uop_in[uop_to_mem_sel[i]] : 0;
+      assign uop_to_fp[i]  = uop_to_fp_sel_valid[i]  ? uop_in[uop_to_fp_sel[i]]  : 0;
     end
   endgenerate
 

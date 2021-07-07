@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/08
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module rob (
   input           clock,
@@ -20,6 +20,8 @@ module rob (
   output  micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
   output  reg         [`ARF_INT_SIZE-1:0]   arf_recover,
   output  reg         [`PRF_INT_SIZE-1:0]   prf_recover,
+  output  reg                               prediction,
+  output  reg                               prediction_hit,
 
   output  reg                               allocatable,
   output  reg                               ready
@@ -34,6 +36,7 @@ module rob (
   rob_index_t                               rob_head_next;
   logic         [`ROB_INDEX_SIZE:0]         rob_size_next;
   logic         [`RENAME_WIDTH:0]           rob_size_increment;
+  logic                                     valid_tmp;
 
   micro_op_t    uop_out_next                [`RENAME_WIDTH-1:0];
   logic                                     recover_next;
@@ -42,6 +45,8 @@ module rob (
   logic         [`ARF_INT_SIZE-1:0]         arf_recover_next;
   logic         [`PRF_INT_SIZE-1:0]         prf_recover_next;
   logic                                     allocatable_next;
+  logic                                     prediction_next;
+  logic                                     prediction_hit_next;
 
   micro_op_t    uop_complete_locker         [`COMMIT_WIDTH-1:0];
   micro_op_t    uop_in_locker               [`RENAME_WIDTH-1:0];
@@ -55,6 +60,8 @@ module rob (
     prf_recover_next    = 1;
     allocatable_next    = 1;
     rob_size_increment  = 0;
+    prediction_next     = 0;
+    prediction_hit_next = 1;
     for (int i = 0; i < `ROB_SIZE; ++i) begin
       op_list_next[i] = op_list[i];
     end
@@ -66,18 +73,18 @@ module rob (
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // Update completed uop
+      valid_tmp = uop_complete_locker[i].valid;
       if (uop_complete_locker[i].valid) begin
-        uop_complete_locker[i].complete                 = 1;
-        op_list_next[uop_complete_locker[i].rob_index]  = uop_complete_locker[i];
+        op_list_next[uop_complete_locker[i].rob_index]            = uop_complete_locker[i];
+        op_list_next[uop_complete_locker[i].rob_index].complete   = 1;
         // A branch-type uop
         if (uop_complete_locker[i].br_type != BR_X) begin
+          prediction_next = 1;
           // A Mis-Prediction uop
           if (uop_complete_locker[i].exp_br != uop_complete_locker[i].real_br) begin
-            recover_next      = 1;
-            uop_recover_next  = uop_complete_locker[i];
-            // todo: Send `prediction miss` signal to `branch prediction`
-          end else begin
-            // todo: Send `prediction hit` signal to `branch prediction`
+            recover_next        = 1;
+            uop_recover_next    = uop_complete_locker[i];
+            prediction_hit_next = 0;
           end
         end
       end
@@ -115,6 +122,10 @@ module rob (
             rob_size_next += 1;
           end
         end
+      end else begin
+        for (int i = 0; i < `RENAME_WIDTH; ++i) begin
+          uop_out_next[i] = 0;
+        end
       end
     end
   end
@@ -141,11 +152,13 @@ module rob (
     for (int i = 0; i < `RENAME_WIDTH; ++i) begin
       uop_out[i] <= uop_out_next[i];
     end
-    recover     <= recover_next;
-    uop_recover <= uop_recover_next;
-    arf_recover <= arf_recover_next;
-    prf_recover <= prf_recover_next;
-    allocatable <= allocatable_next;
+    recover         <= recover_next;
+    uop_recover     <= uop_recover_next;
+    arf_recover     <= arf_recover_next;
+    prf_recover     <= prf_recover_next;
+    allocatable     <= allocatable_next;
+    prediction      <= prediction_next;
+    prediction_hit  <= prediction_hit_next;
     if (ready) begin
       for (int i = 0; i < `ROB_SIZE; ++i) begin
         op_list[i] <= op_list_next[i];

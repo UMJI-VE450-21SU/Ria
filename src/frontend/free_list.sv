@@ -3,9 +3,9 @@
 // Author:  Jian Shi
 // Date:    2021/06/02
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
-module free_list_int (
+module free_list (
   input       clock,
   input       reset,
   input       stall,
@@ -66,9 +66,11 @@ module free_list_int (
       end
     end
 
+    // todo: Operator LTE expects 6 bits on the LHS, but LHS's VARREF 'req_count' generates 4 bits.
     if (req_count <= free_num_next) begin
       for (int i = 0; i < `PRF_INT_SIZE; ++i) begin
         if (free_list_next[i] == 0) begin
+          // todo: Operator ASSIGN expects 6 bits on the Assign RHS, but Assign RHS's VARREF 'i' generates 32 bits.
           prf_out_next[req_idx] = i;
           req_idx += 1;
         end
@@ -88,6 +90,7 @@ module free_list_int (
       allocatable = 0;
     end
     if (allocatable) begin
+      // todo: Operator SUB expects 6 bits on the RHS, but RHS's VARREF 'req_count' generates 4 bits.
       free_num_next = free_num_next - req_count;
     end
   end
@@ -95,6 +98,7 @@ module free_list_int (
   // Store calculation result & output final result
   always_ff @(posedge clock) begin
     if (reset) begin
+      // todo: Operator ASSIGNDLY expects 6 bits on the Assign RHS, but Assign RHS's SUB generates 32 or 7 bits.
       free_list <= `PRF_INT_SIZE'b1;
       free_num  <= `PRF_INT_SIZE-1;
     end else if (recover) begin

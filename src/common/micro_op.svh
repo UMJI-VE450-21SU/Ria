@@ -6,8 +6,8 @@
 `ifndef __MICRO_OP_SVH__
 `define __MICRO_OP_SVH__
 
-`include "defines.svh"
-`include "isa.svh"
+`include "src/common/defines.svh"
+`include "src/common/isa.svh"
 
 typedef struct packed {
   logic [31:0]  pc;

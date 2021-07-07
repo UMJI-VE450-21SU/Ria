@@ -3,7 +3,7 @@
 // Author:  Li Shi
 // Date:    2021/06/21
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module prf_int_data (
   input                                                 clock,
@@ -73,7 +73,7 @@ module prf_int (
   
   output micro_op_t [`PRF_INT_WAYS-1:0]                 uop_out,
   output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs1_data,
-  output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs2_data,
+  output reg [`PRF_INT_WAYS-1:0] [31:0]                 rs2_data
 );
 
   logic [`PRF_INT_WAYS-1:0] [`PRF_INT_INDEX_SIZE-1:0] rs1_index, rs2_index;
@@ -84,19 +84,21 @@ module prf_int (
     for (int i = 0; i < `PRF_INT_WAYS; i++) begin
       case (uop_in[i].rs1_source)
         RS_INVALID  : rs1_index[i] = 0;
-        RS_FROM_RF  : rs1_index[i] = uop_in[i].prf_int_index;
+        RS_FROM_RF  : rs1_index[i] = uop_in[i].rs1_prf_int_index;
         RS_FROM_IMM : rs1_index[i] = 0;
         RS_FROM_ZERO: rs1_index[i] = 0;
         RS_FROM_PC  : rs1_index[i] = 0;
         RS_FROM_NPC : rs1_index[i] = 0;
+        default:      rs1_index[i] = 0;
       endcase
       case (uop_in[i].rs2_source)
         RS_INVALID  : rs2_index[i] = 0;
-        RS_FROM_RF  : rs2_index[i] = uop_in[i].prf_int_index;
+        RS_FROM_RF  : rs2_index[i] = uop_in[i].rs2_prf_int_index;
         RS_FROM_IMM : rs2_index[i] = 0;
         RS_FROM_ZERO: rs2_index[i] = 0;
         RS_FROM_PC  : rs2_index[i] = 0;
         RS_FROM_NPC : rs2_index[i] = 0;
+        default:      rs2_index[i] = 0;
       endcase
     end
   end
@@ -111,6 +113,7 @@ module prf_int (
         RS_FROM_ZERO: rs1_data[i] = 0;
         RS_FROM_PC  : rs1_data[i] = uop_in[i].pc;
         RS_FROM_NPC : rs1_data[i] = uop_in[i].npc;
+        default:      rs1_data[i] = 0;
       endcase
       case (uop_in[i].rs2_source)
         RS_INVALID  : rs2_data[i] = 0;
@@ -119,6 +122,7 @@ module prf_int (
         RS_FROM_ZERO: rs2_data[i] = 0;
         RS_FROM_PC  : rs2_data[i] = uop_in[i].pc;
         RS_FROM_NPC : rs2_data[i] = uop_in[i].npc;
+        default:      rs2_data[i] = 0;
       endcase
     end
   end

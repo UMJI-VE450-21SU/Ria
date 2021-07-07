@@ -49,6 +49,7 @@
 `define PRF_FP_WAYS         (`ISSUE_WIDTH_FP + `ISSUE_WIDTH_MEM)
 
 `define IMUL_LATENCY        5
+`define IDIV_LATENCY        12
 
 typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
 typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;

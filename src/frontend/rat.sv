@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/05/23
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module rat (
   input   clock,
@@ -38,8 +38,6 @@ module rat (
   micro_op_t                              uop_recover_locker;
   micro_op_t    uop_retire_locker         [`COMMIT_WIDTH-1:0];
 
-  micro_op_t    uop_in_locker             [`RENAME_WIDTH-1:0];
-
   micro_op_t    uop_buffer                [`RENAME_WIDTH-1:0];
   micro_op_t    uop_buffer_next           [`RENAME_WIDTH-1:0];
 
@@ -66,10 +64,10 @@ module rat (
 
   logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prev_rd;
   logic [`RENAME_WIDTH-1:0]                             prev_rd_valid;
-  logic                                                 mp_allocatable;z
+  logic                                                 mp_allocatable;
   logic                                                 allocatable_next;
 
-  mapping_table mapping_tb(
+  mapping_table mapping_table (
     .clock          (clock                ),
     .reset          (reset                ),
     .stall          (stall                ),

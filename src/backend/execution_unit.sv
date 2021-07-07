@@ -13,7 +13,7 @@ module pipe_0 (
   output micro_op_t uop_out,
   output [31:0]     out,
   output            busy
-)
+);
 
   logic [31:0]  alu_out;
   logic         br_out;
@@ -62,11 +62,11 @@ module pipe_1 (
   output micro_op_t uop_out,
   output [31:0]     out,
   output            busy
-)
+);
 
-  wire                                  input_valid = uop.valid;
-  logic micro_op_t [`IMUL_LATENCY-1:0]  uop_fifo;
-  logic [31:0]                          alu_out, imul_out;
+  wire                            input_valid = uop.valid;
+  micro_op_t [`IMUL_LATENCY-1:0]  uop_fifo;
+  logic [31:0]                    alu_out, imul_out;
 
   always_ff @(posedge clock) begin
     if (reset) begin
@@ -107,7 +107,8 @@ module pipe_1 (
   );
 
   assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out});
+               ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out);
+  assign uop_out = uop_fifo[0];
 
   assign busy = 1'b0;
 
@@ -124,11 +125,11 @@ module pipe_2 (
   output micro_op_t uop_out,
   output [31:0]     out,
   output            busy
-)
+);
 
-  wire                                  input_valid = uop.valid;
-  logic micro_op_t [`IDIV_LATENCY-1:0]  uop_fifo;
-  logic [31:0]                          alu_out, idiv_out;
+  wire                            input_valid = uop.valid;
+  micro_op_t [`IDIV_LATENCY-1:0]  uop_fifo;
+  logic [31:0]                    alu_out, idiv_out;
 
   always_ff @(posedge clock) begin
     if (reset) begin
@@ -159,7 +160,8 @@ module pipe_2 (
     .out      (alu_out)
   );
 
-  idiv idiv_inst (
+  // todo: Add a idiv module
+  imul idiv_inst (
     .clock    (clock),
     .reset    (reset),
     .uop      (uop),
@@ -169,7 +171,8 @@ module pipe_2 (
   );
 
   assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IDIV}} & idiv_out});
+               ({32{uop_fifo[0].fu_code == FU_IDIV}} & idiv_out);
+  assign uop_out = uop_fifo[0];
 
   assign busy = 1'b0;
 
@@ -194,8 +197,9 @@ module pipe_3 (
   output logic         core2dcache_data_we,
   output mem_size_t    core2dcache_data_size,
   output logic [31:0]  core2dcache_addr
-)
+);
   
+  micro_op_t uop_reg;
   wire input_valid = uop.valid & (uop.fu_code == FU_MEM);
   reg  is_ld, is_ldu, is_st;
   reg  busy_reg;
@@ -221,7 +225,7 @@ module pipe_3 (
     if (busy_reg) begin
       core2dcache_addr = in1 + uop.imm;
       if (is_st) begin
-        core2dcache_data = in2;
+        core2dcache_data = {32'b0, in2};
         core2dcache_data_we = 1;
       end
     end
@@ -254,22 +258,26 @@ module pipe_3 (
 
   // actually a 2-state FSM (IDLE, BUSY)
   always_ff @(posedge clock) begin
-    if (reset)
+    if (reset) begin
       busy_reg <= 0;
-    else if (!busy_reg & input_valid)
+      uop_reg  <= 0;
+    end else if (!busy_reg & input_valid) begin
       busy_reg <= 1;
-    else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid)
+      uop_reg  <= uop;
+    end else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid) begin
       busy_reg <= 0;
-    else if (busy_reg & is_st)
+    end else if (busy_reg & is_st) begin
       busy_reg <= 0;
+    end
   end
 
   always_ff @(posedge clock) begin
     if (reset)
       out <= 0;
     else
-      out <= data_out;
+      out <= data_out[31:0];
   end
+  assign uop_out = uop_reg;
 
   assign busy = busy_reg;
 

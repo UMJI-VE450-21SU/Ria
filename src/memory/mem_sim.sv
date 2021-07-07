@@ -10,7 +10,7 @@
 // Dependencies: 
 // ../common/defines.svh
 //////////////////////////////////////////////////////////////////////////////////
-`include "../common/defines.svh"
+`include "src/common/defines.svh"
 
 module mem_simulator #(
   parameter init_file = "default.mem"

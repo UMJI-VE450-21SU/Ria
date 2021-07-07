@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/05
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module mapping_table (
   input         clock,
@@ -51,7 +51,7 @@ module mapping_table (
   reg   [`ARF_INT_SIZE-1:0]                             arf_valid;
   logic [`ARF_INT_SIZE-1:0]                             arf_valid_next;
 
-  checkpoint_int int_checkpoint (
+  checkpoint checkpoint (
     .clock              (clock            ),
     .reset              (reset            ),
     .check              (check            ),
@@ -61,7 +61,7 @@ module mapping_table (
     .checkpoint_out     (mapping_tb_cp    )
   );
 
-  free_list_int int_free_list (
+  free_list free_list (
     .clock              (clock            ),
     .reset              (reset            ),
     .stall              (stall            ),
@@ -93,6 +93,7 @@ module mapping_table (
       if (rd_valid[i]) begin
         // WAW: Return Previous PRF
         prev_rd[i] = mapping_tb_next[rd[i]];
+        // todo: Bit extraction of var[31:0] requires 5 bit index, not 6 bits.
         if (arf_valid_next[prev_rd[i]]) begin
           prev_rd_valid[i] = 1;
         end
