@@ -161,7 +161,7 @@ module issue_queue_mem (
       issue_slot_mem issue_slot_mem_inst (
         .clock      (clock),
         .reset      (reset),
-        .clear      (clear),
+        .clear      (clear[k]),
         .load       (load[k]),
         .uop_in     (uop_to_slot[k]),
         .uop_new    (uop_to_issue[k + compress_offset]),
