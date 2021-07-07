@@ -60,13 +60,16 @@ module branch (
   input  micro_op_t   uop,
   input  [31:0]       in1,
   input  [31:0]       in2,
-  output logic        out
+  output logic        br_taken,
+  output [31:0]       br_addr,
+  output micro_op_t   br_uop
 );
 
   logic signed [31:0] signed_in1, signed_in2;
   logic               eq, ne, lt, ge, ltu, geu;
-  br_type_t           br;
+  br_type_t           br_type;
   logic               result;
+  logic [31:0]        result_addr;
 
   assign signed_in1 = in1;
   assign signed_in2 = in2;
@@ -78,20 +81,30 @@ module branch (
   assign ltu  = in1 < in2;
   assign geu  = in1 > in2;
 
-  assign br = uop.br_type;
+  assign br_type = uop.br_type;
 
-  assign result = ((br == BR_EQ)  & eq)  |
-                  ((br == BR_NE)  & ne)  |
-                  ((br == BR_LT)  & lt)  |
-                  ((br == BR_GE)  & ge)  |
-                  ((br == BR_LTU) & ltu) |
-                  ((br == BR_GEU) & geu);
+  always_comb begin
+    br_uop = uop;
+    br_uop.br_taken = result;
+    br_uop.br_addr = result_addr;
+  end
+
+  assign result = ((br_type == BR_EQ)  & eq)  |
+                  ((br_type == BR_NE)  & ne)  |
+                  ((br_type == BR_LT)  & lt)  |
+                  ((br_type == BR_GE)  & ge)  |
+                  ((br_type == BR_LTU) & ltu) |
+                  ((br_type == BR_GEU) & geu);
+  assign result_addr = uop.pc + uop.imm;
 
   always_ff @(posedge clock) begin
-    if (reset)
-      out <= 0;
-    else
-      out <= result;
+    if (reset) begin
+      br_taken <= 0;
+      br_addr <= 0;
+    end else begin
+      br_taken <= result;
+      br_addr <= result_addr;
+    end
   end
 
 endmodule

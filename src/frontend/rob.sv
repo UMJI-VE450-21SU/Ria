@@ -81,7 +81,7 @@ module rob (
         if (uop_complete_locker[i].br_type != BR_X) begin
           prediction_next = 1;
           // A Mis-Prediction uop
-          if (uop_complete_locker[i].exp_br != uop_complete_locker[i].real_br) begin
+          if (uop_complete_locker[i].pred_taken != uop_complete_locker[i].br_taken) begin
             recover_next        = 1;
             uop_recover_next    = uop_complete_locker[i];
             prediction_hit_next = 0;
