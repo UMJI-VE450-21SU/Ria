@@ -51,7 +51,7 @@ module mapping_table (
   reg   [`ARF_INT_SIZE-1:0]                             arf_valid;
   logic [`ARF_INT_SIZE-1:0]                             arf_valid_next;
 
-  checkpoint_int int_checkpoint (
+  checkpoint checkpoint (
     .clock              (clock            ),
     .reset              (reset            ),
     .check              (check            ),
@@ -61,7 +61,7 @@ module mapping_table (
     .checkpoint_out     (mapping_tb_cp    )
   );
 
-  free_list_int int_free_list (
+  free_list free_list (
     .clock              (clock            ),
     .reset              (reset            ),
     .stall              (stall            ),

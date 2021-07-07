@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/08
 
-`include "../common/micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module rob (
   input           clock,
@@ -36,6 +36,7 @@ module rob (
   rob_index_t                               rob_head_next;
   logic         [`ROB_INDEX_SIZE:0]         rob_size_next;
   logic         [`RENAME_WIDTH:0]           rob_size_increment;
+  logic                                     valid_tmp;
 
   micro_op_t    uop_out_next                [`RENAME_WIDTH-1:0];
   logic                                     recover_next;
@@ -72,9 +73,10 @@ module rob (
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // Update completed uop
+      valid_tmp = uop_complete_locker[i].valid;
       if (uop_complete_locker[i].valid) begin
-        uop_complete_locker[i].complete                 = 1;
-        op_list_next[uop_complete_locker[i].rob_index]  = uop_complete_locker[i];
+        op_list_next[uop_complete_locker[i].rob_index]            = uop_complete_locker[i];
+        op_list_next[uop_complete_locker[i].rob_index].complete   = 1;
         // A branch-type uop
         if (uop_complete_locker[i].br_type != BR_X) begin
           prediction_next = 1;

@@ -5,7 +5,7 @@
 
 `include "src/common/micro_op.svh"
 
-module free_list_int (
+module free_list (
   input       clock,
   input       reset,
   input       stall,

@@ -5,7 +5,7 @@
 
 `include "src/common/micro_op.svh"
 
-module checkpoint_int (
+module checkpoint (
   input       clock,
   input       reset,
 

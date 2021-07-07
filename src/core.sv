@@ -39,7 +39,7 @@ module core (
   logic                         is_prediction;      // todo: Branch Prediction
   logic                         prediction_hit;     // todo: Branch Prediction
 
-  inst_fetch if (
+  inst_fetch if0 (
     .clock                  (clock),
     .reset                  (reset),
     .stall                  (stall | fb_full | cm_allocatable | rr_allocatable),
@@ -144,8 +144,6 @@ module core (
   micro_op_t  [`RENAME_WIDTH-1:0]   cm_uops_out;
   logic                             cm_allocatable;
   logic                             cm_ready;       // todo: connect to where?
-
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uops_in;
 
   assign dp_uops_in = cm_uops_out;
 
