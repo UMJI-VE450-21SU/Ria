@@ -9,67 +9,46 @@
 module issue_slot_mem (
   input             clock,
   input             reset,
+  input             clear,
 
-  // ctb = common tag bus
-  input  [`ISSUE_WIDTH_MEM-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
-  input  [`ISSUE_WIDTH_MEM-1:0]                           ctb_valid,
-
-  input             load,
-
+  input             load,   // when load is 1, load uop_in into the slot
   input  micro_op_t uop_in,
   input  micro_op_t uop_new,
-  output micro_op_t uop,
+  output micro_op_t uop,    // current uop in this slot
+
+  output logic [`PRF_INT_INDEX_SIZE-1:0] rs1_index,
+  output logic [`PRF_INT_INDEX_SIZE-1:0] rs2_index,
+  input             rs1_busy,
+  input             rs2_busy,
 
   output            ready,
   output            free
 );
 
-  wire [`ISSUE_WIDTH_MEM-1:0] rs1_index_match_ctb;
-  wire [`ISSUE_WIDTH_MEM-1:0] rs2_index_match_ctb;
-  wire [`ISSUE_WIDTH_MEM-1:0] rs1_from_ctb;
-  wire [`ISSUE_WIDTH_MEM-1:0] rs2_from_ctb;
-  wire                        rs1_from_ctb_valid;
-  wire                        rs2_from_ctb_valid;
+  wire rs1_ready, rs2_ready;
 
-  logic rs1_ready;
-  logic rs2_ready;
-
-  generate
-    for (genvar i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
-      assign rs1_index_match_ctb[i] = (uop_in.rs1_prf_int_index == ctb_prf_int_index[i]);
-      assign rs2_index_match_ctb[i] = (uop_in.rs2_prf_int_index == ctb_prf_int_index[i]);
-      assign rs1_from_ctb[i]        = (~rs1_ready & ctb_valid[i] & rs1_index_match_ctb[i]);
-      assign rs2_from_ctb[i]        = (~rs2_ready & ctb_valid[i] & rs2_index_match_ctb[i]);
+  always_comb begin
+    if (load & uop_in.valid) begin
+      rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_int_index : 0;
+      rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_int_index : 0;
+    end else begin
+      rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_int_index : 0;
+      rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_int_index : 0;
     end
-  endgenerate
-  
-  assign rs1_from_ctb_valid = |rs1_from_ctb;
-  assign rs2_from_ctb_valid = |rs2_from_ctb;
+  end
 
   always_ff @ (posedge clock) begin
-    if (reset) begin
+    if (reset | clear)
       uop <= 0;
-    end else if (load & uop_in.valid) begin
+    else if (load & uop_in.valid)
       uop <= uop_in;
-    end else begin
+    else
       uop <= uop_new;
-    end
   end
 
-  always_ff @ (posedge clock) begin
-    if (reset) begin
-      rs1_ready <= 1'b0;
-      rs2_ready <= 1'b0;
-    end else if (load & uop_in.valid) begin
-      rs1_ready <= (uop_in.rs1_source == RS_FROM_RF) ? (uop_in.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
-      rs2_ready <= (uop_in.rs2_source == RS_FROM_RF) ? (uop_in.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
-    end else begin
-      rs1_ready <= (uop.rs1_source == RS_FROM_RF) ? (uop.rs1_from_ctb ? rs1_from_ctb_valid : 1'b1) : 1'b1;
-      rs2_ready <= (uop.rs2_source == RS_FROM_RF) ? (uop.rs2_from_ctb ? rs2_from_ctb_valid : 1'b1) : 1'b1;
-    end
-  end
-
-  assign free = uop.valid;
+  assign free = ~uop.valid;
+  assign rs1_ready = ~rs1_busy;
+  assign rs2_ready = ~rs2_busy;
   assign ready = rs1_ready & rs2_ready;
 
 endmodule
@@ -137,9 +116,10 @@ module issue_queue_mem (
   input  clock,
   input  reset,
 
-  // ctb = common tag bus
-  input  [`ISSUE_WIDTH_MEM-1:0] [`PRF_INT_INDEX_SIZE-1:0] ctb_prf_int_index,
-  input  [`ISSUE_WIDTH_MEM-1:0]             ctb_valid,
+  output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
+  output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
+  input  [`IQ_MEM_SIZE-1:0]                          rs1_busy,
+  input  [`IQ_MEM_SIZE-1:0]                          rs2_busy,
 
   input  [`ISSUE_WIDTH_MEM-1:0]             ex_busy,
 
@@ -179,16 +159,19 @@ module issue_queue_mem (
   generate
     for (genvar k = 0; k < `IQ_MEM_SIZE; k++) begin
       issue_slot_mem issue_slot_mem_inst (
-        .clock              (clock),
-        .reset              (reset),
-        .ctb_prf_int_index  (ctb_prf_int_index),
-        .ctb_valid          (ctb_valid),
-        .load               (load[k]),
-        .uop_in             (uop_to_slot[k]),
-        .uop_new            (uop_to_issue[k + compress_offset]),
-        .uop                (uop_to_issue[k]),
-        .ready              (ready[k]),
-        .free               (free[k])
+        .clock      (clock),
+        .reset      (reset),
+        .clear      (clear),
+        .load       (load[k]),
+        .uop_in     (uop_to_slot[k]),
+        .uop_new    (uop_to_issue[k + compress_offset]),
+        .uop        (uop_to_issue[k]),
+        .rs1_index  (rs1_index[k]),
+        .rs2_index  (rs2_index[k]),
+        .rs1_busy   (rs1_busy[k]),
+        .rs2_busy   (rs2_busy[k]),
+        .ready      (ready[k]),
+        .free       (free[k])
       );
     end
   endgenerate
