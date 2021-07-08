@@ -11,12 +11,15 @@ module pipe_0 (
   input  [31:0]     in1,
   input  [31:0]     in2,
   output micro_op_t uop_out,
+  output logic      br_taken,
   output [31:0]     out,
   output            busy
 );
 
   logic [31:0]  alu_out;
-  logic         br_out;
+  logic [31:0]  br_out;
+  micro_op_t    br_uop;
+  micro_op_t    uop_next;
 
   alu alu_inst (
     .clock    (clock),
@@ -33,19 +36,23 @@ module pipe_0 (
     .uop      (uop),
     .in1      (in1),
     .in2      (in2),
-    .out      (br_out)
+    .br_taken (br_taken),
+    .br_addr  (br_out),
+    .br_uop   (br_uop)
   );
 
   always_ff @(posedge clock) begin
     if (reset) begin
       uop_out <= 0;
     end else begin
-      uop_out <= uop;
+      uop_out <= uop_next;
     end
   end
 
   assign out = ({32{uop.fu_code == FU_ALU}} & alu_out) |
-               ({32{uop.fu_code == FU_BR}} & {32{br_out}});
+               ({32{uop.fu_code == FU_BR}} & br_out);
+
+  assign uop_next = {uop.fu_code == FU_BR} ? br_uop : uop;
 
   assign busy = 1'b0;
 
