@@ -42,4 +42,30 @@ class BucketMemory;
 
 std::unique_ptr<IdeaMemory> make_BucketMemory(); 
 
+// currently an ideal Memory
+class IMem {
+
+  private:
+    IdeaMemory *mem;
+  public:
+    IMem(IdeaMemory *mem): mem(mem) {}
+
+    // read 4 words, 16 bytes from the IMem
+    bool read_transction(unsigned addr, char *dest);
+
+};
+
+class DMem {
+  private:
+    IdeaMemory *mem;
+  public:
+    DMem(IdeaMemory *mem): mem(mem) {}
+
+    // write <size> bytes to memory
+    bool write_transcation(unsigned addr, char *src, unsigned char size);
+
+    bool read_transction(unsigned addr, char *dest);
+    
+};
+
 #endif /* SIM_MEMORY_H */

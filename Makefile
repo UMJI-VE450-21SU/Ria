@@ -14,8 +14,6 @@ SOFTWARE_TARGET := c_example \
 
 SOFTWARE_TARGET_PATH := $(addprefix $(SOFTWARE_SUBDIR)/, $(SOFTWARE_TARGET))
 
-# the sim src should later be redefined
-SIM_SRC := $(wildcard sim/sim_main.cpp)
 
 ifeq ($(VERILATOR_ROOT),)
 VERILATOR = verilator
@@ -49,8 +47,7 @@ VERILOG_ROOT := src
 # Input files for Verilator
 VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
 
-
-SIM_SRC = sim/sim_main.cpp
+SIM_SRC := $(wildcard sim/sim_*.cpp)
 
 VERILATOR_OPTIONS := input.vc
 

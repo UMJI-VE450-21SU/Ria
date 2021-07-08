@@ -108,3 +108,18 @@ class BucketMemory final: public IdeaMemory {
 std::unique_ptr<IdeaMemory> make_BucketMemory() {
   return std::make_unique<BucketMemory>();
 }
+
+bool IMem::read_transction(unsigned addr, char *dest) {
+  this->mem->read_bytes(dest, addr, 16);
+  return true;
+}
+
+bool DMem::write_transcation(unsigned addr, char *src, unsigned char size) {
+  this->mem->write_bytes(src, size, addr);
+  return true;
+}
+
+bool DMem::read_transction(unsigned addr, char *dest) {
+  this->mem->read_bytes(dest, addr, 8);
+  return true;
+}

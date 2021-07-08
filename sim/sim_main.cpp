@@ -8,12 +8,15 @@
 #include <verilated.h>
 #include "Vtop.h"
 
+#include "sim_memory.h"
+
 // Legacy function required only so linking works on Cygwin and MSVC++
 double sc_time_stamp() { return 0; }
 
 int main(int argc, char** argv, char** env) {
   // This is a more complicated example, please also see the simpler examples/make_hello_c.
 
+  std::ios_base::sync_with_stdio(true);
   std::cout << "the arguments are :" << std::endl;
   for (int i = 0; argv[i]; ++i) {
     std::cout << argv[i] << " ";
@@ -27,32 +30,68 @@ int main(int argc, char** argv, char** env) {
 
   const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 
-  // Set debug level, 0 is off, 9 is highest presently used
-  // May be overridden by commandArgs argument parsing
   contextp->debug(0);
 
-  // Randomization reset policy
-  // May be overridden by commandArgs argument parsing
   contextp->randReset(2);
 
-  // Verilator must compute traced signals
   contextp->traceEverOn(true);
 
-  // Pass arguments so Verilated code can see them, e.g. $value$plusargs
-  // This needs to be called before you create any model
   contextp->commandArgs(argc, argv);
 
-  // Construct the Verilated model, from Vtop.h generated from Verilating "top.v".
-  // Using unique_ptr is similar to "Vtop* top = new Vtop" then deleting at end.
-  // "TOP" will be the hierarchical name of the module.
   const std::unique_ptr<Vtop> top{new Vtop{contextp.get(), "TOP"}};
 
+  auto mem = make_BucketMemory();
+
+  mem->load_image_to(std::string{argv[1]}, 0);
+
+  printf("Current memory layout: \n");
+
+  mem->print_all();
+
+  auto imem = std::make_unique<IMem>(mem.get());
+
+  auto dmem = std::make_unique<DMem>(mem.get());
 
   // Simulate until $finish
   while (!contextp->gotFinish()) {
     contextp->timeInc(1);  // 1 timeprecision period passes...
     top->clock = !top->clock;
+
+    top->reset = contextp->time() < 4 ? 1 : 0;
+
+    if(contextp->time() >= 4) {
+      imem->read_transction(top->core2icache_addr, reinterpret_cast<char *>(top->icache2core_data));
+
+      if(top->core2dcache_data_we) {
+        dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), top->core2dcache_data_size);
+      } else {
+        dmem->read_transction(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
+      }
+    }
+
+
     top->eval();
+
+    printf("[%ld] {dmem} c2d_addr=0x%x, c2d_we=%d, c2d_size=%d, d2c_v=%d, {imem} c2i_addr=0x%x, i2d_v=%d \n", 
+        contextp->time(), top->core2dcache_addr, top->core2dcache_data_we, top->core2dcache_data_size, (int) (top->dcache2core_data_valid), 
+        top->core2icache_addr, (int)(top->icache2core_data_valid));
+    printf("    {dmem} c2d_data=%ld, d2c_data=%ld\n", top->core2dcache_data, top->dcache2core_data); 
+    printf("{ctrl} clk=%d, rst=%d\n", top->clock, top->reset);
+    printf("{dmem/hex} c2d_data=");
+    for(int i = 0; i < 8; ++i) {
+      printf("%02x", (unsigned char)(reinterpret_cast<char *>(&(top->core2dcache_data))[i]));
+    }
+    printf("\n");
+    printf("{dmem/hex} d2c_data=");
+    for(int i = 0; i < 8; ++i) {
+      printf("%02x", (unsigned char)(reinterpret_cast<char *>(&(top->dcache2core_data))[i]));
+    }
+    printf("\n");
+    printf("{imem/hex} i2c_data=");
+    for(int i = 0; i < 16; ++i) {
+      printf("%02x", (unsigned char)(reinterpret_cast<char *>(top->icache2core_data)[i]));
+    }
+    printf("\n");
 
     if (contextp->time() > 500) break;
   }
