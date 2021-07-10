@@ -61,12 +61,14 @@ int main(int argc, char** argv, char** env) {
 
     if(contextp->time() >= 4) {
       imem->read_transction(top->core2icache_addr, reinterpret_cast<char *>(top->icache2core_data));
+      top->icache2core_data_valid = 1;
 
       if(top->core2dcache_data_we) {
         dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), top->core2dcache_data_size);
       } else {
         dmem->read_transction(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
       }
+      top->dcache2core_data_valid = 1;
     }
 
 
