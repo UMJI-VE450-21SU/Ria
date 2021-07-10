@@ -11,7 +11,6 @@ module inst_fetch (
   input                                 reset,
   input                                 stall,              // stall is effective in the next clock cycle
   // ======= branch predictor related ========
-  input        [31:0]                   pc_predicted,
   input                                 branch_taken,
   input        [31:0]                   branch_pc,
   // ======= cache related ===================
@@ -25,8 +24,10 @@ module inst_fetch (
 
   reg [31:0]  pc_reg;
   logic       pc_enable;
+  wire [31:0] pc_predicted;
 
   assign pc_enable = ~stall & icache2core_data_valid;
+  assign pc_predicted = pc_reg + 16;
 
   always_ff @(posedge clock) begin
     if (reset)
@@ -35,8 +36,6 @@ module inst_fetch (
       pc_reg <= branch_pc;
     else if (pc_enable)
       pc_reg <= pc_predicted;
-    else
-      pc_reg <= pc_reg + 16;
   end
 
   assign core2icache_addr = pc_reg;

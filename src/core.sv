@@ -42,8 +42,7 @@ module core (
   inst_fetch if0 (
     .clock                  (clock),
     .reset                  (reset),
-    .stall                  (stall | fb_full | cm_allocatable | rr_allocatable),
-    .pc_predicted           (0),
+    .stall                  (stall | fb_full | !cm_allocatable | !rr_allocatable),
     .branch_taken           (0),
     .branch_pc              (0),
     .icache2core_data       (icache2core_data),
@@ -66,6 +65,11 @@ module core (
       fb_insts_in        <= if_insts_out;
       fb_insts_in_valid  <= if_insts_out_valid;
     end
+    $display("[IF-FB] fb_insts_in[0].pc=%h, fb_insts_in[0].inst=%h", fb_insts_in[0].pc, fb_insts_in[0].inst);
+    $display("[IF-FB] fb_insts_in[1].pc=%h, fb_insts_in[1].inst=%h", fb_insts_in[1].pc, fb_insts_in[1].inst);
+    $display("[IF-FB] fb_insts_in[2].pc=%h, fb_insts_in[2].inst=%h", fb_insts_in[2].pc, fb_insts_in[2].inst);
+    $display("[IF-FB] fb_insts_in[3].pc=%h, fb_insts_in[3].inst=%h", fb_insts_in[3].pc, fb_insts_in[3].inst);
+    $display("[IF-FB] fb_insts_in_valid=%b", fb_insts_in_valid);
   end
 
   /* Stage 2: FB - Fetch Buffer */
@@ -96,6 +100,14 @@ module core (
       id_insts_in        <= fb_insts_out;
       id_insts_in_valid  <= fb_insts_out_valid;
     end
+    $display("[FB-ID] id_insts_in[0].pc=%h, id_insts_in[0].inst=%h, id_insts_in_valid[0]=%b", 
+             id_insts_in[0].pc, id_insts_in[0].inst, id_insts_in_valid[0]);
+    $display("[FB-ID] id_insts_in[1].pc=%h, id_insts_in[1].inst=%h, id_insts_in_valid[1]=%b", 
+             id_insts_in[1].pc, id_insts_in[1].inst, id_insts_in_valid[1]);
+    $display("[FB-ID] id_insts_in[2].pc=%h, id_insts_in[2].inst=%h, id_insts_in_valid[2]=%b", 
+             id_insts_in[2].pc, id_insts_in[2].inst, id_insts_in_valid[2]);
+    $display("[FB-ID] id_insts_in[3].pc=%h, id_insts_in[3].inst=%h, id_insts_in_valid[3]=%b", 
+             id_insts_in[3].pc, id_insts_in[3].inst, id_insts_in_valid[3]);
   end
 
   /* Stage 3: ID - Instruction Decode */
@@ -115,6 +127,17 @@ module core (
   micro_op_t [`RENAME_WIDTH-1:0] rr_uops_in;
 
   assign rr_uops_in = id_uops_out;
+
+  always_ff @(posedge clock) begin
+    $display("[ID-RR] rr_uops_in[0]");
+    print_uop(rr_uops_in[0]);
+    $display("[ID-RR] rr_uops_in[1]");
+    print_uop(rr_uops_in[1]);
+    $display("[ID-RR] rr_uops_in[2]");
+    print_uop(rr_uops_in[2]);
+    $display("[ID-RR] rr_uops_in[3]");
+    print_uop(rr_uops_in[3]);
+  end
 
   /* Stage 4: RR - Register Renaming */
 
@@ -146,6 +169,17 @@ module core (
   logic                             cm_ready;       // todo: connect to where?
 
   assign dp_uops_in = cm_uops_out;
+
+  always_ff @(posedge clock) begin
+    $display("[RR-DP] dp_uops_in[0]");
+    print_uop(dp_uops_in[0]);
+    $display("[RR-DP] dp_uops_in[1]");
+    print_uop(dp_uops_in[1]);
+    $display("[RR-DP] dp_uops_in[2]");
+    print_uop(dp_uops_in[2]);
+    $display("[RR-DP] dp_uops_in[3]");
+    print_uop(dp_uops_in[3]);
+  end
 
   /* Stage 5: DP - Dispatch */
 

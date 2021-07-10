@@ -140,4 +140,11 @@ typedef struct packed {
   logic           complete;
 } micro_op_t;
 
+task print_uop(input micro_op_t uop);
+  $display("        pc=%h, iq_code=%h, fu_code=%h, imm=%h, rs1_arf=%h, rs1_prf=%h, rs2_arf=%h, rs2_prf=%h, rd_arf=%h, rd_prf=%h, rd_valid=%b, valid=%b",
+           uop.pc, uop.iq_code, uop.fu_code, uop.imm, uop.rs1_arf_int_index, uop.rs1_prf_int_index,
+           uop.rs2_arf_int_index, uop.rs2_prf_int_index, uop. rd_arf_int_index, uop.rd_prf_int_index, 
+           uop.rd_valid, uop.valid);
+endtask
+
 `endif  // __MICRO_OP_SVH__
