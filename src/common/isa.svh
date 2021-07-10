@@ -63,14 +63,14 @@
 
 
 // ---------- Types -------------------------------------------------------- //
-`define RV32_R_t(op, funct3, funct7)          {``funct7`` , {5{1'b?}} , {5{1'b?}} , ``funct3``, {5{1'b?}} , ``op``    }
-`define RV32_R4_t(op, funct3, funct2)         {{5{1'b?}}  , ``funct2``, {5{1'b?}} , {5{1'b?}} , ``funct3``, {5{1'b?}} , ``op``}
-`define RV32_I_t(op, funct3)                  {{12{1'b?}} , {5{1'b?}} , ``funct3``, {5{1'b?}} , ``op``    }
-`define RV32_S_t(op, funct3)                  {{7{1'b?}}  , {5{1'b?}} , {5{1'b?}} , ``funct3``, {5{1'b?}} , ``op``    }
-`define RV32_B_t(op, funct3)                  {{7{1'b?}}  , {5{1'b?}} , {5{1'b?}} , ``funct3``, {5{1'b?}} , ``op``    }
-`define RV32_U_t(op)                          {{20{1'b?}} , {5{1'b?}} , ``op``    }
-`define RV32_J_t(op)                          {{20{1'b?}} , {5{1'b?}} , ``op``    }
-`define RV32_F_t(op, funct3, funct5, funct7)  {``funct7`` , ``funct5``, {5{1'b?}} , ``funct3``, {5{1'b?}} , ``op``    }
+`define RV32_R_t(op, funct3, funct7)  {``funct7``, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
+`define RV32_R4_t(op, funct3, funct2) {{5{1'b?}}, ``funct2``, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
+`define RV32_I_t(op, funct3)          {{12{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``} 
+`define RV32_S_t(op, funct3)          {{7{1'b?}}, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
+`define RV32_B_t(op, funct3)          {{7{1'b?}}, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
+`define RV32_U_t(op)                  {{20{1'b?}}, {5{1'b?}}, ``op``}
+`define RV32_J_t(op)                  {{20{1'b?}}, {5{1'b?}}, ``op``}
+`define RV32_F_t(op, funct3, funct5, funct7)  {``funct7``, ``funct5``, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
 
 
 // ---------- Instruction encoding ----------------------------------------- //
