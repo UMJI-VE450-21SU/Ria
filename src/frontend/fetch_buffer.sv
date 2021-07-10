@@ -34,7 +34,7 @@ module fetch_buffer (
     .deq_ready  (insts_in_valid)
   );
 
-  assign full = (~ready_hub != 0);
+  assign full = (~ready_hub == 0);
 
 endmodule
 
