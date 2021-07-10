@@ -35,6 +35,8 @@ module inst_fetch (
       pc_reg <= branch_pc;
     else if (pc_enable)
       pc_reg <= pc_predicted;
+    else
+      pc_reg <= pc_reg + 16;
   end
 
   assign core2icache_addr = pc_reg;
