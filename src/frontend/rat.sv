@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/05/23
 
-`include "micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module rat (
   input   clock,
