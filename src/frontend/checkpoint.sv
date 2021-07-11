@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/02
 
-`include "micro_op.svh"
+`include "src/common/micro_op.svh"
 
 module checkpoint (
   input       clock,
