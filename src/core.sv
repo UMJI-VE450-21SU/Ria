@@ -129,7 +129,7 @@ module core (
   rat rr (
     .clock        (clock          ),
     .reset        (reset          ),
-    .stall        (cm_allocatable ),
+    .stall        (!cm_allocatable),
     .recover      (recover        ),
     .arf_recover  (arf_recover    ),
     .prf_recover  (prf_recover    ),
