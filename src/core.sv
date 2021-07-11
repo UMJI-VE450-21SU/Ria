@@ -262,6 +262,22 @@ module core (
       is_mem_uop_in <= dp_uop_to_mem;
       // is_fp_uop_in  <= dp_uop_to_fp;
     end
+    $display("[DP-IS] is_int_uop_in[0]");
+    print_uop(is_int_uop_in[0]);
+    $display("[DP-IS] is_int_uop_in[1]");
+    print_uop(is_int_uop_in[1]);
+    $display("[DP-IS] is_int_uop_in[2]");
+    print_uop(is_int_uop_in[2]);
+    $display("[DP-IS] is_int_uop_in[3]");
+    print_uop(is_int_uop_in[3]);
+    $display("[DP-IS] is_mem_uop_in[0]");
+    print_uop(is_mem_uop_in[0]);
+    $display("[DP-IS] is_mem_uop_in[1]");
+    print_uop(is_mem_uop_in[1]);
+    $display("[DP-IS] is_mem_uop_in[2]");
+    print_uop(is_mem_uop_in[2]);
+    $display("[DP-IS] is_mem_uop_in[3]");
+    print_uop(is_mem_uop_in[3]);
   end
 
   /* Stage 6: IS - Issue */
@@ -315,6 +331,14 @@ module core (
       for (int i = 0; i < `ISSUE_WIDTH_MEM; i++)
         rf_int_uop_in[i + `ISSUE_WIDTH_INT] <= is_mem_uop_out[i];
     end
+    $display("[IS-RF] rf_int_uop_in[0]");
+    print_uop(rf_int_uop_in[0]);
+    $display("[IS-RF] rf_int_uop_in[1]");
+    print_uop(rf_int_uop_in[1]);
+    $display("[IS-RF] rf_int_uop_in[2]");
+    print_uop(rf_int_uop_in[2]);
+    $display("[IS-RF] rf_int_uop_in[3]");
+    print_uop(rf_int_uop_in[3]);
   end
 
   /* Stage 7: RF - Register File */
@@ -368,6 +392,14 @@ module core (
         ex_mem_rs2_data_in[i] <= rf_int_rs2_data_out[i + `ISSUE_WIDTH_INT];
       end
     end
+    $display("[RF-EX] ex_int_uop_in[0], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[0], ex_int_rs2_data_in[0]);
+    print_uop(ex_int_uop_in[0]);
+    $display("[RF-EX] ex_int_uop_in[1], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[1], ex_int_rs2_data_in[1]);
+    print_uop(ex_int_uop_in[1]);
+    $display("[RF-EX] ex_int_uop_in[2], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[2], ex_int_rs2_data_in[2]);
+    print_uop(ex_int_uop_in[2]);
+    $display("[RF-EX] ex_mem_uop_in[0], rs1_data_in=%h, rs2_data_in=%h", ex_mem_rs1_data_in[0], ex_mem_rs2_data_in[0]);
+    print_uop(ex_mem_uop_in[0]);
   end
 
   /* Stage 8: EX - Execution */
