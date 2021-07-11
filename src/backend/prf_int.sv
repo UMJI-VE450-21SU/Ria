@@ -27,16 +27,16 @@ module prf_int_data (
   generate
     for(genvar i = 0; i < `PRF_INT_WAYS; i++) begin
       for(genvar j = 0; j < `PRF_INT_WAYS; j++) begin
-        assign rs1_from_rd[i][j] = rd_en[j] && (rd_index[j] == rs1_index[i]);
-        assign rs2_from_rd[i][j] = rd_en[j] && (rd_index[j] == rs2_index[i]);
+        assign rs1_from_rd[i][j] = rd_en[j] && (rd_index[j] == rs1_index[i]) && (rs1_index[i] != 0);
+        assign rs2_from_rd[i][j] = rd_en[j] && (rd_index[j] == rs2_index[i]) && (rs2_index[i] != 0);
       end
     end
   endgenerate
 
   always_comb begin
     for (int i = 0; i < `PRF_INT_WAYS; i++) begin
-      rs1_data[i] = rf[i][rs1_index[i]];
-      rs2_data[i] = rf[i][rs2_index[i]];
+      rs1_data[i] = (rs1_index[i] != 0) ? rf[i][rs1_index[i]] : 0;
+      rs2_data[i] = (rs2_index[i] != 0) ? rf[i][rs2_index[i]] : 0;
       for (int j = 0; j < `PRF_INT_WAYS; j++) begin
         if(rs1_from_rd[i][j])
           rs1_data[i] = rd_data[j];  
@@ -53,7 +53,7 @@ module prf_int_data (
           rf[i][j] <= 0;
     end else begin
       for (int i = 0; i < `PRF_INT_WAYS; i++)
-        if (rd_en[i])
+        if (rd_en[i] && rd_index[i] != 0)
           for (int j = 0; j < `PRF_INT_WAYS; j++)
             rf[j][rd_index[i]] <= rd_data[i];
     end
