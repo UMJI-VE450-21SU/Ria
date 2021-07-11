@@ -65,11 +65,6 @@ module core (
       fb_insts_in        <= if_insts_out;
       fb_insts_in_valid  <= if_insts_out_valid;
     end
-    $display("[IF-FB] fb_insts_in[0].pc=%h, fb_insts_in[0].inst=%h", fb_insts_in[0].pc, fb_insts_in[0].inst);
-    $display("[IF-FB] fb_insts_in[1].pc=%h, fb_insts_in[1].inst=%h", fb_insts_in[1].pc, fb_insts_in[1].inst);
-    $display("[IF-FB] fb_insts_in[2].pc=%h, fb_insts_in[2].inst=%h", fb_insts_in[2].pc, fb_insts_in[2].inst);
-    $display("[IF-FB] fb_insts_in[3].pc=%h, fb_insts_in[3].inst=%h", fb_insts_in[3].pc, fb_insts_in[3].inst);
-    $display("[IF-FB] fb_insts_in_valid=%b", fb_insts_in_valid);
   end
 
   /* Stage 2: FB - Fetch Buffer */
@@ -100,14 +95,6 @@ module core (
       id_insts_in        <= fb_insts_out;
       id_insts_in_valid  <= fb_insts_out_valid;
     end
-    $display("[FB-ID] id_insts_in[0].pc=%h, id_insts_in[0].inst=%h, id_insts_in_valid[0]=%b", 
-             id_insts_in[0].pc, id_insts_in[0].inst, id_insts_in_valid[0]);
-    $display("[FB-ID] id_insts_in[1].pc=%h, id_insts_in[1].inst=%h, id_insts_in_valid[1]=%b", 
-             id_insts_in[1].pc, id_insts_in[1].inst, id_insts_in_valid[1]);
-    $display("[FB-ID] id_insts_in[2].pc=%h, id_insts_in[2].inst=%h, id_insts_in_valid[2]=%b", 
-             id_insts_in[2].pc, id_insts_in[2].inst, id_insts_in_valid[2]);
-    $display("[FB-ID] id_insts_in[3].pc=%h, id_insts_in[3].inst=%h, id_insts_in_valid[3]=%b", 
-             id_insts_in[3].pc, id_insts_in[3].inst, id_insts_in_valid[3]);
   end
 
   /* Stage 3: ID - Instruction Decode */
@@ -127,17 +114,6 @@ module core (
   micro_op_t [`RENAME_WIDTH-1:0] rr_uops_in;
 
   assign rr_uops_in = id_uops_out;
-
-  always_ff @(posedge clock) begin
-    $display("[ID-RR] rr_uops_in[0]");
-    print_uop(rr_uops_in[0]);
-    $display("[ID-RR] rr_uops_in[1]");
-    print_uop(rr_uops_in[1]);
-    $display("[ID-RR] rr_uops_in[2]");
-    print_uop(rr_uops_in[2]);
-    $display("[ID-RR] rr_uops_in[3]");
-    print_uop(rr_uops_in[3]);
-  end
 
   /* Stage 4: RR - Register Renaming */
 
@@ -169,17 +145,6 @@ module core (
   logic                             cm_ready;       // todo: connect to where?
 
   assign dp_uops_in = cm_uops_out;
-
-  always_ff @(posedge clock) begin
-    $display("[RR-DP] dp_uops_in[0]");
-    print_uop(dp_uops_in[0]);
-    $display("[RR-DP] dp_uops_in[1]");
-    print_uop(dp_uops_in[1]);
-    $display("[RR-DP] dp_uops_in[2]");
-    print_uop(dp_uops_in[2]);
-    $display("[RR-DP] dp_uops_in[3]");
-    print_uop(dp_uops_in[3]);
-  end
 
   /* Stage 5: DP - Dispatch */
 
@@ -262,22 +227,6 @@ module core (
       is_mem_uop_in <= dp_uop_to_mem;
       // is_fp_uop_in  <= dp_uop_to_fp;
     end
-    $display("[DP-IS] is_int_uop_in[0]");
-    print_uop(is_int_uop_in[0]);
-    $display("[DP-IS] is_int_uop_in[1]");
-    print_uop(is_int_uop_in[1]);
-    $display("[DP-IS] is_int_uop_in[2]");
-    print_uop(is_int_uop_in[2]);
-    $display("[DP-IS] is_int_uop_in[3]");
-    print_uop(is_int_uop_in[3]);
-    $display("[DP-IS] is_mem_uop_in[0]");
-    print_uop(is_mem_uop_in[0]);
-    $display("[DP-IS] is_mem_uop_in[1]");
-    print_uop(is_mem_uop_in[1]);
-    $display("[DP-IS] is_mem_uop_in[2]");
-    print_uop(is_mem_uop_in[2]);
-    $display("[DP-IS] is_mem_uop_in[3]");
-    print_uop(is_mem_uop_in[3]);
   end
 
   /* Stage 6: IS - Issue */
@@ -331,14 +280,6 @@ module core (
       for (int i = 0; i < `ISSUE_WIDTH_MEM; i++)
         rf_int_uop_in[i + `ISSUE_WIDTH_INT] <= is_mem_uop_out[i];
     end
-    $display("[IS-RF] rf_int_uop_in[0]");
-    print_uop(rf_int_uop_in[0]);
-    $display("[IS-RF] rf_int_uop_in[1]");
-    print_uop(rf_int_uop_in[1]);
-    $display("[IS-RF] rf_int_uop_in[2]");
-    print_uop(rf_int_uop_in[2]);
-    $display("[IS-RF] rf_int_uop_in[3]");
-    print_uop(rf_int_uop_in[3]);
   end
 
   /* Stage 7: RF - Register File */
@@ -392,14 +333,6 @@ module core (
         ex_mem_rs2_data_in[i] <= rf_int_rs2_data_out[i + `ISSUE_WIDTH_INT];
       end
     end
-    $display("[RF-EX] ex_int_uop_in[0], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[0], ex_int_rs2_data_in[0]);
-    print_uop(ex_int_uop_in[0]);
-    $display("[RF-EX] ex_int_uop_in[1], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[1], ex_int_rs2_data_in[1]);
-    print_uop(ex_int_uop_in[1]);
-    $display("[RF-EX] ex_int_uop_in[2], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[2], ex_int_rs2_data_in[2]);
-    print_uop(ex_int_uop_in[2]);
-    $display("[RF-EX] ex_mem_uop_in[0], rs1_data_in=%h, rs2_data_in=%h", ex_mem_rs1_data_in[0], ex_mem_rs2_data_in[0]);
-    print_uop(ex_mem_uop_in[0]);
   end
 
   /* Stage 8: EX - Execution */
@@ -547,5 +480,95 @@ module core (
   );
 
   // todo: connect pipe 0 output to recover signal
+
+  always_ff @(posedge clock) begin
+    $display("===== Pipeline Registers =====");
+    $display("[IF-FB] fb_insts_in[0].pc=%h, fb_insts_in[0].inst=%h", fb_insts_in[0].pc, fb_insts_in[0].inst);
+    $display("[IF-FB] fb_insts_in[1].pc=%h, fb_insts_in[1].inst=%h", fb_insts_in[1].pc, fb_insts_in[1].inst);
+    $display("[IF-FB] fb_insts_in[2].pc=%h, fb_insts_in[2].inst=%h", fb_insts_in[2].pc, fb_insts_in[2].inst);
+    $display("[IF-FB] fb_insts_in[3].pc=%h, fb_insts_in[3].inst=%h", fb_insts_in[3].pc, fb_insts_in[3].inst);
+    $display("[IF-FB] fb_insts_in_valid=%b", fb_insts_in_valid);
+
+    $display("[FB-ID] id_insts_in[0].pc=%h, id_insts_in[0].inst=%h, id_insts_in_valid[0]=%b", 
+             id_insts_in[0].pc, id_insts_in[0].inst, id_insts_in_valid[0]);
+    $display("[FB-ID] id_insts_in[1].pc=%h, id_insts_in[1].inst=%h, id_insts_in_valid[1]=%b", 
+             id_insts_in[1].pc, id_insts_in[1].inst, id_insts_in_valid[1]);
+    $display("[FB-ID] id_insts_in[2].pc=%h, id_insts_in[2].inst=%h, id_insts_in_valid[2]=%b", 
+             id_insts_in[2].pc, id_insts_in[2].inst, id_insts_in_valid[2]);
+    $display("[FB-ID] id_insts_in[3].pc=%h, id_insts_in[3].inst=%h, id_insts_in_valid[3]=%b", 
+             id_insts_in[3].pc, id_insts_in[3].inst, id_insts_in_valid[3]);
+
+    $display("[ID-RR] rr_uops_in[0]");
+    print_uop(rr_uops_in[0]);
+    $display("[ID-RR] rr_uops_in[1]");
+    print_uop(rr_uops_in[1]);
+    $display("[ID-RR] rr_uops_in[2]");
+    print_uop(rr_uops_in[2]);
+    $display("[ID-RR] rr_uops_in[3]");
+    print_uop(rr_uops_in[3]);
+
+    $display("[RR-DP] dp_uops_in[0]");
+    print_uop(dp_uops_in[0]);
+    $display("[RR-DP] dp_uops_in[1]");
+    print_uop(dp_uops_in[1]);
+    $display("[RR-DP] dp_uops_in[2]");
+    print_uop(dp_uops_in[2]);
+    $display("[RR-DP] dp_uops_in[3]");
+    print_uop(dp_uops_in[3]);
+
+    $display("[DP-IS] is_int_uop_in[0]");
+    print_uop(is_int_uop_in[0]);
+    $display("[DP-IS] is_int_uop_in[1]");
+    print_uop(is_int_uop_in[1]);
+    $display("[DP-IS] is_int_uop_in[2]");
+    print_uop(is_int_uop_in[2]);
+    $display("[DP-IS] is_int_uop_in[3]");
+    print_uop(is_int_uop_in[3]);
+    $display("[DP-IS] is_mem_uop_in[0]");
+    print_uop(is_mem_uop_in[0]);
+    $display("[DP-IS] is_mem_uop_in[1]");
+    print_uop(is_mem_uop_in[1]);
+    $display("[DP-IS] is_mem_uop_in[2]");
+    print_uop(is_mem_uop_in[2]);
+    $display("[DP-IS] is_mem_uop_in[3]");
+    print_uop(is_mem_uop_in[3]);
+
+    $display("[IS-RF] rf_int_uop_in[0]");
+    print_uop(rf_int_uop_in[0]);
+    $display("[IS-RF] rf_int_uop_in[1]");
+    print_uop(rf_int_uop_in[1]);
+    $display("[IS-RF] rf_int_uop_in[2]");
+    print_uop(rf_int_uop_in[2]);
+    $display("[IS-RF] rf_int_uop_in[3]");
+    print_uop(rf_int_uop_in[3]);
+
+    $display("[RF-EX] ex_int_uop_in[0], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[0], ex_int_rs2_data_in[0]);
+    print_uop(ex_int_uop_in[0]);
+    $display("[RF-EX] ex_int_uop_in[1], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[1], ex_int_rs2_data_in[1]);
+    print_uop(ex_int_uop_in[1]);
+    $display("[RF-EX] ex_int_uop_in[2], rs1_data_in=%h, rs2_data_in=%h", ex_int_rs1_data_in[2], ex_int_rs2_data_in[2]);
+    print_uop(ex_int_uop_in[2]);
+    $display("[RF-EX] ex_mem_uop_in[0], rs1_data_in=%h, rs2_data_in=%h", ex_mem_rs1_data_in[0], ex_mem_rs2_data_in[0]);
+    print_uop(ex_mem_uop_in[0]);
+
+    $display("[EX-WB] wb_uops_in[0]");
+    print_uop(wb_uops_in[0]);
+    $display("[EX-WB] wb_uops_in[1]");
+    print_uop(wb_uops_in[1]);
+    $display("[EX-WB] wb_uops_in[2]");
+    print_uop(wb_uops_in[2]);
+    $display("[EX-WB] wb_uops_in[3]");
+    print_uop(wb_uops_in[3]);
+
+    $display("[WB-CM] cm_uops_complete[0]");
+    print_uop(cm_uops_complete[0]);
+    $display("[WB-CM] cm_uops_complete[1]");
+    print_uop(cm_uops_complete[1]);
+    $display("[WB-CM] cm_uops_complete[2]");
+    print_uop(cm_uops_complete[2]);
+    $display("[WB-CM] cm_uops_complete[3]");
+    print_uop(cm_uops_complete[3]);
+    $display("==============================");
+  end
 
 endmodule
