@@ -113,18 +113,23 @@ module core (
 
   micro_op_t [`RENAME_WIDTH-1:0] rr_uops_in;
 
-  assign rr_uops_in = id_uops_out;
+  always_ff @(posedge clock) begin
+    if (reset) begin
+      rr_uops_in <= 0;
+    end else begin
+      rr_uops_in <= id_uops_out;
+    end
+  end
 
   /* Stage 4: RR - Register Renaming */
 
   micro_op_t  [`RENAME_WIDTH-1:0] rr_uops_out;
   logic                           rr_allocatable;
-  logic                           rr_ready;
 
   rat rr (
     .clock        (clock          ),
     .reset        (reset          ),
-    .input_valid  (cm_allocatable ),
+    .stall        (cm_allocatable ),
     .recover      (recover        ),
     .arf_recover  (arf_recover    ),
     .prf_recover  (prf_recover    ),
@@ -132,8 +137,7 @@ module core (
     .uop_retire   (uop_retire     ),
     .uop_in       (rr_uops_in     ),
     .uop_out      (rr_uops_out    ),
-    .allocatable  (rr_allocatable ),
-    .ready        (rr_ready       )
+    .allocatable  (rr_allocatable )
   );
 
   /* RR ~ DP Pipeline Registers */
@@ -456,8 +460,15 @@ module core (
   logic                           cm_in_valid;
   micro_op_t [`RENAME_WIDTH-1:0]  cm_uops_in;
 
-  assign cm_in_valid  = rr_ready & rr_allocatable;
-  assign cm_uops_in   = rr_uops_out;
+  always_ff @(posedge clock) begin
+    if (reset) begin
+      cm_in_valid <= 0;
+      cm_uops_in  <= 0;
+    end else begin
+      cm_in_valid <= rr_allocatable;
+      cm_uops_in  <= rr_uops_out;
+    end
+  end
 
   /* Stage 10: CM - Commit */
 
