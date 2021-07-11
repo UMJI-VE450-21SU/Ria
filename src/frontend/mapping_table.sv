@@ -3,7 +3,7 @@
 // Author:  Jian Shi
 // Date:    2021/06/05
 
-`include "src/common/micro_op.svh"
+`include "micro_op.svh"
 
 module mapping_table (
   input         clock,
@@ -81,10 +81,10 @@ module mapping_table (
     prev_rd_valid     = 0;
     mapping_tb_cp_in  = 0;
     for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
-      mapping_tb_next[i]  = mapping_tb[i];
+      mapping_tb_next[i] = mapping_tb[i];
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
-      prd[i]              = 0;
+      prd[i] = 0;
       if (check_flag[i]) begin
         for (int j = 0; j < `ARF_INT_SIZE; j = j + 1 ) begin
           mapping_tb_cp_in[j] = mapping_tb_next[j];
@@ -96,9 +96,9 @@ module mapping_table (
         if (arf_valid_next[rd[i]]) begin
           prev_rd_valid[i] = 1;
         end
-        mapping_tb_next[rd[i]]      = prf_out[i];
-        prd[i]                      = prf_out[i];
-        arf_valid_next[rd[i]]       = 1;
+        mapping_tb_next[rd[i]] = prf_out[i];
+        prd[i]                 = prf_out[i];
+        arf_valid_next[rd[i]]  = 1;
       end
       prs1[i] = mapping_tb_next[rs1[i]];
       prs2[i] = mapping_tb_next[rs2[i]];
@@ -116,7 +116,8 @@ module mapping_table (
         mapping_tb[i] <= mapping_tb_cp[i];
       end
       arf_valid <= arf_recover;
-    end else if (!stall) begin
+    end else if (!stall & allocatable) begin
+      // stall = 0; allocatable = 1;
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_next[i];
       end
