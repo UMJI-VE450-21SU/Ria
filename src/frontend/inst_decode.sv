@@ -17,6 +17,7 @@ module decode (
   always_comb begin
     uop = 0;
     uop.pc    = pc;
+    uop.npc   = pc + 4;
     uop.inst  = inst;
     uop.valid = valid;
     casez (inst) 
@@ -42,13 +43,23 @@ module decode (
       end
       `RV32_JAL: begin
         uop.iq_code           = IQ_INT;
+        uop.fu_code           = FU_BR;
         uop.br_type           = BR_JAL;
-        // todo
+        uop.imm               = `RV32_signext_J_Imm(inst);
+        uop.rs1_source        = RS_FROM_ZERO;
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = `RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_JALR: begin
         uop.iq_code           = IQ_INT;
+        uop.fu_code           = FU_BR;
         uop.br_type           = BR_JALR;
-        // todo
+        uop.imm               = `RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_int_index  = `RV32_RD(inst);
+        uop.rd_valid          = 1;
       end
       `RV32_BEQ: begin
         uop.iq_code           = IQ_INT;
