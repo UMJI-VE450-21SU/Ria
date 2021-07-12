@@ -34,20 +34,16 @@ typedef enum logic [3:0] {
   FU_CSR  = 4'h9
 } fu_code_t;
 
-typedef enum logic [1:0] {
-  JAL_X   = 2'h0,
-  JAL_J   = 2'h1,
-  JAL_JR  = 2'h2
-} jal_type_t;
-
-typedef enum logic [2:0] {
-  BR_X    = 3'h0,
-  BR_EQ   = 3'h1,
-  BR_NE   = 3'h2,
-  BR_LT   = 3'h3,
-  BR_GE   = 3'h4,
-  BR_LTU  = 3'h5,
-  BR_GEU  = 3'h6
+typedef enum logic [3:0] {
+  BR_X    = 4'h0,
+  BR_EQ   = 4'h1,
+  BR_NE   = 4'h2,
+  BR_LT   = 4'h3,
+  BR_GE   = 4'h4,
+  BR_LTU  = 4'h5,
+  BR_GEU  = 4'h6,
+  BR_JAL  = 4'h7,
+  BR_JALR = 4'h8
 } br_type_t;
 
 typedef enum logic [3:0] {
@@ -111,7 +107,6 @@ typedef struct packed {
   iq_code_t       iq_code;      // which issue unit do we use?
   fu_code_t       fu_code;      // which functional unit do we use?
 
-  jal_type_t      jal_type;
   br_type_t       br_type;
   alu_type_t      alu_type;
   imul_type_t     imul_type;

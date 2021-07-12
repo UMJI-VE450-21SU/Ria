@@ -42,12 +42,12 @@ module decode (
       end
       `RV32_JAL: begin
         uop.iq_code           = IQ_INT;
-        uop.jal_type          = JAL_J;
+        uop.br_type           = BR_JAL;
         // todo
       end
       `RV32_JALR: begin
         uop.iq_code           = IQ_INT;
-        uop.jal_type          = JAL_JR;
+        uop.br_type           = BR_JALR;
         // todo
       end
       `RV32_BEQ: begin

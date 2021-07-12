@@ -59,7 +59,8 @@ module rob (
         op_list_next[uop_complete[i].rob_index]          = uop_complete[i];
         op_list_next[uop_complete[i].rob_index].complete = 1;
         if (uop_complete[i].br_type != BR_X) begin
-          // A branch-type uop
+          // Branch-type uop
+          // Jump-type uop
           if (uop_complete[i].pred_taken != uop_complete[i].br_taken) begin
             // A Mis-Prediction uop
             recover     = 1;
@@ -69,15 +70,6 @@ module rob (
             end else begin
               rob_size_next = `ROB_SIZE + uop_complete[i].rob_index - rob_head_next + 1;
             end
-          end
-        end
-        if (uop_complete[i].jal_type == JAL_JR) begin
-          recover     = 1;
-          uop_recover = uop_complete[i];
-          if (uop_complete[i].rob_index >= rob_head_next) begin
-            rob_size_next = uop_complete[i].rob_index - rob_head_next + 1;
-          end else begin
-            rob_size_next = `ROB_SIZE + uop_complete[i].rob_index - rob_head_next + 1;
           end
         end
       end
