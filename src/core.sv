@@ -50,7 +50,7 @@ module core (
   /* Stage 1: IF - Instruction Fetch */
 
   fb_entry_t [`FETCH_WIDTH-1:0] if_insts_out;
-  logic                         if_insts_out_valid;
+  logic      [`FETCH_WIDTH-1:0] if_insts_out_valid;
   logic                         fb_full;
   logic                         is_prediction;      // todo: Branch Prediction
   logic                         prediction_hit;     // todo: Branch Prediction
@@ -71,7 +71,7 @@ module core (
   /* IF ~ FB Pipeline Registers */
 
   fb_entry_t [`FETCH_WIDTH-1:0] fb_insts_in;
-  logic                         fb_insts_in_valid;
+  logic      [`FETCH_WIDTH-1:0] fb_insts_in_valid;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
@@ -516,11 +516,14 @@ module core (
 
   always_ff @(posedge clock) begin
     $display("===== Pipeline Registers =====");
-    $display("[IF-FB] fb_insts_in[0].pc=%h, fb_insts_in[0].inst=%h", fb_insts_in[0].pc, fb_insts_in[0].inst);
-    $display("[IF-FB] fb_insts_in[1].pc=%h, fb_insts_in[1].inst=%h", fb_insts_in[1].pc, fb_insts_in[1].inst);
-    $display("[IF-FB] fb_insts_in[2].pc=%h, fb_insts_in[2].inst=%h", fb_insts_in[2].pc, fb_insts_in[2].inst);
-    $display("[IF-FB] fb_insts_in[3].pc=%h, fb_insts_in[3].inst=%h", fb_insts_in[3].pc, fb_insts_in[3].inst);
-    $display("[IF-FB] fb_insts_in_valid=%b", fb_insts_in_valid);
+    $display("[IF-FB] fb_insts_in[0].pc=%h, fb_insts_in[0].inst=%h, fb_insts_in_valid[0]=%b", 
+             fb_insts_in[0].pc, fb_insts_in[0].inst, fb_insts_in_valid[0]);
+    $display("[IF-FB] fb_insts_in[1].pc=%h, fb_insts_in[1].inst=%h, fb_insts_in_valid[1]=%b", 
+             fb_insts_in[1].pc, fb_insts_in[1].inst, fb_insts_in_valid[1]);
+    $display("[IF-FB] fb_insts_in[2].pc=%h, fb_insts_in[2].inst=%h, fb_insts_in_valid[2]=%b", 
+             fb_insts_in[2].pc, fb_insts_in[2].inst, fb_insts_in_valid[2]);
+    $display("[IF-FB] fb_insts_in[3].pc=%h, fb_insts_in[3].inst=%h, fb_insts_in_valid[3]=%b", 
+             fb_insts_in[3].pc, fb_insts_in[3].inst, fb_insts_in_valid[3]);
 
     $display("[FB-ID] id_insts_in[0].pc=%h, id_insts_in[0].inst=%h, id_insts_in_valid[0]=%b", 
              id_insts_in[0].pc, id_insts_in[0].inst, id_insts_in_valid[0]);

@@ -10,7 +10,7 @@ module fetch_buffer (
   input                                 reset,
 
   input  fb_entry_t [`FETCH_WIDTH-1:0]  insts_in,
-  input                                 insts_in_valid,
+  input             [`FETCH_WIDTH-1:0]  insts_in_valid,
 
   output fb_entry_t [`FETCH_WIDTH-1:0]  insts_out,
   output logic      [`FETCH_WIDTH-1:0]  insts_out_valid,
