@@ -49,8 +49,8 @@ module pipe_0 (
     end
   end
 
-  assign out = ({32{uop.fu_code == FU_ALU}} & alu_out) |
-               ({32{uop.fu_code == FU_BR}} & br_out);
+  assign out = ({32{uop_out.fu_code == FU_ALU}} & alu_out) |
+               ({32{uop_out.fu_code == FU_BR}} & br_out);
 
   assign uop_next = {uop.fu_code == FU_BR} ? br_uop : uop;
 
@@ -113,8 +113,8 @@ module pipe_1 (
     .out      (imul_out)
   );
 
-  assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out);
+  assign out = ({32{uop_out.fu_code == FU_ALU}}  & alu_out) |
+               ({32{uop_out.fu_code == FU_IMUL}} & imul_out);
   assign uop_out = uop_fifo[0];
 
   assign busy = 1'b0;
@@ -177,8 +177,8 @@ module pipe_2 (
     .out      (idiv_out)
   );
 
-  assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IDIV}} & idiv_out);
+  assign out = ({32{uop_out.fu_code == FU_ALU}}  & alu_out) |
+               ({32{uop_out.fu_code == FU_IDIV}} & idiv_out);
   assign uop_out = uop_fifo[0];
 
   assign busy = 1'b0;
