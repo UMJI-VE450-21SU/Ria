@@ -100,8 +100,8 @@ module mapping_table (
         prd[i]                 = prf_out[i];
         arf_valid_next[rd[i]]  = 1;
       end
-      prs1[i] = mapping_tb_next[rs1[i]];
-      prs2[i] = mapping_tb_next[rs2[i]];
+      prs1[i] = (rs1[i] == 0) ? 0 : mapping_tb_next[rs1[i]];
+      prs2[i] = (rs2[i] == 0) ? 0 : mapping_tb_next[rs2[i]];
     end
   end
 

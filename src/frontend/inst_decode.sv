@@ -46,7 +46,7 @@ module decode (
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_JAL;
         uop.imm               = `RV32_signext_J_Imm(inst);
-        uop.rs1_source        = RS_FROM_ZERO;
+        uop.rs1_source        = RS_FROM_PC;
         uop.rs2_source        = RS_FROM_IMM;
         uop.rd_arf_int_index  = `RV32_RD(inst);
         uop.rd_valid          = 1;
@@ -70,7 +70,6 @@ module decode (
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
         uop.rs2_arf_int_index = `RV32_RS2(inst);
-        // todo: where to set/select PC?
       end
       `RV32_BNE: begin
         uop.iq_code           = IQ_INT;
@@ -436,6 +435,8 @@ module decode (
       default:
         uop = 0;
     endcase
+    if (uop.rd_arf_int_index == 0)
+      uop.rd_valid = 0;
   end
     
 endmodule

@@ -37,7 +37,7 @@ module pipe_0 (
     .in1      (in1),
     .in2      (in2),
     .br_taken (br_taken),
-    .br_addr  (br_out),
+    .br_out   (br_out),
     .br_uop   (br_uop)
   );
 

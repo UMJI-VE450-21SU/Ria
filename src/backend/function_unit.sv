@@ -61,7 +61,7 @@ module branch (
   input  [31:0]       in1,
   input  [31:0]       in2,
   output logic        br_taken,
-  output [31:0]       br_addr,
+  output [31:0]       br_out,
   output micro_op_t   br_uop
 );
 
@@ -69,7 +69,8 @@ module branch (
   logic               eq, ne, lt, ge, ltu, geu;
   br_type_t           br_type;
   logic               result;
-  logic [31:0]        result_addr;
+  logic [31:0]        result_addr, br_out_result;
+  logic               is_jal, is_jalr, is_conditional;
 
   assign signed_in1 = in1;
   assign signed_in2 = in2;
@@ -82,28 +83,38 @@ module branch (
   assign geu  = in1 > in2;
 
   assign br_type = uop.br_type;
+  assign is_jal  = (br_type == BR_JAL);
+  assign is_jalr = (br_type == BR_JALR);
+  assign is_conditional = (br_type == BR_EQ)  | (br_type == BR_NE) |
+                          (br_type == BR_LT)  | (br_type == BR_GE) |
+                          (br_type == BR_LTU) | (br_type == BR_GEU);
 
   always_comb begin
     br_uop = uop;
     br_uop.br_taken = result;
-    br_uop.br_addr = result_addr;
+    br_uop.br_addr = uop.pc + uop.imm;
+    if (is_jalr)
+      br_uop.br_addr = in1 + uop.imm;
   end
 
-  assign result = ((br_type == BR_EQ)  & eq)  |
-                  ((br_type == BR_NE)  & ne)  |
-                  ((br_type == BR_LT)  & lt)  |
-                  ((br_type == BR_GE)  & ge)  |
-                  ((br_type == BR_LTU) & ltu) |
-                  ((br_type == BR_GEU) & geu);
-  assign result_addr = uop.pc + uop.imm;
+  assign result = ((br_type == BR_EQ)  & eq)  | ((br_type == BR_NE)  & ne)  |
+                  ((br_type == BR_LT)  & lt)  | ((br_type == BR_GE)  & ge)  |
+                  ((br_type == BR_LTU) & ltu) | ((br_type == BR_GEU) & geu) |
+                  (br_type == BR_JAL)         | (br_type == BR_JALR);
+
+  always_comb begin
+    br_out_result = 0;
+    if (is_jal | is_jalr)
+      br_out_result = uop.npc;
+  end
 
   always_ff @(posedge clock) begin
     if (reset) begin
       br_taken <= 0;
-      br_addr <= 0;
+      br_out <= 0;
     end else begin
       br_taken <= result;
-      br_addr <= result_addr;
+      br_out <= br_out_result;
     end
   end
 
@@ -116,7 +127,7 @@ module imul (
   input  micro_op_t   uop,
   input  [31:0]       in1,
   input  [31:0]       in2,
-  output logic [31:0] out                         // 5-cycle latency
+  output logic [31:0] out
 );
 
   logic signed [31:0]          signed_in1, signed_in2; // for signed wire
@@ -124,7 +135,7 @@ module imul (
   logic [1:0]                  sign;
   reg [`IMUL_LATENCY-1:0]      range;                  // 1 if [63:32]
   reg [`IMUL_LATENCY-1:0][1:0] sign_reg;
-  // every imul have a delay of 5 clock cycles
+  // every imul have a delay of `IMUL_LATENCY clock cycles
 
   assign signed_in1 = in1;
   assign signed_in2 = in2;

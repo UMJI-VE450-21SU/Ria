@@ -55,10 +55,10 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
-SIMULATOR_PROG = software/c_example/c_example.bin
+SIMULATOR_PROG = software/asm_example/asm_example.bin
 #SIMULATOR_PROG = myfile
 # the dmem init
-SIMULATOR_DATA_INIT = software/c_example/c_example.bin
+SIMULATOR_DATA_INIT = software/asm_example/asm_example.bin
 
 default: run
 
