@@ -1,6 +1,6 @@
 // Project: RISC-V SoC Microarchitecture Design & Optimization
 // Module:  Instruction Decode
-// Author:  Li Shi
+// Author:  Li Shi, Jian Shi
 // Date:    2021/06/02
 
 `include "src/common/micro_op.svh"
@@ -42,10 +42,12 @@ module decode (
       end
       `RV32_JAL: begin
         uop.iq_code           = IQ_INT;
+        uop.jal_type          = JAL_J;
         // todo
       end
       `RV32_JALR: begin
         uop.iq_code           = IQ_INT;
+        uop.jal_type          = JAL_JR;
         // todo
       end
       `RV32_BEQ: begin

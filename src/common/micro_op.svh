@@ -34,6 +34,12 @@ typedef enum logic [3:0] {
   FU_CSR  = 4'h9
 } fu_code_t;
 
+typedef enum logic [1:0] {
+  JAL_X   = 2'h0,
+  JAL_J   = 2'h1,
+  JAL_JR  = 2'h2
+} jal_type_t;
+
 typedef enum logic [2:0] {
   BR_X    = 3'h0,
   BR_EQ   = 3'h1,
@@ -105,6 +111,7 @@ typedef struct packed {
   iq_code_t       iq_code;      // which issue unit do we use?
   fu_code_t       fu_code;      // which functional unit do we use?
 
+  jal_type_t      jal_type;
   br_type_t       br_type;
   alu_type_t      alu_type;
   imul_type_t     imul_type;
