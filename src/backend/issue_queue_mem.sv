@@ -49,7 +49,7 @@ module issue_slot_mem (
   assign free = ~uop.valid;
   assign rs1_ready = ~rs1_busy;
   assign rs2_ready = ~rs2_busy;
-  assign ready = rs1_ready & rs2_ready;
+  assign ready = rs1_ready & rs2_ready & uop.valid;
 
 endmodule
 

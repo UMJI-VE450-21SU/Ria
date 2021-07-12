@@ -47,7 +47,7 @@ module issue_slot_int (
   assign free = ~uop.valid;
   assign rs1_ready = ~rs1_busy;
   assign rs2_ready = ~rs2_busy;
-  assign ready = rs1_ready & rs2_ready;
+  assign ready = rs1_ready & rs2_ready & uop.valid;
 
 endmodule
 
@@ -176,6 +176,16 @@ module issue_queue_int (
       assign ready_idiv[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IDIV);
     end
   endgenerate
+
+  wire iq_int_print = 0;
+
+  always_ff @(posedge clock) begin
+    if (iq_int_print)
+      for (integer i = 0; i < `IQ_INT_SIZE; i++) begin
+        $display("[IQ_INT] slot %d (ready=%b)", i, ready[i]);
+        print_uop(uop_to_issue[i]);
+      end
+  end
 
   // Input selector
   issue_queue_int_selector #(

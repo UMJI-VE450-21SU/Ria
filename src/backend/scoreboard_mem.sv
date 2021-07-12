@@ -56,8 +56,9 @@ module scoreboard_mem (
 
   always_comb begin
     for (int i = 0; i < `IQ_MEM_SIZE; i++) begin
-      rs1_busy[i] = sb[i][rs1_index[i]];
-      rs2_busy[i] = sb[i][rs2_index[i]];
+      // t0 is never busy
+      rs1_busy[i] = (rs1_index[i] == 0) ? 0 : sb[i][rs1_index[i]];
+      rs2_busy[i] = (rs2_index[i] == 0) ? 0 : sb[i][rs2_index[i]];
       for (int j = 0; j < `PRF_INT_WAYS; j++) begin
         if (rs1_from_clear[i][j])
           rs1_busy[i] = 0;  
