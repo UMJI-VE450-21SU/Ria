@@ -516,8 +516,8 @@ module core (
 
   wire if_fb_print = 1;
   wire fb_id_print = 1;
-  wire id_rr_print = 0;
-  wire rr_dp_print = 0;
+  wire id_rr_print = 1;
+  wire rr_dp_print = 1;
   wire dp_is_print = 0;
   wire is_rf_print = 0;
   wire rf_ex_print = 0;

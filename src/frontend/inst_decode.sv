@@ -54,6 +54,7 @@ module decode (
         uop.iq_code           = IQ_INT;
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_EQ;
+        uop.imm               = `RV32_signext_B_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
@@ -64,6 +65,7 @@ module decode (
         uop.iq_code           = IQ_INT;
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_NE;
+        uop.imm               = `RV32_signext_B_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
@@ -73,6 +75,7 @@ module decode (
         uop.iq_code           = IQ_INT;
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_LT;
+        uop.imm               = `RV32_signext_B_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
@@ -82,6 +85,7 @@ module decode (
         uop.iq_code           = IQ_INT;
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_GE;
+        uop.imm               = `RV32_signext_B_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
@@ -91,6 +95,7 @@ module decode (
         uop.iq_code           = IQ_INT;
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_LTU;
+        uop.imm               = `RV32_signext_B_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
@@ -100,6 +105,7 @@ module decode (
         uop.iq_code           = IQ_INT;
         uop.fu_code           = FU_BR;
         uop.br_type           = BR_GEU;
+        uop.imm               = `RV32_signext_B_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_RF;
