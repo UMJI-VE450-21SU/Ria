@@ -9,40 +9,40 @@ module rob (
   input           clock,
   input           reset,
 
-  input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_complete,
-  input   micro_op_t  [`RENAME_WIDTH-1:0]   uop_in,
+  input   micro_op_t  [`COMMIT_WIDTH-1:0] uop_complete,
+  input   micro_op_t  [`RENAME_WIDTH-1:0] uop_in,
 
-  output  micro_op_t  [`RENAME_WIDTH-1:0]   uop_out,
+  output  micro_op_t  [`RENAME_WIDTH-1:0] uop_out,
 
-  output  reg                               recover,
-  output  micro_op_t                        uop_recover,
-  output  micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
-  output  reg         [`ARF_INT_SIZE-1:0]   arf_recover,
-  output  reg         [`PRF_INT_SIZE-1:0]   prf_recover,
+  output  reg                             recover,
+  output  micro_op_t                      uop_recover,
+  output  micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire,
+  output  reg         [`ARF_INT_SIZE-1:0] arf_recover,
+  output  reg         [`PRF_INT_SIZE-1:0] prf_recover,
 
-  output  reg                               allocatable
+  output  reg                             allocatable
 );
 
-  micro_op_t    op_list                     [`ROB_SIZE-1:0];
-  micro_op_t    op_list_next                [`ROB_SIZE-1:0];
+  micro_op_t    op_list                   [`ROB_SIZE-1:0];
+  micro_op_t    op_list_next              [`ROB_SIZE-1:0];
 
-  rob_index_t                               rob_head;
-  reg           [`ROB_INDEX_SIZE:0]         rob_size;
+  rob_index_t                             rob_head;
+  reg           [`ROB_INDEX_SIZE:0]       rob_size;
 
-  rob_index_t                               rob_head_next;
-  logic         [`ROB_INDEX_SIZE:0]         rob_size_next;
+  rob_index_t                             rob_head_next;
+  logic         [`ROB_INDEX_SIZE:0]       rob_size_next;
 
-  logic                                     uop_valid;
+  logic                                   uop_valid;
 
   always_comb begin
-    rob_head_next       = rob_head;
-    rob_size_next       = rob_size;
-    uop_valid           = 0;
-    recover             = 0;
-    uop_recover         = 0;
-    arf_recover         = 0;
-    prf_recover         = 0;
-    allocatable         = 1;
+    rob_head_next = rob_head;
+    rob_size_next = rob_size;
+    uop_valid     = 0;
+    recover       = 0;
+    uop_recover   = 0;
+    arf_recover   = 0;
+    prf_recover   = 0;
+    allocatable   = 1;
     for (int i = 0; i < `ROB_SIZE; ++i) begin
       op_list_next[i] = op_list[i];
     end
@@ -103,8 +103,8 @@ module rob (
             op_list_next[rob_head_next + rob_size_next]           = uop_in[i];
             op_list_next[rob_head_next + rob_size_next].rob_index = rob_head_next + rob_size_next;
 
-            uop_out[i]      = op_list_next[rob_head_next + rob_size_next];
-            rob_size_next   += 1;
+            uop_out[i]    = op_list_next[rob_head_next + rob_size_next];
+            rob_size_next += 1;
           end
         end else begin
           allocatable = 0;
@@ -115,8 +115,8 @@ module rob (
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      rob_head  <= 0;
-      rob_size  <= 0;
+      rob_head <= 0;
+      rob_size <= 0;
       for (int i = 0; i < `ROB_SIZE; ++i) begin
         op_list[i] <= 0;
       end

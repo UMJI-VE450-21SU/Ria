@@ -20,7 +20,6 @@ module checkpoint (
 
   reg     [`ARF_INT_SIZE-1:0] [`PRF_INT_INDEX_SIZE-1:0]   checkpoint[`RAT_CP_SIZE-1:0];
 
-
   initial begin
     for (int i = 0; i < `RAT_CP_SIZE; i = i + 1 )  begin
       checkpoint[i] = 0;
