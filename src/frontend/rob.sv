@@ -8,7 +8,6 @@
 module rob (
   input           clock,
   input           reset,
-  input           input_valid,
 
   input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_complete,
   input   micro_op_t  [`RENAME_WIDTH-1:0]   uop_in,
@@ -100,8 +99,11 @@ module rob (
           // Have enough rob space to store uop
           if (uop_in[i].valid) begin
             // A valid uop to store
-            op_list_next[rob_head_next + rob_size_next] = uop_in[i];
-            rob_size_next += 1;
+            op_list_next[rob_head_next + rob_size_next]           = uop_in[i];
+            op_list_next[rob_head_next + rob_size_next].rob_index = rob_head_next + rob_size_next;
+
+            uop_out[i]      = op_list_next[rob_head_next + rob_size_next];
+            rob_size_next   += 1;
           end
         end else begin
           allocatable = 0;

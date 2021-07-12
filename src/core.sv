@@ -26,10 +26,26 @@ module core (
   logic                           stall = 0;
   logic                           clear = 0;
   logic                           recover;
-  logic       [`ARF_INT_SIZE-1:0] arf_recover;
-  logic       [`PRF_INT_SIZE-1:0] prf_recover;
   micro_op_t                      uop_recover;
   micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire;
+  logic       [`ARF_INT_SIZE-1:0] arf_recover;
+  logic       [`PRF_INT_SIZE-1:0] prf_recover;
+
+  always_ff @(posedge clock) begin
+    if (reset) begin
+      recover     <= 0;
+      uop_recover <= 0;
+      uop_retire  <= 0;
+      arf_recover <= 0;
+      prf_recover <= 0;
+    end else begin
+      recover     <= cm_recover;
+      uop_recover <= cm_uop_recover;
+      uop_retire  <= cm_uop_retire;
+      arf_recover <= cm_arf_recover;
+      prf_recover <= cm_prf_recover;
+    end
+  end
 
   /* Stage 1: IF - Instruction Fetch */
 
@@ -111,13 +127,16 @@ module core (
 
   /* ID ~ RR Pipeline Registers */
 
-  micro_op_t [`RENAME_WIDTH-1:0] rr_uops_in;
+  micro_op_t [`RENAME_WIDTH-1:0]  rr_uops_in;
+  logic                           rr_stall;
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      rr_uops_in <= 0;
+      rr_uops_in  <= 0;
+      rr_stall    <= 0;
     end else begin
-      rr_uops_in <= id_uops_out;
+      rr_uops_in  <= id_uops_out;
+      rr_stall    <= !cm_allocatable;
     end
   end
 
@@ -129,7 +148,7 @@ module core (
   rat rr (
     .clock        (clock          ),
     .reset        (reset          ),
-    .stall        (!cm_allocatable),
+    .stall        (rr_stall       ),
     .recover      (recover        ),
     .arf_recover  (arf_recover    ),
     .prf_recover  (prf_recover    ),
@@ -143,10 +162,6 @@ module core (
   /* RR ~ DP Pipeline Registers */
 
   micro_op_t [`DISPATCH_WIDTH-1:0] dp_uops_in;
-
-  micro_op_t  [`RENAME_WIDTH-1:0]   cm_uops_out;
-  logic                             cm_allocatable;
-  logic                             cm_ready;       // todo: connect to where?
 
   assign dp_uops_in = cm_uops_out;
 
@@ -453,41 +468,48 @@ module core (
 
   micro_op_t [`COMMIT_WIDTH-1:0]  cm_uops_complete;
 
-  assign cm_uops_complete = wb_uops_out;
+  always_ff @(posedge clock) begin
+    if (reset) begin
+      cm_uops_complete <= 0;
+    end else begin
+      cm_uops_complete <= wb_uops_out;
+    end
+  end
 
   /* RR ~ CM Pipeline Registers */
 
-  logic                           cm_in_valid;
   micro_op_t [`RENAME_WIDTH-1:0]  cm_uops_in;
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      cm_in_valid <= 0;
-      cm_uops_in  <= 0;
+      cm_uops_in <= 0;
     end else begin
-      cm_in_valid <= rr_allocatable;
-      cm_uops_in  <= rr_uops_out;
+      cm_uops_in <= rr_uops_out;
     end
   end
 
   /* Stage 10: CM - Commit */
 
+  micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;
+  logic                           cm_recover;
+  micro_op_t                      cm_uop_recover;
+  micro_op_t  [`COMMIT_WIDTH-1:0] cm_uop_retire;
+  logic       [`ARF_INT_SIZE-1:0] cm_arf_recover;
+  logic       [`PRF_INT_SIZE-1:0] cm_prf_recover;
+  logic                           cm_allocatable;
+
   rob cm (
     .clock          (clock            ),
     .reset          (reset            ),
-    .input_valid    (cm_in_valid      ),
     .uop_complete   (cm_uops_complete ),
     .uop_in         (cm_uops_in       ),
     .uop_out        (cm_uops_out      ),
-    .recover        (recover          ),
-    .uop_recover    (uop_recover      ),
-    .uop_retire     (uop_retire       ),
-    .arf_recover    (arf_recover      ),
-    .prf_recover    (prf_recover      ),
-    .prediction     (is_prediction    ),
-    .prediction_hit (prediction_hit   ),
-    .allocatable    (cm_allocatable   ),
-    .ready          (cm_ready         )
+    .recover        (cm_recover       ),
+    .uop_recover    (cm_uop_recover   ),
+    .uop_retire     (cm_uop_retire    ),
+    .arf_recover    (cm_arf_recover   ),
+    .prf_recover    (cm_prf_recover   ),
+    .allocatable    (cm_allocatable   )
   );
 
   // todo: connect pipe 0 output to recover signal
