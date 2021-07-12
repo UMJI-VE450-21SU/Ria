@@ -25,6 +25,15 @@ module core (
 
   logic                           stall = 0;
   logic                           clear = 0;
+
+  /* CM ~ Recover Pipeline Registers */
+
+  logic                           cm_recover;
+  micro_op_t                      cm_uop_recover;
+  micro_op_t  [`COMMIT_WIDTH-1:0] cm_uop_retire;
+  logic       [`ARF_INT_SIZE-1:0] cm_arf_recover;
+  logic       [`PRF_INT_SIZE-1:0] cm_prf_recover;
+
   logic                           recover;
   micro_op_t                      uop_recover;
   micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire;
@@ -46,6 +55,10 @@ module core (
       prf_recover <= cm_prf_recover;
     end
   end
+
+  /* Stage Stall Signal */
+  logic                           rr_allocatable;
+  logic                           cm_allocatable;
 
   /* Stage 1: IF - Instruction Fetch */
 
@@ -136,14 +149,13 @@ module core (
       rr_stall    <= 0;
     end else begin
       rr_uops_in  <= id_uops_out;
-      rr_stall    <= !cm_allocatable;
+      rr_stall    <= !cm_allocatable | stall;
     end
   end
 
   /* Stage 4: RR - Register Renaming */
 
   micro_op_t  [`RENAME_WIDTH-1:0] rr_uops_out;
-  logic                           rr_allocatable;
 
   rat rr (
     .clock        (clock          ),
@@ -161,7 +173,8 @@ module core (
 
   /* RR ~ DP Pipeline Registers */
 
-  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uops_in;
+  micro_op_t  [`RENAME_WIDTH-1:0]   cm_uops_out;
+  micro_op_t  [`DISPATCH_WIDTH-1:0] dp_uops_in;
 
   assign dp_uops_in = cm_uops_out;
 
@@ -489,14 +502,6 @@ module core (
   end
 
   /* Stage 10: CM - Commit */
-
-  micro_op_t  [`RENAME_WIDTH-1:0] cm_uops_out;
-  logic                           cm_recover;
-  micro_op_t                      cm_uop_recover;
-  micro_op_t  [`COMMIT_WIDTH-1:0] cm_uop_retire;
-  logic       [`ARF_INT_SIZE-1:0] cm_arf_recover;
-  logic       [`PRF_INT_SIZE-1:0] cm_prf_recover;
-  logic                           cm_allocatable;
 
   rob cm (
     .clock          (clock            ),
