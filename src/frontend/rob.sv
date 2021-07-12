@@ -71,7 +71,7 @@ module rob (
             end
           end
         end
-        if (uop_complete[i].jal_type != JAL_X) begin
+        if (uop_complete[i].jal_type == JAL_JR) begin
           recover     = 1;
           uop_recover = uop_complete[i];
           if (uop_complete[i].rob_index >= rob_head_next) begin
