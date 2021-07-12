@@ -12,6 +12,7 @@
 typedef struct packed {
   logic [31:0]  pc;
   inst_t        inst;   // fetched instruction
+  logic         valid;
 } fb_entry_t;
 
 typedef enum logic [1:0] {

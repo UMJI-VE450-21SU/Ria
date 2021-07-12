@@ -19,7 +19,7 @@ module inst_fetch (
   output logic [31:0]                   core2icache_addr,   // one addr is enough
   // ======= inst buffer related =============
   output fb_entry_t [`FETCH_WIDTH-1:0]  insts_out,
-  output logic      [`FETCH_WIDTH-1:0]  insts_out_valid
+  output logic                          insts_out_valid
 );
 
   reg   [31:0] pc;
@@ -44,6 +44,7 @@ module inst_fetch (
   end
 
   assign core2icache_addr = pc_aligned;
+  assign insts_out_valid = pc_enable;
 
   generate
     for (genvar i = 0; i < `FETCH_WIDTH; i++) begin
@@ -54,18 +55,18 @@ module inst_fetch (
   endgenerate
 
   always_comb begin
-    insts_out_valid[0] = (pc_offset == 2'b00);
-    insts_out_valid[1] = ((insts_out_valid[0] && !is_jal[0]) || pc_offset == 2'b01);
-    insts_out_valid[2] = ((insts_out_valid[1] && !is_jal[1]) || pc_offset == 2'b10);
-    insts_out_valid[3] = ((insts_out_valid[2] && !is_jal[2]) || pc_offset == 2'b11);
+    insts_out[0].valid = insts_out_valid && (pc_offset == 2'b00);
+    insts_out[1].valid = insts_out_valid && ((insts_out[0].valid && !is_jal[0]) || pc_offset == 2'b01);
+    insts_out[2].valid = insts_out_valid && ((insts_out[1].valid && !is_jal[1]) || pc_offset == 2'b10);
+    insts_out[3].valid = insts_out_valid && ((insts_out[2].valid && !is_jal[2]) || pc_offset == 2'b11);
   end
 
   // Branch predictor
 
   always_comb begin
-    pc_predicted = pc + 16;
+    pc_predicted = pc_aligned + 16;
     for (integer i = 0; i < `FETCH_WIDTH; i++) begin
-      if (insts_out_valid[i] && is_jal[i]) begin
+      if (insts_out[i].valid && is_jal[i]) begin
         pc_predicted = insts_out[i].pc + `RV32_signext_J_Imm(insts_out[i].inst);
       end
     end
