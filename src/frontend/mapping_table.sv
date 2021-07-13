@@ -90,6 +90,8 @@ module mapping_table (
           mapping_tb_cp_in[j] = mapping_tb_next[j];
         end
       end
+      prs1[i] = (rs1[i] == 0) ? 0 : mapping_tb_next[rs1[i]];
+      prs2[i] = (rs2[i] == 0) ? 0 : mapping_tb_next[rs2[i]];
       if (rd_valid[i]) begin
         // WAW: Return Previous PRF
         prev_rd[i] = mapping_tb_next[rd[i]];
@@ -100,8 +102,6 @@ module mapping_table (
         prd[i]                 = prf_out[i];
         arf_valid_next[rd[i]]  = 1;
       end
-      prs1[i] = (rs1[i] == 0) ? 0 : mapping_tb_next[rs1[i]];
-      prs2[i] = (rs2[i] == 0) ? 0 : mapping_tb_next[rs2[i]];
     end
   end
 
