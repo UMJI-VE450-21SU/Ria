@@ -137,6 +137,8 @@ module pipe_2 (
   wire                            input_valid = uop.valid;
   micro_op_t [`IDIV_LATENCY-1:0]  uop_fifo;
   logic [31:0]                    alu_out, idiv_out;
+  logic                           ready;
+
 
   always_ff @(posedge clock) begin
     if (reset) begin
@@ -167,21 +169,26 @@ module pipe_2 (
     .out      (alu_out)
   );
 
-  // todo: Add a idiv module
-  imul idiv_inst (
-    .clock    (clock),
-    .reset    (reset),
-    .uop      (uop),
-    .in1      (in1),
-    .in2      (in2),
-    .out      (idiv_out)
-  );
+
+  Divide idiv_inst(  
+    .clk    (clock),  
+    .reset  (reset),  
+    .start  (input_valid),  
+    .A      (in1),  
+    .B      (in2),  
+    .D      (idiv_out),  
+    .R      (),  // remaindar, currently useless
+    .ok     (ready),  // =1 when the divider is not running
+    .err    ()
+  );  
+
 
   assign out = ({32{uop_out.fu_code == FU_ALU}}  & alu_out) |
                ({32{uop_out.fu_code == FU_IDIV}} & idiv_out);
+  
   assign uop_out = uop_fifo[0];
 
-  assign busy = 1'b0;
+  assign busy = ~ready;
 
 endmodule
 
