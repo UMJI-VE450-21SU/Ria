@@ -371,27 +371,30 @@ module core (
 
   micro_op_t [`ISSUE_WIDTH_INT-1:0]  ex_int_uop_out;
   logic [`ISSUE_WIDTH_INT-1:0][31:0] ex_int_rd_data_out;
+  logic [1:0]                        ex_int_br_taken;
 
   // ALU + BR
-  pipe_0 pipe_0 (
+  pipe_0_1 pipe_0 (
     .clock    (clock                 ),
     .reset    (reset                 ),
     .uop      (ex_int_uop_in      [0]),
     .in1      (ex_int_rs1_data_in [0]),
     .in2      (ex_int_rs2_data_in [0]),
     .uop_out  (ex_int_uop_out     [0]),
+    .br_taken (ex_int_br_taken    [0]),
     .out      (ex_int_rd_data_out [0]),
     .busy     (ex_int_busy        [0])
   );
 
-  // ALU + IMUL
-  pipe_1 pipe_1 (
+  // ALU + BR
+  pipe_0_1 pipe_1 (
     .clock    (clock                 ),
     .reset    (reset                 ),
     .uop      (ex_int_uop_in      [1]),
     .in1      (ex_int_rs1_data_in [1]),
     .in2      (ex_int_rs2_data_in [1]),
     .uop_out  (ex_int_uop_out     [1]),
+    .br_taken (ex_int_br_taken    [1]),
     .out      (ex_int_rd_data_out [1]),
     .busy     (ex_int_busy        [1])
   );

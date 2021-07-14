@@ -131,14 +131,13 @@ module issue_queue_int (
 
   logic [`IQ_INT_SIZE-1:0] free, load;
 
-  logic [`IQ_INT_SIZE-1:0] ready, ready_alu, ready_br, ready_imul, ready_idiv;
+  logic [`IQ_INT_SIZE-1:0] ready, ready_alu_br, ready_imul_idiv;
   logic [`IQ_INT_SIZE-1:0] clear;
 
-  logic [$clog2(`IQ_INT_SIZE)-1:0] clear_br, clear_imul, clear_idiv;
-  logic                            clear_br_valid, clear_imul_valid, clear_idiv_valid;
-
-  logic [`ISSUE_WIDTH_INT-1:0][$clog2(`IQ_INT_SIZE)-1:0] clear_alu;
-  logic [`ISSUE_WIDTH_INT-1:0]                           clear_alu_valid;
+  logic [1:0][$clog2(`IQ_INT_SIZE)-1:0] clear_alu_br;         // Pipe 0/1 for alu/br
+  logic [1:0]                           clear_alu_br_valid;
+  logic [$clog2(`IQ_INT_SIZE)-1:0]      clear_imul_idiv;      // Pipe 2 for imul/idiv
+  logic                                 clear_imul_idiv_valid;
 
   micro_op_t [`IQ_INT_SIZE-1:0] uop_to_slot, uop_to_issue;
 
@@ -170,21 +169,25 @@ module issue_queue_int (
         .ready      (ready[k]),
         .free       (free[k])
       );
-      assign ready_alu[k]  = ready[k] & (uop_to_issue[k].fu_code == FU_ALU);
-      assign ready_br[k]   = ready[k] & (uop_to_issue[k].fu_code == FU_BR);
-      assign ready_imul[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IMUL);
-      assign ready_idiv[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IDIV);
+      assign ready_alu_br[k]    = ready[k] & 
+                                  ((uop_to_issue[k].fu_code == FU_ALU) | 
+                                   (uop_to_issue[k].fu_code == FU_BR));
+      assign ready_imul_idiv[k] = ready[k] & 
+                                  ((uop_to_issue[k].fu_code == FU_IMUL) | 
+                                   (uop_to_issue[k].fu_code == FU_IDIV));
     end
   endgenerate
 
   wire iq_int_print = 0;
 
   always_ff @(posedge clock) begin
-    if (iq_int_print)
+    if (iq_int_print) begin
       for (integer i = 0; i < `IQ_INT_SIZE; i++) begin
         $display("[IQ_INT] slot %d (ready=%b)", i, ready[i]);
         print_uop(uop_to_issue[i]);
       end
+      $display("[IQ_INT] free_count_reg=%d", free_count_reg);
+    end
   end
 
   // Input selector
@@ -221,43 +224,24 @@ module issue_queue_int (
   end
 
   // Output selector
-  // todo: Adjust for different execution pipes
   issue_queue_int_selector #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_br (
-    .ready      (ready_br),
-    .sel        (clear_br),
-    .sel_valid  (clear_br_valid)
+    /*REQS=*/  2,
+    /*WIDTH=*/ `IQ_INT_SIZE
+  ) output_selector_alu_br (
+    .ready      (ready_alu_br),
+    .sel        (clear_alu_br),
+    .sel_valid  (clear_alu_br_valid)
   );
 
   issue_queue_int_selector #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_imul (
-    .ready      (ready_imul),
-    .sel        (clear_imul),
-    .sel_valid  (clear_imul_valid)
+    /*REQS=*/  1,
+    /*WIDTH=*/ `IQ_INT_SIZE
+  ) output_selector_imul_idiv (
+    .ready      (ready_imul_idiv),
+    .sel        (clear_imul_idiv),
+    .sel_valid  (clear_imul_idiv_valid)
   );
 
-  issue_queue_int_selector #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_idiv (
-    .ready      (ready_idiv),
-    .sel        (clear_idiv),
-    .sel_valid  (clear_idiv_valid)
-  );
-
-  issue_queue_int_selector #(
-    /*REQS=*/ `ISSUE_WIDTH_INT,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_alu (
-    .ready      (ready_alu),
-    .sel        (clear_alu),
-    .sel_valid  (clear_alu_valid)
-  );
-  
   always_comb begin
     uop_out_count = 0;
     for (int i = 0; i < `IQ_INT_SIZE; i++) begin
@@ -269,43 +253,13 @@ module issue_queue_int (
 
   // Select part of ready instructions to be issued
   always_comb begin
-    uop_out[0] = 0;
-    uop_out[1] = 0;
-    uop_out[2] = 0;
+    uop_out[0] = clear_alu_br_valid[0] ? uop_to_issue[clear_alu_br[0]] : 0;
+    uop_out[1] = clear_alu_br_valid[1] ? uop_to_issue[clear_alu_br[1]] : 0;
+    uop_out[2] = clear_imul_idiv_valid ? uop_to_issue[clear_imul_idiv] : 0;
     clear = 0;
-    // Execution pipe 0 (ALU+Branch): Branch > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-      if ((clear_br == j) & clear_br_valid) begin
-        uop_out[0] = uop_to_issue[j];
-        clear[j] = 1;
-        break;
-      end else if ((clear_alu[0] == j) & clear_alu_valid[0]) begin
-        uop_out[0] = uop_to_issue[j];
-        clear[j] = 1;
-      end
-    end
-    // Execution pipe 1 (ALU+IntMult): IntMult > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-      if ((clear_imul == j) & clear_imul_valid) begin
-        uop_out[1] = uop_to_issue[j];
-        clear[j] = 1;
-        break;
-      end else if ((clear_alu[1] == j) & clear_alu_valid[1]) begin
-        uop_out[1] = uop_to_issue[j];
-        clear[j] = 1;
-      end
-    end
-    // Execution pipe 1 (ALU+IntDiv): IntDiv > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-      if ((clear_idiv == j) & clear_idiv_valid) begin
-        uop_out[2] = uop_to_issue[j];
-        clear[j] = 1;
-        break;
-      end else if ((clear_alu[2] == j) & clear_alu_valid[2]) begin
-        uop_out[2] = uop_to_issue[j];
-        clear[j] = 1;
-      end
-    end
+    clear[clear_alu_br[0]] = clear_alu_br_valid[0];
+    clear[clear_alu_br[1]] = clear_alu_br_valid[1];
+    clear[clear_imul_idiv] = clear_imul_idiv_valid;
   end
 
 endmodule
