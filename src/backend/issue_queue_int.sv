@@ -186,6 +186,9 @@ module issue_queue_int (
         $display("[IQ_INT] slot %d (ready=%b)", i, ready[i]);
         print_uop(uop_to_issue[i]);
       end
+      $display("[IQ_INT] clear=%b, ready_alu_br=%b", clear, ready_alu_br);
+      $display("[IQ_INT] clear_alu_br[0]=%h, clear_alu_br[1]=%h", clear_alu_br[0], clear_alu_br[1]);
+      $display("[IQ_INT] clear_alu_br_valid[0]=%h, clear_alu_br_valid[1]=%h", clear_alu_br_valid[0], clear_alu_br_valid[1]);
       $display("[IQ_INT] free_count_reg=%d", free_count_reg);
     end
   end
@@ -253,13 +256,20 @@ module issue_queue_int (
 
   // Select part of ready instructions to be issued
   always_comb begin
-    uop_out[0] = clear_alu_br_valid[0] ? uop_to_issue[clear_alu_br[0]] : 0;
-    uop_out[1] = clear_alu_br_valid[1] ? uop_to_issue[clear_alu_br[1]] : 0;
-    uop_out[2] = clear_imul_idiv_valid ? uop_to_issue[clear_imul_idiv] : 0;
+    uop_out = 0;
     clear = 0;
-    clear[clear_alu_br[0]] = clear_alu_br_valid[0];
-    clear[clear_alu_br[1]] = clear_alu_br_valid[1];
-    clear[clear_imul_idiv] = clear_imul_idiv_valid;
+    if (clear_alu_br_valid[0]) begin
+      uop_out[0] = uop_to_issue[clear_alu_br[0]];
+      clear[clear_alu_br[0]] = 1;
+    end
+    if (clear_alu_br_valid[1]) begin
+      uop_out[1] = uop_to_issue[clear_alu_br[1]];
+      clear[clear_alu_br[1]] = 1;
+    end
+    if (clear_imul_idiv_valid) begin
+      uop_out[2] = uop_to_issue[clear_imul_idiv];
+      clear[clear_imul_idiv] = 1;
+    end
   end
 
 endmodule

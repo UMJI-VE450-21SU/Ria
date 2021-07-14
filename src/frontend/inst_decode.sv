@@ -437,6 +437,8 @@ module decode (
     endcase
     if (uop.rd_arf_int_index == 0)
       uop.rd_valid = 0;
+    if (!uop.valid)
+      uop = 0;      // easier for debug
   end
     
 endmodule

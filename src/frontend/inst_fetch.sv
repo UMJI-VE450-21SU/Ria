@@ -40,7 +40,7 @@ module inst_fetch (
       pc <= branch_pc;
     else if (pc_enable)
       pc <= pc_predicted;
-    $display("pc=%h, pc_predicted=%h", pc, pc_predicted);
+    // $display("pc=%h, pc_predicted=%h", pc, pc_predicted);
   end
 
   assign core2icache_addr = pc_aligned;
