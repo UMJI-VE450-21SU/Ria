@@ -433,21 +433,19 @@ module core (
 
   /* EX ~ WB Pipeline Registers (inside EX pipes) */
   
-  micro_op_t [`COMMIT_WIDTH-1:0] wb_uops_in;
+  micro_op_t [`COMMIT_WIDTH-1:0] wb_uops;
 
   always_comb begin
-    wb_uops_in = 0;
+    wb_uops = 0;
     for (int i = 0; i < `ISSUE_WIDTH_INT; i++)
-      wb_uops_in[i] = ex_int_uop_out[i];
+      wb_uops[i] = ex_int_uop_out[i];
     for (int i = 0; i < `ISSUE_WIDTH_MEM; i++)
-      wb_uops_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i];
+      wb_uops[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i];
     // for (int i = 0; i < `ISSUE_WIDTH_FP; i++)
-    //   wb_uops_in[i + `ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM] <= ex_fp_uop_out[i];
+    //   wb_uops[i + `ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM] <= ex_fp_uop_out[i];
   end
 
   /* Stage 9: WB - Write Back */
-
-  micro_op_t [`COMMIT_WIDTH-1:0] wb_uops_out;
 
   // Note: ex_***_uop_out and ex_***_rd_data_out are sequential logics
   generate
@@ -467,13 +465,6 @@ module core (
     end
   endgenerate
 
-  always_ff @(posedge clock) begin
-    if (reset)
-      wb_uops_out <= 0;
-    else
-      wb_uops_out <= wb_uops_in;
-  end
-
   /* WB ~ CM Pipeline Registers */
 
   micro_op_t [`COMMIT_WIDTH-1:0]  cm_uops_complete;
@@ -482,7 +473,7 @@ module core (
     if (reset) begin
       cm_uops_complete <= 0;
     end else begin
-      cm_uops_complete <= wb_uops_out;
+      cm_uops_complete <= wb_uops;
     end
   end
 
@@ -516,10 +507,10 @@ module core (
 
   // todo: connect pipe 0 output to recover signal
 
-  wire if_fb_print = 0;
-  wire fb_id_print = 0;
-  wire id_rr_print = 0;
-  wire rr_dp_print = 0;
+  wire if_fb_print = 1;
+  wire fb_id_print = 1;
+  wire id_rr_print = 1;
+  wire rr_dp_print = 1;
   wire dp_is_print = 1;
   wire is_rf_print = 1;
   wire rf_ex_print = 1;
@@ -608,18 +599,18 @@ module core (
       print_uop(ex_mem_uop_in[0]);
     end
     if (ex_wb_print) begin
-      $display("[EX-WB] wb_uops_in[0], rd_data_in=%h, rd=%h, rd_en=%b", 
+      $display("[EX-WB] wb_uops[0], rd_data_in=%h, rd=%h, rd_en=%b", 
                rf_int_rd_data_in[0], rf_int_rd_index_in[0], rf_int_rd_en_in[0]);
-      print_uop(wb_uops_in[0]);
-      $display("[EX-WB] wb_uops_in[1], rd_data_in=%h, rd=%h, rd_en=%b", 
+      print_uop(wb_uops[0]);
+      $display("[EX-WB] wb_uops[1], rd_data_in=%h, rd=%h, rd_en=%b", 
                rf_int_rd_data_in[1], rf_int_rd_index_in[1], rf_int_rd_en_in[1]);
-      print_uop(wb_uops_in[1]);
-      $display("[EX-WB] wb_uops_in[2], rd_data_in=%h, rd=%h, rd_en=%b", 
+      print_uop(wb_uops[1]);
+      $display("[EX-WB] wb_uops[2], rd_data_in=%h, rd=%h, rd_en=%b", 
                rf_int_rd_data_in[2], rf_int_rd_index_in[2], rf_int_rd_en_in[2]);
-      print_uop(wb_uops_in[2]);
-      $display("[EX-WB] wb_uops_in[3], rd_data_in=%h, rd=%h, rd_en=%b", 
+      print_uop(wb_uops[2]);
+      $display("[EX-WB] wb_uops[3], rd_data_in=%h, rd=%h, rd_en=%b", 
                rf_int_rd_data_in[3], rf_int_rd_index_in[3], rf_int_rd_en_in[3]);
-      print_uop(wb_uops_in[3]);
+      print_uop(wb_uops[3]);
     end
     if (wb_cm_print) begin
       $display("[WB-CM] cm_uops_complete[0]");
