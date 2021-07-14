@@ -15,6 +15,7 @@ loop1:
   jal   x0, loop1
 
 main:
+  addi  t2, x0, 0
   addi  a0, x0, 120   # first parameter in the multiplication
   addi  a1, x0, 6     # second parameter in the multiplication
   jal   ra, intmul
