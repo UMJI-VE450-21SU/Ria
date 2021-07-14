@@ -3,8 +3,8 @@
 // Author:  Li Shi
 // Date:    2021/06/21
 
-// Pipe 0: ALU + BR
-module pipe_0 (
+// Pipe 0/1: ALU + BR
+module pipe_0_1 (
   input             clock,
   input             reset,
   input  micro_op_t uop,
@@ -59,70 +59,7 @@ module pipe_0 (
 endmodule
 
 
-// Pipe 1: ALU + IMUL
-module pipe_1 (
-  input             clock,
-  input             reset,
-  input  micro_op_t uop,
-  input  [31:0]     in1,
-  input  [31:0]     in2,
-  output micro_op_t uop_out,
-  output [31:0]     out,
-  output            busy
-);
-
-  wire                            input_valid = uop.valid;
-  micro_op_t [`IMUL_LATENCY-1:0]  uop_fifo;
-  logic [31:0]                    alu_out, imul_out;
-
-  always_ff @(posedge clock) begin
-    if (reset) begin
-      uop_fifo <= 0;
-    end else begin
-      if (input_valid & (uop.fu_code == FU_ALU)) begin
-        uop_fifo[0] <= uop;
-      end else begin
-        uop_fifo[0] <= uop_fifo[1];
-      end
-      for (int i = 1; i < `IMUL_LATENCY - 1; i++) begin
-        uop_fifo[i] <= uop_fifo[i + 1];
-      end
-      if (input_valid & (uop.fu_code == FU_IMUL)) begin
-        uop_fifo[`IMUL_LATENCY - 1] <= uop;
-      end else begin
-        uop_fifo[`IMUL_LATENCY - 1] <= 0;
-      end
-    end
-  end
-
-  alu alu_inst (
-    .clock    (clock),
-    .reset    (reset),
-    .uop      (uop),
-    .in1      (in1),
-    .in2      (in2),
-    .out      (alu_out)
-  );
-
-  imul imul_inst (
-    .clock    (clock),
-    .reset    (reset),
-    .uop      (uop),
-    .in1      (in1),
-    .in2      (in2),
-    .out      (imul_out)
-  );
-
-  assign out = ({32{uop_out.fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_out.fu_code == FU_IMUL}} & imul_out);
-  assign uop_out = uop_fifo[0];
-
-  assign busy = 1'b0;
-
-endmodule
-
-
-// Pipe 2: ALU + IDIV
+// Pipe 2: IMUL + IDIV
 module pipe_2 (
   input             clock,
   input             reset,
@@ -134,61 +71,42 @@ module pipe_2 (
   output            busy
 );
 
-  wire                            input_valid = uop.valid;
-  micro_op_t [`IDIV_LATENCY-1:0]  uop_fifo;
-  logic [31:0]                    alu_out, idiv_out;
-  logic                           ready;
+  micro_op_t   uop_reg;
+  logic [31:0] imul_out, idiv_out;
+  logic        imul_busy, idiv_busy, ready;
 
-
-  always_ff @(posedge clock) begin
-    if (reset) begin
-      uop_fifo <= 0;
-    end else begin
-      if (input_valid & (uop.fu_code == FU_ALU)) begin
-        uop_fifo[0] <= uop;
-      end else begin
-        uop_fifo[0] <= uop_fifo[1];
-      end
-      for (int i = 1; i < `IDIV_LATENCY - 1; i++) begin
-        uop_fifo[i] <= uop_fifo[i + 1];
-      end
-      if (input_valid & (uop.fu_code == FU_IDIV)) begin
-        uop_fifo[`IDIV_LATENCY - 1] <= uop;
-      end else begin
-        uop_fifo[`IDIV_LATENCY - 1] <= 0;
-      end
-    end
-  end
-
-  alu alu_inst (
+  imul imul_inst (
     .clock    (clock),
     .reset    (reset),
     .uop      (uop),
     .in1      (in1),
     .in2      (in2),
-    .out      (alu_out)
+    .out      (imul_out),
+    .busy     (imul_busy)
   );
 
+  idiv idiv_inst (
+    .clock    (clock),
+    .reset    (reset),
+    .uop      (uop),
+    .in1      (in1),
+    .in2      (in2),
+    .out      (idiv_out),
+    .busy     (idiv_busy)
+  );
 
-  Divide idiv_inst(  
-    .clk    (clock),  
-    .reset  (reset),  
-    .start  (input_valid),  
-    .A      (in1),  
-    .B      (in2),  
-    .D      (idiv_out),  
-    .R      (),  // remaindar, currently useless
-    .ok     (ready),  // =1 when the divider is not running
-    .err    ()
-  );  
+  always_ff @(posedge clock) begin
+    if (reset)
+      uop_reg <= 0;
+    else if (!busy && uop.valid)
+      uop_reg <= uop;
+  end
 
-
-  assign out = ({32{uop_out.fu_code == FU_ALU}}  & alu_out) |
+  assign out = ({32{uop_out.fu_code == FU_IMUL}} & imul_out) |
                ({32{uop_out.fu_code == FU_IDIV}} & idiv_out);
-  
-  assign uop_out = uop_fifo[0];
 
-  assign busy = ~ready;
+  assign busy = imul_busy | idiv_busy;  // busy is synchronous signal
+  assign uop_out = busy ? 0 : uop_reg;  // uop_out is synchronous signal
 
 endmodule
 
