@@ -173,10 +173,10 @@ module core (
 
   /* RR ~ DP Pipeline Registers */
 
-  micro_op_t  [`RENAME_WIDTH-1:0]   cm_uops_out;
+  micro_op_t  [`RENAME_WIDTH-1:0]   rob_uops_out;
   micro_op_t  [`DISPATCH_WIDTH-1:0] dp_uops_in;
 
-  assign dp_uops_in = cm_uops_out;
+  assign dp_uops_in = rob_uops_out;
 
   /* Stage 5: DP - Dispatch */
 
@@ -482,13 +482,13 @@ module core (
 
   /* RR ~ CM Pipeline Registers */
 
-  micro_op_t [`RENAME_WIDTH-1:0]  cm_uops_in;
+  micro_op_t [`RENAME_WIDTH-1:0]  rob_uops_in;
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      cm_uops_in <= 0;
+      rob_uops_in <= 0;
     end else begin
-      cm_uops_in <= rr_uops_out;
+      rob_uops_in <= rr_uops_out;
     end
   end
 
@@ -498,8 +498,8 @@ module core (
     .clock          (clock            ),
     .reset          (reset            ),
     .uop_complete   (cm_uops_complete ),
-    .uop_in         (cm_uops_in       ),
-    .uop_out        (cm_uops_out      ),
+    .uop_in         (rob_uops_in      ),
+    .uop_out        (rob_uops_out     ),
     .recover        (cm_recover       ),
     .uop_recover    (cm_uop_recover   ),
     .uop_retire     (cm_uop_retire    ),
@@ -554,14 +554,14 @@ module core (
       print_uop(rr_uops_in[3]);
     end
     if (rr_dp_print) begin
-      $display("[RR-DP] dp_uops_in[0]");
-      print_uop(dp_uops_in[0]);
-      $display("[RR-DP] dp_uops_in[1]");
-      print_uop(dp_uops_in[1]);
-      $display("[RR-DP] dp_uops_in[2]");
-      print_uop(dp_uops_in[2]);
-      $display("[RR-DP] dp_uops_in[3]");
-      print_uop(dp_uops_in[3]);
+      $display("[RR-DP] rob_uops_in[0]");
+      print_uop(rob_uops_in[0]);
+      $display("[RR-DP] rob_uops_in[1]");
+      print_uop(rob_uops_in[1]);
+      $display("[RR-DP] rob_uops_in[2]");
+      print_uop(rob_uops_in[2]);
+      $display("[RR-DP] rob_uops_in[3]");
+      print_uop(rob_uops_in[3]);
     end
     if (dp_is_print) begin
       $display("[DP-IS] is_int_uop_in[0]");
@@ -628,19 +628,19 @@ module core (
     $display("==============================");
     $display("|---FB---|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
     $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             fb_insts_in[0].pc, id_insts_in[0].pc, rr_uops_in[0].pc, dp_uops_in[0].pc,
+             fb_insts_in[0].pc, id_insts_in[0].pc, rr_uops_in[0].pc, rob_uops_in[0].pc,
              is_int_uop_in[0].pc, rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc,
              cm_uops_complete[0].pc);
     $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             fb_insts_in[1].pc, id_insts_in[1].pc, rr_uops_in[1].pc, dp_uops_in[1].pc,
+             fb_insts_in[1].pc, id_insts_in[1].pc, rr_uops_in[1].pc, rob_uops_in[1].pc,
              is_int_uop_in[1].pc, rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc,
              cm_uops_complete[1].pc);
     $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             fb_insts_in[2].pc, id_insts_in[2].pc, rr_uops_in[2].pc, dp_uops_in[2].pc, 
+             fb_insts_in[2].pc, id_insts_in[2].pc, rr_uops_in[2].pc, rob_uops_in[2].pc, 
              is_int_uop_in[2].pc, rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc,
              cm_uops_complete[2].pc);
     $display("|%h|%h|%h|%h|%h|        |        |        |        |", 
-             fb_insts_in[3].pc, id_insts_in[3].pc, rr_uops_in[3].pc, dp_uops_in[3].pc,
+             fb_insts_in[3].pc, id_insts_in[3].pc, rr_uops_in[3].pc, rob_uops_in[3].pc,
              is_int_uop_in[3].pc);
     $display("|        |        |        |        |%h|%h|%h|%h|%h|", 
              is_mem_uop_in[0].pc, rf_int_uop_in[3].pc, ex_mem_uop_in[0].pc, wb_uops[3].pc, 
