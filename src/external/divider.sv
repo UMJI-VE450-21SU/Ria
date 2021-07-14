@@ -1,7 +1,13 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Integer Divider
+// Author:  Yiqiu Sun
+// Date:    2021/07/13
+
 // fpga4student.com FPGA projects, Verilog projects, VHDL projects 
- // Verilog project: Verilog code for 32-bit divider 
- // Verilog code for divider using behavioral modelling
-module Divide(  
+// Verilog project: Verilog code for 32-bit divider 
+// Verilog code for divider using behavioral modelling
+
+module divider (  
     input           clk,  
     input           reset,  
     input           start,  
@@ -10,7 +16,7 @@ module Divide(
     output  [31:0]  D,  
     output  [31:0]  R,  
     output          ok ,   // =1 when ready to get the result   
-    output err  
+    output          err  
     );  
 
     reg         active;   // True if the divider is running  
@@ -28,7 +34,7 @@ module Divide(
      
     // fpga4student.com FPGA projects, Verilog projects, VHDL projects   
     // The state machine  
-    always @(posedge clk,posedge reset) begin  
+    always @(posedge clk) begin  
         if (reset) begin  
             active <= 0;  
             cycle <= 0;  
