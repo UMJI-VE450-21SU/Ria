@@ -73,6 +73,15 @@ typedef union packed {
     logic [6:0]   opcode;
   } r;
   struct packed {
+    logic [4:0]   rs3;
+    logic [1:0]   funct2;
+    logic [4:0]   rs2;
+    logic [4:0]   rs1;
+    logic [2:0]   funct3;
+    logic [4:0]   rd;
+    logic [6:0]   opcode;
+  } r4;
+  struct packed {
     logic [11:0]  imm;
     logic [4:0]   rs1;
     logic [2:0]   funct3;
