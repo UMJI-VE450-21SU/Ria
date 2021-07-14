@@ -626,6 +626,32 @@ module core (
       print_uop(cm_uops_complete[3]);
     end
     $display("==============================");
+    $display("|---FB---|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             fb_insts_in[0].pc, id_insts_in[0].pc, rr_uops_in[0].pc, dp_uops_in[0].pc,
+             is_int_uop_in[0].pc, rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc,
+             cm_uops_complete[0].pc);
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             fb_insts_in[1].pc, id_insts_in[1].pc, rr_uops_in[1].pc, dp_uops_in[1].pc,
+             is_int_uop_in[1].pc, rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc,
+             cm_uops_complete[1].pc);
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             fb_insts_in[2].pc, id_insts_in[2].pc, rr_uops_in[2].pc, dp_uops_in[2].pc, 
+             is_int_uop_in[2].pc, rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc,
+             cm_uops_complete[2].pc);
+    $display("|%h|%h|%h|%h|%h|        |        |        |        |", 
+             fb_insts_in[3].pc, id_insts_in[3].pc, rr_uops_in[3].pc, dp_uops_in[3].pc,
+             is_int_uop_in[3].pc);
+    $display("|        |        |        |        |%h|%h|%h|%h|%h|", 
+             is_mem_uop_in[0].pc, rf_int_uop_in[3].pc, ex_mem_uop_in[0].pc, wb_uops[3].pc, 
+             cm_uops_complete[3].pc);
+    $display("|        |        |        |        |%h|        |        |        |        |", 
+             is_mem_uop_in[1].pc);
+    $display("|        |        |        |        |%h|        |        |        |        |", 
+             is_mem_uop_in[2].pc);
+    $display("|        |        |        |        |%h|        |        |        |        |", 
+             is_mem_uop_in[3].pc);
+    $display("|---FB---|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
   end
 
 endmodule
