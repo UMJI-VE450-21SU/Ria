@@ -48,7 +48,7 @@ module core (
     end
   end
 
-  assign clear = recover;
+  assign clear = cm_recover;
 
   /* Stage Stall Signal */
   logic                         if_stall;
@@ -123,13 +123,33 @@ module core (
   /* ID ~ RR Pipeline Registers */
 
   micro_op_t [`RENAME_WIDTH-1:0]  rr_uops_in;
+  micro_op_t [`DECODE_WIDTH-1:0]  id_uops_out_tmp;
+  logic                           rr_stall_prev;
 
   assign cm_full = iq_full | (~cm_allocatable);
 
   always_ff @(posedge clock) begin
-    if (reset | clear | cm_full) begin
-      rr_uops_in  <= 0;
+    if (reset | clear) begin
+      rr_uops_in      <= 0;
+      id_uops_out_tmp <= 0;
+      rr_stall_prev   <= 0;
+    end else if (cm_full & (~rr_stall_prev)) begin
+      // cm_full = 1; rr_stall_prev = 0;
+      // CM stage is full & previous cycle is not stall
+      // -> Store data from ID stage
+      rr_uops_in      <= 0;
+      id_uops_out_tmp <= id_uops_out;
+      rr_stall_prev   <= 1;
+    end else if (rr_stall_prev & (~cm_full)) begin
+      // rr_stall_prev = 1; cm_full = 0;
+      // CM Stage is not full & previous cycle is stall
+      // -> Output stored data
+      rr_uops_in  <= id_uops_out_tmp;
+    end else if (cm_full) begin
+      // cm_full = 1; rr_stall_prev = 1;
+      rr_uops_in      <= 0;
     end else begin
+      // cm_full = 0; rr_stall_prev = 0;
       rr_uops_in  <= id_uops_out;
     end
   end
