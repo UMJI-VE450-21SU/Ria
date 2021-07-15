@@ -17,8 +17,6 @@ module rob (
   output  reg                             recover,
   output  micro_op_t                      uop_recover,
   output  micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire,
-  output  reg         [`ARF_INT_SIZE-1:0] arf_recover,
-  output  reg         [`PRF_INT_SIZE-1:0] prf_recover,
 
   output  reg                             allocatable
 );
@@ -40,8 +38,6 @@ module rob (
     uop_valid     = 0;
     recover       = 0;
     uop_recover   = 0;
-    arf_recover   = 0;
-    prf_recover   = 0;
     allocatable   = 1;
     for (int i = 0; i < `ROB_SIZE; ++i) begin
       op_list_next[i] = op_list[i];
@@ -58,20 +54,6 @@ module rob (
         // Update completed uop
         op_list_next[uop_complete[i].rob_index]          = uop_complete[i];
         op_list_next[uop_complete[i].rob_index].complete = 1;
-        if (uop_complete[i].br_type != BR_X) begin
-          // Branch-type uop
-          // Jump-type uop
-          if (uop_complete[i].pred_taken != uop_complete[i].br_taken) begin
-            // A Mis-Prediction uop
-            recover     = 1;
-            uop_recover = uop_complete[i];
-            if (uop_complete[i].rob_index >= rob_head_next) begin
-              rob_size_next = uop_complete[i].rob_index - rob_head_next + 1;
-            end else begin
-              rob_size_next = `ROB_SIZE + uop_complete[i].rob_index - rob_head_next + 1;
-            end
-          end
-        end
       end
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
@@ -84,17 +66,23 @@ module rob (
         rob_head_next += 1;
         rob_size_next -= 1;
         uop_retire[i] = op_list_next[rob_head + i];
+        if (uop_retire[i].br_type != BR_X) begin
+          // Branch-type uop
+          // Jump-type uop
+          if (uop_retire[i].pred_taken != uop_retire[i].br_taken) begin
+            // A Mis-Prediction uop
+            recover       = 1;
+            uop_recover   = uop_retire[i];
+            rob_head_next = 0;
+            rob_size_next = 0;
+            break;
+          end
+        end
       end else begin
         break;
       end
     end
-    if (recover) begin
-      for (int i = 0; i < rob_size_next; ++i) begin
-        arf_recover[op_list_next[rob_head_next + i].rd_arf_int_index]      = 1;
-        prf_recover[op_list_next[rob_head_next + i].rd_prf_int_index]      = 1;
-        prf_recover[op_list_next[rob_head_next + i].rd_prf_int_index_prev] = 1;
-      end
-    end else begin
+    if (~recover) begin
       for (int i = 0; i < `RENAME_WIDTH; ++i) begin
         if (rob_size_next < `ROB_SIZE) begin
           // Have enough rob space to store uop

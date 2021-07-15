@@ -31,54 +31,54 @@ module core (
   logic                           cm_recover;
   micro_op_t                      cm_uop_recover;
   micro_op_t  [`COMMIT_WIDTH-1:0] cm_uop_retire;
-  logic       [`ARF_INT_SIZE-1:0] cm_arf_recover;
-  logic       [`PRF_INT_SIZE-1:0] cm_prf_recover;
 
   logic                           recover;
   micro_op_t                      uop_recover;
   micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire;
-  logic       [`ARF_INT_SIZE-1:0] arf_recover;
-  logic       [`PRF_INT_SIZE-1:0] prf_recover;
 
   always_ff @(posedge clock) begin
     if (reset) begin
       recover     <= 0;
       uop_recover <= 0;
       uop_retire  <= 0;
-      arf_recover <= 0;
-      prf_recover <= 0;
     end else begin
       recover     <= cm_recover;
       uop_recover <= cm_uop_recover;
       uop_retire  <= cm_uop_retire;
-      arf_recover <= cm_arf_recover;
-      prf_recover <= cm_prf_recover;
     end
   end
 
+  assign clear = recover;
+
   /* Stage Stall Signal */
-  logic                           rr_allocatable;
-  logic                           cm_allocatable;
+  logic                         if_stall;
+  logic                         fb_full;
+  logic                         rr_full;
+  logic                         cm_full;
+  logic                         iq_full;
+  logic                         rr_allocatable;
+  logic                         cm_allocatable;
 
   /* Stage 1: IF - Instruction Fetch */
 
   fb_entry_t [`FETCH_WIDTH-1:0] if_insts_out;
   logic                         if_insts_out_valid;
-  logic                         fb_full;
-  logic                         is_prediction;      // todo: Branch Prediction
-  logic                         prediction_hit;     // todo: Branch Prediction
+  // logic                         is_prediction;      // todo: Branch Prediction
+  // logic                         prediction_hit;     // todo: Branch Prediction
+
+  assign if_stall = rr_full | fb_full;
 
   inst_fetch if0 (
-    .clock                  (clock),
-    .reset                  (reset),
-    .stall                  (stall | fb_full | !cm_allocatable | !rr_allocatable),
-    .branch_taken           (0),
-    .branch_pc              (0),
-    .icache2core_data       (icache2core_data),
-    .icache2core_data_valid (icache2core_data_valid),
-    .core2icache_addr       (core2icache_addr),
-    .insts_out              (if_insts_out),
-    .insts_out_valid        (if_insts_out_valid)
+    .clock                  (clock                  ),
+    .reset                  (reset                  ),
+    .stall                  (if_stall               ),
+    .branch_taken           (0                      ),
+    .branch_pc              (0                      ),
+    .icache2core_data       (icache2core_data       ),
+    .icache2core_data_valid (icache2core_data_valid ),
+    .core2icache_addr       (core2icache_addr       ),
+    .insts_out              (if_insts_out           ),
+    .insts_out_valid        (if_insts_out_valid     )
   );
 
   /* IF ~ FB Pipeline Registers */
@@ -87,7 +87,7 @@ module core (
   logic                         fb_insts_in_valid;
 
   always_ff @(posedge clock) begin
-    if (reset | clear) begin
+    if (reset | clear | rr_full) begin
       fb_insts_in        <= 0;
       fb_insts_in_valid  <= 0;
     end else if (!stall) begin
@@ -102,25 +102,27 @@ module core (
   logic      [`FETCH_WIDTH-1:0] fb_insts_out_valid;
 
   fetch_buffer fb (
-    .clock            (clock),
-    .reset            (reset),
-    .insts_in         (fb_insts_in),
-    .insts_in_valid   (fb_insts_in_valid),
-    .insts_out        (fb_insts_out),
-    .insts_out_valid  (fb_insts_out_valid),
-    .full             (fb_full)
+    .clock            (clock              ),
+    .reset            (reset              ),
+    .insts_in         (fb_insts_in        ),
+    .insts_in_valid   (fb_insts_in_valid  ),
+    .insts_out        (fb_insts_out       ),
+    .insts_out_valid  (fb_insts_out_valid ),
+    .full             (fb_full            )
   );  // todo: consider 8 in + 4 out for C extension?
 
   /* FB ~ ID Pipeline Registers */
 
-  fb_entry_t [`DECODE_WIDTH-1:0] id_insts_in;
-  logic      [`DECODE_WIDTH-1:0] id_insts_in_valid;
+  fb_entry_t [`DECODE_WIDTH-1:0]  id_insts_in;
+  logic      [`DECODE_WIDTH-1:0]  id_insts_in_valid;
+
+  assign rr_full = cm_full | (~rr_allocatable);
 
   always_ff @(posedge clock) begin
-    if (reset | clear) begin
+    if (reset | clear | rr_full) begin
       id_insts_in        <= 0;
       id_insts_in_valid  <= 0;
-    end else if (!stall) begin
+    end else begin
       id_insts_in        <= fb_insts_out;
       id_insts_in_valid  <= fb_insts_out_valid;
     end
@@ -131,25 +133,24 @@ module core (
   micro_op_t [`DECODE_WIDTH-1:0] id_uops_out;
 
   inst_decode id (
-    .clock        (clock),
-    .reset        (reset),
-    .insts        (id_insts_in),
-    .insts_valid  (id_insts_in_valid),
-    .uops         (id_uops_out)
+    .clock        (clock              ),
+    .reset        (reset              ),
+    .insts        (id_insts_in        ),
+    .insts_valid  (id_insts_in_valid  ),
+    .uops         (id_uops_out        )
   );
 
   /* ID ~ RR Pipeline Registers */
 
   micro_op_t [`RENAME_WIDTH-1:0]  rr_uops_in;
-  logic                           rr_stall;
+
+  assign cm_full = iq_full | (~cm_allocatable);
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear | cm_full) begin
       rr_uops_in  <= 0;
-      rr_stall    <= 0;
     end else begin
       rr_uops_in  <= id_uops_out;
-      rr_stall    <= !cm_allocatable | stall;
     end
   end
 
@@ -160,10 +161,7 @@ module core (
   rat rr (
     .clock        (clock          ),
     .reset        (reset          ),
-    .stall        (rr_stall       ),
     .recover      (recover        ),
-    .arf_recover  (arf_recover    ),
-    .prf_recover  (prf_recover    ),
     .uop_recover  (uop_recover    ),
     .uop_retire   (uop_retire     ),
     .uop_in       (rr_uops_in     ),
@@ -185,10 +183,10 @@ module core (
   micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_fp;
 
   dispatch dp (
-    .uop_in     (dp_uops_in),
-    .uop_to_int (dp_uop_to_int),
-    .uop_to_mem (dp_uop_to_mem),
-    .uop_to_fp  (dp_uop_to_fp)
+    .uop_in     (dp_uops_in     ),
+    .uop_to_int (dp_uop_to_int  ),
+    .uop_to_mem (dp_uop_to_mem  ),
+    .uop_to_fp  (dp_uop_to_fp   )
   );
 
   wire [`DISPATCH_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0] set_busy_int_index;
@@ -216,31 +214,31 @@ module core (
   endgenerate
 
   scoreboard_int sb_int (
-    .clock            (clock),
-    .reset            (reset),
-    .clear            (clear),
-    .set_busy_index   (set_busy_int_index),
-    .set_busy_valid   (set_busy_int_valid),
-    .clear_busy_index (clear_busy_index),
-    .clear_busy_valid (clear_busy_valid),
-    .rs1_index        (rs1_int_index),
-    .rs2_index        (rs2_int_index),
-    .rs1_busy         (rs1_int_busy),
-    .rs2_busy         (rs2_int_busy)
+    .clock            (clock              ),
+    .reset            (reset              ),
+    .clear            (clear              ),
+    .set_busy_index   (set_busy_int_index ),
+    .set_busy_valid   (set_busy_int_valid ),
+    .clear_busy_index (clear_busy_index   ),
+    .clear_busy_valid (clear_busy_valid   ),
+    .rs1_index        (rs1_int_index      ),
+    .rs2_index        (rs2_int_index      ),
+    .rs1_busy         (rs1_int_busy       ),
+    .rs2_busy         (rs2_int_busy       )
   );
 
   scoreboard_mem sb_mem (
-    .clock            (clock),
-    .reset            (reset),
-    .clear            (clear),
-    .set_busy_index   (set_busy_mem_index),
-    .set_busy_valid   (set_busy_mem_valid),
-    .clear_busy_index (clear_busy_index),
-    .clear_busy_valid (clear_busy_valid),
-    .rs1_index        (rs1_mem_index),
-    .rs2_index        (rs2_mem_index),
-    .rs1_busy         (rs1_mem_busy),
-    .rs2_busy         (rs2_mem_busy)
+    .clock            (clock              ),
+    .reset            (reset              ),
+    .clear            (clear              ),
+    .set_busy_index   (set_busy_mem_index ),
+    .set_busy_valid   (set_busy_mem_valid ),
+    .clear_busy_index (clear_busy_index   ),
+    .clear_busy_valid (clear_busy_valid   ),
+    .rs1_index        (rs1_mem_index      ),
+    .rs2_index        (rs2_mem_index      ),
+    .rs1_busy         (rs1_mem_busy       ),
+    .rs2_busy         (rs2_mem_busy       )
   );
 
   /* DP ~ IS Pipeline Registers */
@@ -268,16 +266,16 @@ module core (
   logic                             iq_int_full;
 
   issue_queue_int iq_int (
-    .clock        (clock),
-    .reset        (reset),
-    .ex_busy      (ex_int_busy),
-    .rs1_index    (rs1_int_index),
-    .rs2_index    (rs2_int_index),
-    .rs1_busy     (rs1_int_busy),
-    .rs2_busy     (rs2_int_busy),
-    .uop_in       (is_int_uop_in),
-    .uop_out      (is_int_uop_out),
-    .iq_int_full  (iq_int_full)
+    .clock        (clock          ),
+    .reset        (reset          ),
+    .ex_busy      (ex_int_busy    ),
+    .rs1_index    (rs1_int_index  ),
+    .rs2_index    (rs2_int_index  ),
+    .rs1_busy     (rs1_int_busy   ),
+    .rs2_busy     (rs2_int_busy   ),
+    .uop_in       (is_int_uop_in  ),
+    .uop_out      (is_int_uop_out ),
+    .iq_int_full  (iq_int_full    )
   );
 
   logic      [`ISSUE_WIDTH_MEM-1:0] ex_mem_busy;
@@ -285,16 +283,16 @@ module core (
   logic                             iq_mem_full;
 
   issue_queue_mem iq_mem (
-    .clock        (clock),
-    .reset        (reset),
-    .ex_busy      (ex_mem_busy),
-    .rs1_index    (rs1_mem_index),
-    .rs2_index    (rs2_mem_index),
-    .rs1_busy     (rs1_mem_busy),
-    .rs2_busy     (rs2_mem_busy),
-    .uop_in       (is_mem_uop_in),
-    .uop_out      (is_mem_uop_out),
-    .iq_mem_full  (iq_mem_full)
+    .clock        (clock          ),
+    .reset        (reset          ),
+    .ex_busy      (ex_mem_busy    ),
+    .rs1_index    (rs1_mem_index  ),
+    .rs2_index    (rs2_mem_index  ),
+    .rs1_busy     (rs1_mem_busy   ),
+    .rs2_busy     (rs2_mem_busy   ),
+    .uop_in       (is_mem_uop_in  ),
+    .uop_out      (is_mem_uop_out ),
+    .iq_mem_full  (iq_mem_full    )
   );
 
   /* IS ~ RF Pipeline Registers */
@@ -325,15 +323,15 @@ module core (
   logic [`PRF_INT_WAYS-1:0][31:0]   rf_int_rs2_data_out;
 
   prf_int rf_int (
-    .clock    (clock),
-    .reset    (reset),
-    .uop_in   (rf_int_uop_in),
-    .rd_index (rf_int_rd_index_in),
-    .rd_data  (rf_int_rd_data_in),
-    .rd_en    (rf_int_rd_en_in),
-    .uop_out  (rf_int_uop_out),
-    .rs1_data (rf_int_rs1_data_out),
-    .rs2_data (rf_int_rs2_data_out)
+    .clock    (clock                ),
+    .reset    (reset                ),
+    .uop_in   (rf_int_uop_in        ),
+    .rd_index (rf_int_rd_index_in   ),
+    .rd_data  (rf_int_rd_data_in    ),
+    .rd_en    (rf_int_rd_en_in      ),
+    .uop_out  (rf_int_uop_out       ),
+    .rs1_data (rf_int_rs1_data_out  ),
+    .rs2_data (rf_int_rs2_data_out  )
   );
 
   /* RF ~ EX Pipeline Registers */
@@ -375,28 +373,28 @@ module core (
 
   // ALU + BR
   pipe_0_1 pipe_0 (
-    .clock    (clock                 ),
-    .reset    (reset                 ),
-    .uop      (ex_int_uop_in      [0]),
-    .in1      (ex_int_rs1_data_in [0]),
-    .in2      (ex_int_rs2_data_in [0]),
-    .uop_out  (ex_int_uop_out     [0]),
-    .br_taken (ex_int_br_taken    [0]),
-    .out      (ex_int_rd_data_out [0]),
-    .busy     (ex_int_busy        [0])
+    .clock    (clock                  ),
+    .reset    (reset                  ),
+    .uop      (ex_int_uop_in      [0] ),
+    .in1      (ex_int_rs1_data_in [0] ),
+    .in2      (ex_int_rs2_data_in [0] ),
+    .uop_out  (ex_int_uop_out     [0] ),
+    .br_taken (ex_int_br_taken    [0] ),
+    .out      (ex_int_rd_data_out [0] ),
+    .busy     (ex_int_busy        [0] )
   );
 
   // ALU + BR
   pipe_0_1 pipe_1 (
-    .clock    (clock                 ),
-    .reset    (reset                 ),
-    .uop      (ex_int_uop_in      [1]),
-    .in1      (ex_int_rs1_data_in [1]),
-    .in2      (ex_int_rs2_data_in [1]),
-    .uop_out  (ex_int_uop_out     [1]),
-    .br_taken (ex_int_br_taken    [1]),
-    .out      (ex_int_rd_data_out [1]),
-    .busy     (ex_int_busy        [1])
+    .clock    (clock                  ),
+    .reset    (reset                  ),
+    .uop      (ex_int_uop_in      [1] ),
+    .in1      (ex_int_rs1_data_in [1] ),
+    .in2      (ex_int_rs2_data_in [1] ),
+    .uop_out  (ex_int_uop_out     [1] ),
+    .br_taken (ex_int_br_taken    [1] ),
+    .out      (ex_int_rd_data_out [1] ),
+    .busy     (ex_int_busy        [1] )
   );
 
   // ALU + IDIV
@@ -484,8 +482,10 @@ module core (
 
   micro_op_t [`RENAME_WIDTH-1:0]  rob_uops_in;
 
+  assign iq_full = iq_mem_full | iq_int_full;
+
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear | iq_full) begin
       rob_uops_in <= 0;
     end else begin
       rob_uops_in <= rr_uops_out;
@@ -503,12 +503,11 @@ module core (
     .recover        (cm_recover       ),
     .uop_recover    (cm_uop_recover   ),
     .uop_retire     (cm_uop_retire    ),
-    .arf_recover    (cm_arf_recover   ),
-    .prf_recover    (cm_prf_recover   ),
     .allocatable    (cm_allocatable   )
   );
 
-  // todo: connect pipe 0 output to recover signal
+  // @lishi: TODO: connect pipe 0 output to recover signal
+  // @TimShi: R U sure?
 
   wire if_fb_print = 1;
   wire fb_id_print = 1;
