@@ -484,8 +484,7 @@ module core (
     .allocatable    (cm_allocatable   )
   );
 
-  wire if_fb_print = 1;
-  wire fb_id_print = 1;
+  wire if_id_print = 1;
   wire id_rr_print = 1;
   wire rr_dp_print = 1;
   wire dp_is_print = 1;
@@ -496,25 +495,14 @@ module core (
 
   always_ff @(posedge clock) begin
     $display("===== Pipeline Registers =====");
-    if (if_fb_print) begin
-      $display("[IF-FB] fb_insts_in[0].pc=%h, fb_insts_in[0].inst=%h, fb_insts_in[0].valid=%b", 
-              fb_insts_in[0].pc, fb_insts_in[0].inst, fb_insts_in[0].valid);
-      $display("[IF-FB] fb_insts_in[1].pc=%h, fb_insts_in[1].inst=%h, fb_insts_in[1].valid=%b", 
-              fb_insts_in[1].pc, fb_insts_in[1].inst, fb_insts_in[1].valid);
-      $display("[IF-FB] fb_insts_in[2].pc=%h, fb_insts_in[2].inst=%h, fb_insts_in[2].valid=%b", 
-              fb_insts_in[2].pc, fb_insts_in[2].inst, fb_insts_in[2].valid);
-      $display("[IF-FB] fb_insts_in[3].pc=%h, fb_insts_in[3].inst=%h, fb_insts_in[3].valid=%b", 
-              fb_insts_in[3].pc, fb_insts_in[3].inst, fb_insts_in[3].valid);
-      $display("[IF-FB] fb_insts_in_valid=%b", fb_insts_in_valid);
-    end
-    if (fb_id_print) begin
-      $display("[FB-ID] id_insts_in[0].pc=%h, id_insts_in[0].inst=%h, id_insts_in_valid[0]=%b", 
+    if (if_id_print) begin
+      $display("[IF-ID] id_insts_in[0].pc=%h, id_insts_in[0].inst=%h, id_insts_in_valid[0]=%b", 
               id_insts_in[0].pc, id_insts_in[0].inst, id_insts_in_valid[0]);
-      $display("[FB-ID] id_insts_in[1].pc=%h, id_insts_in[1].inst=%h, id_insts_in_valid[1]=%b", 
+      $display("[IF-ID] id_insts_in[1].pc=%h, id_insts_in[1].inst=%h, id_insts_in_valid[1]=%b", 
               id_insts_in[1].pc, id_insts_in[1].inst, id_insts_in_valid[1]);
-      $display("[FB-ID] id_insts_in[2].pc=%h, id_insts_in[2].inst=%h, id_insts_in_valid[2]=%b", 
+      $display("[IF-ID] id_insts_in[2].pc=%h, id_insts_in[2].inst=%h, id_insts_in_valid[2]=%b", 
               id_insts_in[2].pc, id_insts_in[2].inst, id_insts_in_valid[2]);
-      $display("[FB-ID] id_insts_in[3].pc=%h, id_insts_in[3].inst=%h, id_insts_in_valid[3]=%b", 
+      $display("[IF-ID] id_insts_in[3].pc=%h, id_insts_in[3].inst=%h, id_insts_in_valid[3]=%b", 
               id_insts_in[3].pc, id_insts_in[3].inst, id_insts_in_valid[3]);
     end
     if (id_rr_print) begin
@@ -600,32 +588,28 @@ module core (
       print_uop(cm_uops_complete[3]);
     end
     $display("==============================");
-    $display("|---FB---|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             fb_insts_in[0].pc, id_insts_in[0].pc, rr_uops_in[0].pc, rob_uops_in[0].pc,
-             is_int_uop_in[0].pc, rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc,
-             cm_uops_complete[0].pc);
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             fb_insts_in[1].pc, id_insts_in[1].pc, rr_uops_in[1].pc, rob_uops_in[1].pc,
-             is_int_uop_in[1].pc, rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc,
-             cm_uops_complete[1].pc);
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             fb_insts_in[2].pc, id_insts_in[2].pc, rr_uops_in[2].pc, rob_uops_in[2].pc, 
-             is_int_uop_in[2].pc, rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc,
-             cm_uops_complete[2].pc);
-    $display("|%h|%h|%h|%h|%h|        |        |        |        |", 
-             fb_insts_in[3].pc, id_insts_in[3].pc, rr_uops_in[3].pc, rob_uops_in[3].pc,
-             is_int_uop_in[3].pc);
-    $display("|        |        |        |        |%h|%h|%h|%h|%h|", 
+    $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             id_insts_in[0].pc, rr_uops_in[0].pc, rob_uops_in[0].pc, is_int_uop_in[0].pc,
+             rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc, cm_uops_complete[0].pc);
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             id_insts_in[1].pc, rr_uops_in[1].pc, rob_uops_in[1].pc, is_int_uop_in[1].pc,
+             rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc, cm_uops_complete[1].pc);
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             id_insts_in[2].pc, rr_uops_in[2].pc, rob_uops_in[2].pc, is_int_uop_in[2].pc,
+             rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc, cm_uops_complete[2].pc);
+    $display("|%h|%h|%h|%h|        |        |        |        |", 
+             id_insts_in[3].pc, rr_uops_in[3].pc, rob_uops_in[3].pc, is_int_uop_in[3].pc);
+    $display("|        |        |        |%h|%h|%h|%h|%h|", 
              is_mem_uop_in[0].pc, rf_int_uop_in[3].pc, ex_mem_uop_in[0].pc, wb_uops[3].pc, 
              cm_uops_complete[3].pc);
-    $display("|        |        |        |        |%h|        |        |        |        |", 
+    $display("|        |        |        |%h|        |        |        |        |", 
              is_mem_uop_in[1].pc);
-    $display("|        |        |        |        |%h|        |        |        |        |", 
+    $display("|        |        |        |%h|        |        |        |        |", 
              is_mem_uop_in[2].pc);
-    $display("|        |        |        |        |%h|        |        |        |        |", 
+    $display("|        |        |        |%h|        |        |        |        |", 
              is_mem_uop_in[3].pc);
-    $display("|---FB---|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
+    $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
   end
 
 endmodule
