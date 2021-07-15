@@ -52,7 +52,7 @@ module core (
 
   /* Stage Stall Signal */
   logic                         if_stall;
-  logic                         fb_full;
+  logic                         fb_full = 0;
   logic                         rr_full;
   logic                         cm_full;
   logic                         iq_full;
@@ -82,34 +82,12 @@ module core (
   );
 
   /* IF ~ FB Pipeline Registers */
-
-  fb_entry_t [`FETCH_WIDTH-1:0] fb_insts_in;
-  logic                         fb_insts_in_valid;
-
-  always_ff @(posedge clock) begin
-    if (reset | clear | rr_full) begin
-      fb_insts_in        <= 0;
-      fb_insts_in_valid  <= 0;
-    end else if (!stall) begin
-      fb_insts_in        <= if_insts_out;
-      fb_insts_in_valid  <= if_insts_out_valid;
-    end
-  end
+  
+  // Skip FB in T1 version
 
   /* Stage 2: FB - Fetch Buffer */
 
-  fb_entry_t [`FETCH_WIDTH-1:0] fb_insts_out;
-  logic      [`FETCH_WIDTH-1:0] fb_insts_out_valid;
-
-  fetch_buffer fb (
-    .clock            (clock              ),
-    .reset            (reset              ),
-    .insts_in         (fb_insts_in        ),
-    .insts_in_valid   (fb_insts_in_valid  ),
-    .insts_out        (fb_insts_out       ),
-    .insts_out_valid  (fb_insts_out_valid ),
-    .full             (fb_full            )
-  );  // todo: consider 8 in + 4 out for C extension?
+  // Skip FB in T1 version
 
   /* FB ~ ID Pipeline Registers */
 
@@ -123,8 +101,10 @@ module core (
       id_insts_in        <= 0;
       id_insts_in_valid  <= 0;
     end else begin
-      id_insts_in        <= fb_insts_out;
-      id_insts_in_valid  <= fb_insts_out_valid;
+      id_insts_in        <= if_insts_out;
+      for (int i = 0; i < `DECODE_WIDTH; i++) begin
+        id_insts_in_valid[i] <= if_insts_out_valid & if_insts_out[i].valid;
+      end
     end
   end
 
@@ -430,8 +410,6 @@ module core (
     .core2dcache_addr       (core2dcache_addr      )
   );
 
-  // todo: Consider add open-source fpu in pipe 4/5
-
   /* EX ~ WB Pipeline Registers (inside EX pipes) */
   
   micro_op_t [`COMMIT_WIDTH-1:0] wb_uops;
@@ -505,9 +483,6 @@ module core (
     .uop_retire     (cm_uop_retire    ),
     .allocatable    (cm_allocatable   )
   );
-
-  // @lishi: TODO: connect pipe 0 output to recover signal
-  // @TimShi: R U sure?
 
   wire if_fb_print = 1;
   wire fb_id_print = 1;
