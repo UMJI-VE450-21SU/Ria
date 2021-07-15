@@ -16,8 +16,6 @@ module mapping_table (
   input         cp_index_t                                      check_idx,
   input         [`RENAME_WIDTH-1:0]                             check_flag,
   input         cp_index_t                                      recover_idx,
-  input         [`ARF_INT_SIZE-1:0]                             arf_recover,
-  input         [`PRF_INT_SIZE-1:0]                             prf_recover,
 
   input         [`RENAME_WIDTH-1:0]                             rd_valid,
 
@@ -25,8 +23,12 @@ module mapping_table (
   input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rs2,
   input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0]   rd,
 
-  input         [`COMMIT_WIDTH-1:0]                             retire_req,
-  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   retire_prf,
+  input         [`COMMIT_WIDTH-1:0]                             pre_prf_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   pre_prf,
+
+  input         [`COMMIT_WIDTH-1:0]                             retire_prf_valid,
+  input         [`COMMIT_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0]    retire_prf,
+  input         [`COMMIT_WIDTH-1:0][`ARF_INT_INDEX_SIZE-1:0]    retire_arf,
 
   output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs1,
   output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0]   prs2,
@@ -50,6 +52,8 @@ module mapping_table (
   // ARF Valid
   reg   [`ARF_INT_SIZE-1:0]                             arf_valid;
   logic [`ARF_INT_SIZE-1:0]                             arf_valid_next;
+  reg   [`ARF_INT_SIZE-1:0]                             arf_recover;
+  reg   [`ARF_INT_SIZE-1:0]                             arf_recover_next;
 
   checkpoint checkpoint (
     .clock              (clock            ),
@@ -66,9 +70,10 @@ module mapping_table (
     .reset              (reset            ),
     .stall              (stall            ),
     .recover            (recover          ),
-    .recover_fl         (prf_recover      ),
-    .prf_retire_valid   (retire_req       ),
-    .prf_retire         (retire_prf       ),
+    .pre_prf_valid      (pre_prf_valid    ),
+    .pre_prf            (pre_prf          ),
+    .retire_prf_valid   (retire_prf_valid ),
+    .retire_prf         (retire_prf       ),
     .prf_req            (rd_valid         ),
     .prf_out            (prf_out          ),
     .allocatable        (allocatable      )
@@ -77,11 +82,17 @@ module mapping_table (
   always_comb begin
     // Prepare input for Free List
     arf_valid_next    = arf_valid;
+    arf_recover_next  = arf_recover;
     prev_rd           = 0;
     prev_rd_valid     = 0;
     mapping_tb_cp_in  = 0;
     for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
       mapping_tb_next[i] = mapping_tb[i];
+    end
+    for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
+      if (retire_prf_valid[i]) begin
+        arf_recover_next[retire_arf[i]] = 1;
+      end
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
       prd[i] = 0;
@@ -110,18 +121,21 @@ module mapping_table (
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= 0;
       end
-      arf_valid <= 1;
+      arf_valid   <= 1;
+      arf_recover <= 1;
     end else if (recover) begin
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_cp[i];
       end
-      arf_valid <= arf_recover;
+      arf_valid   <= arf_recover_next;
+      arf_recover <= arf_recover_next;
     end else if (!stall & allocatable) begin
       // stall = 0; allocatable = 1;
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mapping_tb[i] <= mapping_tb_next[i];
       end
-      arf_valid <= arf_valid_next;
+      arf_valid   <= arf_valid_next;
+      arf_recover <= arf_recover_next;
     end
   end
 
