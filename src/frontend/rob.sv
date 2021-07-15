@@ -117,4 +117,16 @@ module rob (
     end
   end
 
+  wire rob_print = 0;
+
+  always_ff @(posedge clock) begin
+    if (rob_print) begin
+      for (integer i = 0; i < `ROB_SIZE; i++) begin
+        $display("[ROB] slot %d", i);
+        print_uop(op_list[i]);
+      end
+      $display("[ROB] head=%d, size=%d, recover=%d", rob_head, rob_size, recover);
+    end
+  end
+
 endmodule
