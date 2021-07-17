@@ -1,119 +1,183 @@
-`define WAYS 4
-`define XLEN 32
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Module:  Branch Predictor
+// Author:  Yiqiu Sun, Jian Shi
+// Date:    2021/07/17
 
-module branch_pred #(parameter SIZE=128,//Size of BHT
-    parameter PSZ=128,//Size of PHT
-    parameter PL=7,//PL=$clog2(PSZ)
-    parameter NS=32,//Num of set of BTB
-    parameter NW=4)(//Num of way of BTB
-    
-    input clock, reset,
+`include "src/common/micro_op.svh"
 
-    // Input to make prediction(s)
-    input [`XLEN-1:0] PC,
-    input [`WAYS-1:0] is_branch,
-    input [`WAYS-1:0] is_valid,
-    // Input to update state based on committed branch(es)
-    input [`WAYS-1:0] [`XLEN-1:0]       PC_update,
-    input [`WAYS-1:0]                   direction_update,
-    input [`WAYS-1:0] [`XLEN-1:0]       target_update,
-    input [`WAYS-1:0]                   valid_update,
+module branch_pred (
+  input clock,
+  input reset,
 
-    // Output
-    output logic [`XLEN-1:0]            next_PC,
-    output logic [`WAYS-1:0]            predictions
+  // Input to make prediction(s)
+  input               [31:0]                PC,
+  input               [`FETCH_WIDTH-1:0]    is_branch,
+  input               [`FETCH_WIDTH-1:0]    is_valid,
+
+  // Input to update state based on committed branch(es)
+  input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
+
+  input [`FETCH_WIDTH-1:0] [31:0]           PC_update,
+  input [`FETCH_WIDTH-1:0]                  direction_update,
+  input [`FETCH_WIDTH-1:0] [31:0]           target_update,
+  input [`FETCH_WIDTH-1:0]                  valid_update,
+
+  // Output
+  output logic        [31:0]                next_PC,
+  output logic        [`FETCH_WIDTH-1:0]    predictions
 );
 
-    // Internal register declarations (BHT and PHT and BTB)
-    logic [SIZE-1:0] [PL-1:0]          BHT; // branch history table (128 * 7)
-    logic [PSZ-1:0] [1:0]              PHT; // pattern history table (128 * 2)
+  // Internal register declarations (BHT and PHT and BTB and LRU)
+  // Branch History Table
+  reg   [`PHT_INDEX_SIZE-1:0]   BHT             [`BHT_SIZE-1:0];
 
-    logic [NS-1:0] [NW-1:0] [`XLEN-1:0]     BTB_PC; // branch target buffer
-    logic [NS-1:0] [NW-1:0] [`XLEN-1:0]     BTB_target;
-    logic [NS-1:0] [NW-1:0]                 BTB_valid;
+  // Pattern History Table
+  reg   [1:0]                   PHT             [`PHT_SIZE-1:0];
 
-    logic branch;
+  // Branch Target Buffer
+  reg   [`BTB_WIDTH-1:0]        BTB_valid       [`BTB_SIZE-1:0];
+  reg   [`BTB_WIDTH-1:0] [31:0] BTB_PC          [`BTB_SIZE-1:0];
+  reg   [`BTB_WIDTH-1:0] [31:0] BTB_target      [`BTB_SIZE-1:0];
 
-    logic [$clog2(NW)-1:0] LRU;
 
-    // Combinational/Output logic
-    always_comb begin
-        // Default output is all not taken
-        next_PC = PC + (`WAYS * 4);
-        predictions = 0;
-        branch = 0;
+  logic [`PHT_INDEX_SIZE-1:0]   BHT_next        [`BHT_SIZE-1:0];
+  logic [1:0]                   PHT_next        [`PHT_SIZE-1:0];
+  logic [`BTB_WIDTH-1:0]        BTB_valid_next  [`BTB_SIZE-1:0];
+  logic [`BTB_WIDTH-1:0] [31:0] BTB_PC_next     [`BTB_SIZE-1:0];
+  logic [`BTB_WIDTH-1:0] [31:0] BTB_target_next [`BTB_SIZE-1:0];
 
-        // See if something should be predicted taken
-        for(int i = 0; i < `WAYS; i++) begin
-            if(PHT[BHT[PC[$clog2(SIZE)+1:2] + i]][1] && is_branch[i] && is_valid[i] ) begin
-                // the current PC is predicted to be a branch taken
-               for(int j=0; j < NW; j++)begin
-                   if(BTB_valid[PC[$clog2(NS)+1:2]+i][j]==1 && BTB_PC[PC[$clog2(NS)+1:2]+i][j]==PC+(i*4) )begin
-                      next_PC = BTB_target[PC[$clog2(NS)+1:2]+i][j];
-                      predictions[i] = 1;
-                      branch =1;
-                      break;
-                   end
-                end
+  // Least Recently Used
+  logic [`BTB_WIDTH_INDXE-1:0]  LRU;
+
+  logic branch;
+  logic [1:0]                   PHT_tmp;
+
+  logic [6:0]  BHT_PC_entry;
+  logic [6:0]  BHT_entry        [`FETCH_WIDTH-1:0];
+  logic [31:0] PC_update        [`FETCH_WIDTH-1:0];
+  logic [31:0] target_update    [`FETCH_WIDTH-1:0];
+
+  generate;
+    assign BHT_PC_entry = PC[`BHT_INDEX_SIZE+1:2];
+    for (genvar i = 0; i < `FETCH_WIDTH; i++) begin
+      assign BHT_entry[i]     = uop_retire[i].pc[`BHT_INDEX_SIZE+1:2];
+      assign PC_update[i]     = uop_retire[i].pc;
+      assign target_update[i] = uop_retire[i].br_addr;
+    end
+  endgenerate
+
+  // Combinational/Output logic
+  always_comb begin
+    // Default output is all not taken
+    next_PC     = PC + (`FETCH_WIDTH * 4);
+    predictions = 0;
+    branch      = 0;
+    for (int i = 0; i < `BHT_SIZE; i++) begin
+      BHT_next[i] = BHT[i];
+    end
+    for (int i = 0; i < `PHT_SIZE; i++) begin
+      PHT_next[i] = PHT[i];
+    end
+    for (int i = 0; i < `BTB_SIZE; i++) begin
+      BTB_valid_next[i]   = BTB_valid[i];
+      BTB_PC_next[i]      = BTB_PC[i];
+      BTB_target_next[i]  = BTB_target[i];
+    end
+    LRU = 0;
+
+    for (int i = 0; i < `FETCH_WIDTH; i++) begin
+      if (uop_retire[i].valid) begin
+        if (uop_retire[i].br_type != BR_X) begin
+          // Branch-type uop
+          // Jump-type uop
+          if (uop_retire[i].pred_taken != uop_retire[i].br_taken) begin
+            // A Mis-Prediction uop
+            BHT_next[BHT_entry[i]]    = BHT_next[BHT_entry[i]] << 1;
+            BHT_next[BHT_entry[i]][0] = 1'b1;
+            PHT_tmp = PHT_next[BHT_next[BHT_entry[i]]];
+            if (PHT_tmp  < 2'b11) begin
+              PHT_next[BHT_next[BHT_entry[i]]] = PHT_tmp + 1;
             end
-            if(branch)break;
+            LRU = `BTB_WIDTH;
+
+            for (int j = 0; j < `BTB_WIDTH; j++) begin
+              if (BTB_valid_next[BHT_entry[i]][j])begin
+                if (BTB_PC_next[BHT_entry[i]][j] == PC_update[i]) begin
+                  LRU = j;
+                  break;
+                end
+              end
+            end
+            BTB_PC_next[BHT_entry[i]][0] = PC_update[i];
+            BTB_target_next[BHT_entry[i]][0] = target_update[i];
+            BTB_valid_next[BHT_entry[i]][0] = 1'b1;
+            for (int j = 1; j < `BTB_WIDTH; j++)begin
+              if (j < LRU +1 )begin
+                BTB_PC_next[BHT_entry[i]][j]     = BTB_PC_next[BHT_entry[i]][j-1];
+                BTB_target_next[BHT_entry[i]][j] = BTB_target_next[BHT_entry[i]][j-1];
+                BTB_valid_next[BHT_entry[i]][j]  = BTB_valid_next[BHT_entry[i]][j-1];
+              end
+            end
+          end else begin
+            // shift the entry of BHT left by 1 bit and append 0
+            BHT_next[BHT_entry[i]] = BHT_next[BHT_entry[i]] << 1;
+            PHT_tmp = PHT_next[BHT_next[BHT_entry[i]]];
+            if (PHT_tmp > 2'b00)begin
+              PHT_next[BHT_next[BHT_entry[i]]] = PHT_tmp - 1;
+            end
+          end
         end
-        
+      end
     end
 
-    // Sequential Logic
-    // synopsys sync_set_reset "reset"
-    always_ff @(posedge clock) begin
-        // upon reset, clear everything stored
-        // the initial prediction stage are weakly not taken
-        if(reset) begin
-            BTB_valid  <= `SD 0;
-            BHT        <= `SD 0;
-            BTB_PC     <= `SD 0;
-            BTB_target <= `SD 0;
-            for(int i = 0; i < PSZ; i++) begin
-                PHT[i] <= `SD 2'b01;
+    // See if something should be predicted taken
+    for (int i = 0; i < `FETCH_WIDTH; i++) begin
+      if (PHT_next[BHT_next[BHT_PC_entry + i]][1] & is_branch[i] & is_valid[i]) begin
+        // the current PC is predicted to be a branch taken
+        for (int j = 0; j < `BTB_WIDTH; j++) begin
+          if (BTB_valid_next[BHT_PC_entry + i][j])begin
+            if (BTB_PC[BHT_PC_entry + i][j] == PC + (i * 4)) begin
+              next_PC         = BTB_target[BHT_PC_entry+i][j];
+              predictions[i]  = 1;
+              branch          = 1;
+              break;
             end
-        end else begin
-            for(int i = 0; i < `WAYS; i++) begin
-                if(valid_update[i]) begin
-                    if(direction_update[i]) begin
-                        // shift the entry of BHT left by 1 bit and append 1
-                        BHT[PC_update[i][$clog2(SIZE)+1:2]] <= `SD {BHT[PC_update[i][$clog2(SIZE)+1:2]][PL-2:0],1'b1};
+          end
+        end
+      end
+      if(branch)break;
+    end
+  end
 
-                        if(PHT[BHT[PC_update[i][$clog2(SIZE)+1:2]]] < 2'b11)begin
-                            PHT[BHT[PC_update[i][$clog2(SIZE)+1:2]]] <= `SD PHT[BHT[PC_update[i][$clog2(SIZE)+1:2]]] + 1;
-                        end
+  // Sequential Logic
+  always_ff @(posedge clock) begin
+    if (reset) begin
+      // Upon reset, clear everything stored
+      for (int i = 0; i < `BHT_SIZE; i++) begin
+        BHT[i] <= 0;
+      end
+      for (int i = 0; i < `BTB_SIZE; i++) begin
+        BTB_valid[i]  <= 0;
+        BTB_PC[i]     <= 0;
+        BTB_target[i] <= 0;
+      end
+      // The initial prediction stage are weakly not taken
+      for (int i = 0; i < `PHT_SIZE; i++) begin
+        PHT[i] <= 2'b01;
+      end
+    end else begin
+      for (int i = 0; i < `BHT_SIZE; i++) begin
+        BHT[i] <= BHT_next[i];
+      end
+      for (int i = 0; i < `BTB_SIZE; i++) begin
+        BTB_valid[i]  <= BTB_valid_next[i];
+        BTB_PC[i]     <= BTB_PC_next[i];
+        BTB_target[i] <= BTB_target_next[i];
+      end
+      for (int i = 0; i < `PHT_SIZE; i++) begin
+        PHT[i] <= PHT_next[i];
+      end
+    end
+  end
 
-                        LRU = NW;
-                        for(int j=0; j < NW; j++)begin
-                            if(BTB_valid[PC_update[i][$clog2(NS)+1:2]][j]==1 && BTB_PC[PC_update[i][$clog2(NS)+1:2]][j]==PC_update[i])begin
-                                LRU = j;
-                                break;
-                            end
-                        end
-                        
-                        BTB_PC[PC_update[i][$clog2(NS)+1:2]][0] <= `SD PC_update[i];
-                        BTB_target[PC_update[i][$clog2(NS)+1:2]][0] <= `SD target_update[i];
-                        BTB_valid[PC_update[i][$clog2(NS)+1:2]][0] <= `SD 1'b1;
-                        for (int j = 1; j < NW; j++)begin
-                          if(j < LRU +1 )begin
-                             BTB_PC[PC_update[i][$clog2(NS)+1:2]][j]     <= `SD BTB_PC[PC_update[i][$clog2(NS)+1:2]][j-1];
-                             BTB_target[PC_update[i][$clog2(NS)+1:2]][j] <= `SD BTB_target[PC_update[i][$clog2(NS)+1:2]][j-1];
-                             BTB_valid[PC_update[i][$clog2(NS)+1:2]][j]  <= `SD BTB_valid[PC_update[i][$clog2(NS)+1:2]][j-1];
-                          end
-                        end
-
-                    end else begin
-                        // shift the entry of BHT left by 1 bit and append 0
-                        BHT[PC_update[i][$clog2(SIZE)+1:2]] <= `SD {BHT[PC_update[i][$clog2(SIZE)+1:2]][PL-2:0],1'b0};
-                        if(PHT[BHT[PC_update[i][$clog2(SIZE)+1:2]]] > 2'b00)begin
-                            PHT[BHT[PC_update[i][$clog2(SIZE)+1:2]]] <= `SD PHT[BHT[PC_update[i][$clog2(SIZE)+1:2]]] - 1;
-                        end    
-                    end
-                end // if valid_update
-            end // loop
-        end // if(!reset)
-    end // always_ff
 endmodule
-

@@ -17,6 +17,15 @@
 
 `define INST_PACK           32 * `FETCH_WIDTH
 
+`define BHT_SIZE            128
+`define BHT_INDEX_SIZE      7   // log2(BHT_SIZE)
+`define PHT_SIZE            128
+`define PHT_INDEX_SIZE      7   // log2(PHT_SIZE)
+`define BTB_SIZE            32
+`define BTB_INDEX_SIZE      5   // log2(BTB_SIZE)
+`define BTB_WIDTH           4
+`define BTB_WIDTH_INDXE     2   // log2(BTB_WIDTH)
+
 `define FB_SIZE             16
 `define FB_ADDR             4
 
