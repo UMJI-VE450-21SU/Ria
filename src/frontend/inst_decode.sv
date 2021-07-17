@@ -50,6 +50,7 @@ module decode (
         uop.rs2_source        = RS_FROM_IMM;
         uop.rd_arf_int_index  = `RV32_RD(inst);
         uop.rd_valid          = 1;
+        uop.pred_taken        = 1;
       end
       `RV32_JALR: begin
         uop.iq_code           = IQ_INT;

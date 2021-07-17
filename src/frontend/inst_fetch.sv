@@ -11,8 +11,8 @@ module inst_fetch (
   input                                 reset,
   input                                 stall,              // stall is effective in the next clock cycle
   // ======= branch predictor related ========
-  input                                 branch_taken,
-  input        [31:0]                   branch_pc,
+  input                                 recover,
+  input        [31:0]                   recover_pc,
   // ======= cache related ===================
   input        [127:0]                  icache2core_data,
   input                                 icache2core_data_valid,
@@ -21,6 +21,16 @@ module inst_fetch (
   output fb_entry_t [`FETCH_WIDTH-1:0]  insts_out,
   output logic                          insts_out_valid
 );
+
+  /* todo: Debug purpose - Add hash to PC */
+  reg   [15:0] counter;
+  always_ff @(posedge clock) begin
+    if (reset)
+      counter <= 0;
+    else
+      counter <= counter + 1;
+  end
+  /*       Debug purpose - Add hash to PC */
 
   reg   [31:0] pc;
   wire  [31:0] pc_aligned;
@@ -36,11 +46,10 @@ module inst_fetch (
   always_ff @(posedge clock) begin
     if (reset)
       pc <= 0;
-    else if (branch_taken)
-      pc <= branch_pc;
+    else if (recover)
+      pc <= {16'b0, recover_pc[15:0]};    // todo: Debug purpose
     else if (pc_enable)
-      pc <= pc_predicted;
-    // $display("pc=%h, pc_predicted=%h", pc, pc_predicted);
+      pc <= {16'b0, pc_predicted[15:0]};  // todo: Debug purpose
   end
 
   assign core2icache_addr = pc_aligned;
@@ -49,7 +58,8 @@ module inst_fetch (
   generate
     for (genvar i = 0; i < `FETCH_WIDTH; i++) begin
       assign insts_out[i].inst = icache2core_data[(i+1)*32-1:i*32];
-      assign insts_out[i].pc   = pc_aligned + i * 4;
+      // assign insts_out[i].pc   = pc_aligned + i * 4;
+      assign insts_out[i].pc   = pc_aligned + i * 4 + (counter << 16);  // todo: Debug purpose - Add hash to PC
       assign is_jal[i]         = (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL);
     end
   endgenerate

@@ -72,8 +72,8 @@ module core (
     .clock                  (clock                  ),
     .reset                  (reset                  ),
     .stall                  (if_stall               ),
-    .branch_taken           (0                      ),
-    .branch_pc              (0                      ),
+    .recover                (cm_recover             ),
+    .recover_pc             (cm_uop_recover.br_addr ),
     .icache2core_data       (icache2core_data       ),
     .icache2core_data_valid (icache2core_data_valid ),
     .core2icache_addr       (core2icache_addr       ),
@@ -95,6 +95,14 @@ module core (
   logic      [`DECODE_WIDTH-1:0]  id_insts_in_valid;
 
   assign rr_full = cm_full | (~rr_allocatable);
+
+  reg id_stall_reg; // todo: Only for debug purpose
+  always_ff @(posedge clock) begin
+    if (reset)
+      id_stall_reg <= 0;
+    else
+      id_stall_reg <= if_stall;
+  end
 
   always_ff @(posedge clock) begin
     if (reset | clear | rr_full) begin
@@ -128,6 +136,7 @@ module core (
 
   assign cm_full = iq_full | (~cm_allocatable);
 
+  // todo: consider using switch-case to describe this state machine?
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       rr_uops_in      <= 0;
@@ -141,16 +150,17 @@ module core (
       id_uops_out_tmp <= id_uops_out;
       rr_stall_prev   <= 1;
     end else if (rr_stall_prev & (~cm_full)) begin
-      // rr_stall_prev = 1; cm_full = 0;
+      // cm_full = 0; rr_stall_prev = 1;
       // CM Stage is not full & previous cycle is stall
       // -> Output stored data
-      rr_uops_in  <= id_uops_out_tmp;
+      rr_uops_in      <= id_uops_out_tmp;
+      rr_stall_prev   <= 0;
     end else if (cm_full) begin
       // cm_full = 1; rr_stall_prev = 1;
       rr_uops_in      <= 0;
     end else begin
       // cm_full = 0; rr_stall_prev = 0;
-      rr_uops_in  <= id_uops_out;
+      rr_uops_in      <= id_uops_out;
     end
   end
 
@@ -171,12 +181,69 @@ module core (
 
   /* RR ~ DP Pipeline Registers */
 
-  micro_op_t  [`RENAME_WIDTH-1:0]   rob_uops_out;
-  micro_op_t  [`DISPATCH_WIDTH-1:0] dp_uops_in;
+  micro_op_t [`DECODE_WIDTH-1:0]   rr_uops_out_tmp;
+  logic                            dp_stall_prev;
+
+  micro_op_t [`RENAME_WIDTH-1:0]   rob_uops_in;
+  micro_op_t [`RENAME_WIDTH-1:0]   rob_uops_out;
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uops_in;
+
+  assign iq_full = iq_mem_full | iq_int_full;
+
+  logic iq_full_reg; // todo: Only debug purpose
+  always_ff @(posedge clock) begin
+    if (reset)
+      iq_full_reg <= 0;
+    else
+      iq_full_reg <= iq_full;
+  end
+
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      rob_uops_in     <= 0;
+      rr_uops_out_tmp <= 0;
+      dp_stall_prev   <= 0;
+    end else if (iq_full & (~dp_stall_prev)) begin
+      // iq_full = 1; dp_stall_prev = 0;
+      // IS stage is full & previous cycle is not stall
+      // -> Store data from RR stage
+      rob_uops_in     <= 0;
+      rr_uops_out_tmp <= rr_uops_out;
+      dp_stall_prev   <= 1;
+    end else if (dp_stall_prev & (~iq_full)) begin
+      // iq_full = 0; dp_stall_prev = 1;
+      // IS Stage is not full & previous cycle is stall
+      // -> Output stored data
+      rob_uops_in     <= rr_uops_out_tmp;
+      dp_stall_prev   <= 0;
+    end else if (cm_full) begin
+      // iq_full = 1; rr_stall_prev = 1;
+      rob_uops_in     <= 0;
+    end else begin
+      // iq_full = 0; rr_stall_prev = 0;
+      rob_uops_in     <= rr_uops_out;
+    end
+  end
 
   assign dp_uops_in = rob_uops_out;
 
   /* Stage 5: DP - Dispatch */
+
+  // ... --> ROB --> Dispatcher --> ...
+
+  micro_op_t [`COMMIT_WIDTH-1:0]  cm_uops_complete;
+
+  rob cm (
+    .clock          (clock            ),
+    .reset          (reset            ),
+    .uop_complete   (cm_uops_complete ),
+    .uop_in         (rob_uops_in      ),
+    .uop_out        (rob_uops_out     ),
+    .recover        (cm_recover       ),
+    .uop_recover    (cm_uop_recover   ),
+    .uop_retire     (cm_uop_retire    ),
+    .allocatable    (cm_allocatable   )
+  );
 
   micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_int;
   micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_mem;
@@ -268,6 +335,7 @@ module core (
   issue_queue_int iq_int (
     .clock        (clock          ),
     .reset        (reset          ),
+    .load_en      (!iq_full       ),
     .ex_busy      (ex_int_busy    ),
     .rs1_index    (rs1_int_index  ),
     .rs2_index    (rs2_int_index  ),
@@ -285,6 +353,7 @@ module core (
   issue_queue_mem iq_mem (
     .clock        (clock          ),
     .reset        (reset          ),
+    .load_en      (!iq_full       ),
     .ex_busy      (ex_mem_busy    ),
     .rs1_index    (rs1_mem_index  ),
     .rs2_index    (rs2_mem_index  ),
@@ -466,8 +535,6 @@ module core (
 
   /* WB ~ CM Pipeline Registers */
 
-  micro_op_t [`COMMIT_WIDTH-1:0]  cm_uops_complete;
-
   always_ff @(posedge clock) begin
     if (reset) begin
       cm_uops_complete <= 0;
@@ -476,33 +543,11 @@ module core (
     end
   end
 
-  /* RR ~ CM Pipeline Registers */
-
-  micro_op_t [`RENAME_WIDTH-1:0]  rob_uops_in;
-
-  assign iq_full = iq_mem_full | iq_int_full;
-
-  always_ff @(posedge clock) begin
-    if (reset | clear | iq_full) begin
-      rob_uops_in <= 0;
-    end else begin
-      rob_uops_in <= rr_uops_out;
-    end
-  end
-
   /* Stage 10: CM - Commit */
 
-  rob cm (
-    .clock          (clock            ),
-    .reset          (reset            ),
-    .uop_complete   (cm_uops_complete ),
-    .uop_in         (rob_uops_in      ),
-    .uop_out        (rob_uops_out     ),
-    .recover        (cm_recover       ),
-    .uop_recover    (cm_uop_recover   ),
-    .uop_retire     (cm_uop_retire    ),
-    .allocatable    (cm_allocatable   )
-  );
+  // See Stage 5: DP
+
+  /* Debug Messages        */
 
   wire if_id_print = 1;
   wire id_rr_print = 1;
@@ -629,6 +674,8 @@ module core (
              is_mem_uop_in[2].pc);
     $display("|        |        |        |%h|        |        |        |        |", 
              is_mem_uop_in[3].pc);
+    $display("|full: %h |full: %h |full: %h |full: %h |        |        |        |        |", 
+             id_stall_reg, rr_stall_prev, dp_stall_prev, iq_full_reg);
     $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
   end
 
