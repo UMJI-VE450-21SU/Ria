@@ -13,13 +13,13 @@ module free_list (
   input       recover,
 
   input         [`COMMIT_WIDTH-1:0]                           pre_prf_valid,
-  input         [`COMMIT_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0]  pre_prf,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] pre_prf,
 
-  input         [`COMMIT_WIDTH-1:0]                           retire_prf_valid,
-  input         [`COMMIT_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0]  retire_prf,
+  input         [`COMMIT_WIDTH-1:0]                           retire_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] retire_prf,
 
   input         [`RENAME_WIDTH-1:0]                           prf_req,
-  output logic  [`RENAME_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0]  prf_out,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prf_out,
   output logic                                                allocatable
 );
 
@@ -54,14 +54,16 @@ module free_list (
       prf_out[i] = 0;
       prf_out_next[i] = 0;
     end
+
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
+      // Retire PRF
       if (pre_prf_valid[i]) begin
         free_num_next                 += 1;
         free_list_next[pre_prf[i]]    = 0;
         prf_recover_num_next          += 1;
         prf_recover_next[pre_prf[i]]  = 0;
       end
-      if (retire_prf_valid[i]) begin
+      if (retire_valid[i]) begin
         prf_recover_num_next            -= 1;
         prf_recover_next[retire_prf[i]] = 1;
       end
@@ -73,6 +75,7 @@ module free_list (
     end
 
     if (req_count <= free_num_next) begin
+      // Allocatable
       for (int i = 0; i < `PRF_INT_SIZE; ++i) begin
         if (free_list_next[i] == 0) begin
           prf_out_next[req_idx] = i;
@@ -91,8 +94,10 @@ module free_list (
       end
       allocatable = 1;
     end else begin
+      // Not Allocatable
       allocatable = 0;
     end
+
     if (allocatable) begin
       free_num_next = free_num_next - req_count;
     end
