@@ -115,6 +115,7 @@ endmodule
 module issue_queue_mem (
   input  clock,
   input  reset,
+  input  load_en,  // global load signal
 
   output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
   output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
@@ -162,7 +163,7 @@ module issue_queue_mem (
         .clock      (clock),
         .reset      (reset),
         .clear      (clear[k]),
-        .load       (load[k]),
+        .load       (load[k] & load_en),
         .uop_in     (uop_to_slot[k]),
         .uop_new    (uop_to_issue[k + compress_offset]),
         .uop        (uop_to_issue[k]),

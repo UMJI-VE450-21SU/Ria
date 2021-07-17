@@ -30,7 +30,7 @@
 `define ISSUE_WIDTH_MEM     1
 `define ISSUE_WIDTH_FP      2
 
-`define IQ_INT_SIZE         16
+`define IQ_INT_SIZE         32
 `define IQ_MEM_SIZE         16
 `define IQ_FP_SIZE          16
 
