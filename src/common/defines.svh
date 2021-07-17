@@ -23,9 +23,6 @@
 `define ROB_SIZE            64
 `define ROB_INDEX_SIZE      6   // log2(ROB_SIZE)
 
-`define RAT_CP_SIZE         8
-`define RAT_CP_INDEX_SIZE   3   // log2(RAT_CP_SIZE)
-
 `define ISSUE_WIDTH_INT     3
 `define ISSUE_WIDTH_MEM     1
 `define ISSUE_WIDTH_FP      2
