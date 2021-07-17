@@ -57,8 +57,6 @@ typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
 typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
 typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
 
-typedef logic [`RAT_CP_INDEX_SIZE-1:0]  cp_index_t;
-
 typedef logic [`ROB_INDEX_SIZE-1:0]     rob_index_t;
 
 // RISCV ISA SPEC

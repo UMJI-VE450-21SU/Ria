@@ -143,7 +143,6 @@ typedef struct packed {
   logic [31:0]    npc;          // Next PC = PC +2/+4
   inst_t          inst;
 
-  cp_index_t      cp_index;
   rob_index_t     rob_index;
 
   iq_code_t       iq_code;      // which issue unit do we use?
