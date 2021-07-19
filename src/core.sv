@@ -190,7 +190,7 @@ module core (
 
   assign iq_full = iq_mem_full | iq_int_full;
 
-  logic iq_full_reg; // todo: Only debug purpose
+  logic iq_full_reg;
   always_ff @(posedge clock) begin
     if (reset)
       iq_full_reg <= 0;
@@ -203,24 +203,24 @@ module core (
       rob_uops_in     <= 0;
       rr_uops_out_tmp <= 0;
       dp_stall_prev   <= 0;
-    end else if (iq_full & (~dp_stall_prev)) begin
-      // iq_full = 1; dp_stall_prev = 0;
+    end else if (iq_full_reg & (~dp_stall_prev)) begin
+      // iq_full_reg = 1; dp_stall_prev = 0;
       // IS stage is full & previous cycle is not stall
       // -> Store data from RR stage
       rob_uops_in     <= 0;
       rr_uops_out_tmp <= rr_uops_out;
       dp_stall_prev   <= 1;
-    end else if (dp_stall_prev & (~iq_full)) begin
-      // iq_full = 0; dp_stall_prev = 1;
+    end else if (dp_stall_prev & (~iq_full_reg)) begin
+      // iq_full_reg = 0; dp_stall_prev = 1;
       // IS Stage is not full & previous cycle is stall
       // -> Output stored data
       rob_uops_in     <= rr_uops_out_tmp;
       dp_stall_prev   <= 0;
     end else if (cm_full) begin
-      // iq_full = 1; rr_stall_prev = 1;
+      // iq_full_reg = 1; rr_stall_prev = 1;
       rob_uops_in     <= 0;
     end else begin
-      // iq_full = 0; rr_stall_prev = 0;
+      // iq_full_reg = 0; rr_stall_prev = 0;
       rob_uops_in     <= rr_uops_out;
     end
   end
@@ -299,16 +299,35 @@ module core (
   micro_op_t [`DISPATCH_WIDTH-1:0] is_int_uop_in;
   micro_op_t [`DISPATCH_WIDTH-1:0] is_mem_uop_in;
   // micro_op_t [`DISPATCH_WIDTH-1:0] is_fp_uop_in;
+  
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_int_tmp;
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_mem_tmp;
+  // micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_fp_tmp;
+  logic                            is_stall_prev;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
-      is_int_uop_in <= 0;
-      is_mem_uop_in <= 0;
-      // is_fp_uop_in  <= 0;
-    end else if (!stall) begin
-      is_int_uop_in <= dp_uop_to_int;
-      is_mem_uop_in <= dp_uop_to_mem;
-      // is_fp_uop_in  <= dp_uop_to_fp;
+      is_int_uop_in     <= 0;
+      is_mem_uop_in     <= 0;
+      dp_uop_to_int_tmp <= 0;
+      dp_uop_to_mem_tmp <= 0;
+      is_stall_prev     <= 0;
+    end else if (iq_full_reg & (~is_stall_prev)) begin
+      is_int_uop_in     <= 0;
+      is_mem_uop_in     <= 0;
+      dp_uop_to_int_tmp <= dp_uop_to_int;
+      dp_uop_to_mem_tmp <= dp_uop_to_mem;
+      is_stall_prev     <= 1;
+    end else if (is_stall_prev & (~iq_full_reg)) begin
+      is_int_uop_in     <= dp_uop_to_int_tmp;
+      is_mem_uop_in     <= dp_uop_to_mem_tmp;
+      is_stall_prev     <= 0;
+    end else if (iq_full_reg) begin
+      is_int_uop_in     <= 0;
+      is_mem_uop_in     <= 0;
+    end else begin
+      is_int_uop_in     <= dp_uop_to_int;
+      is_mem_uop_in     <= dp_uop_to_mem;
     end
   end
 
@@ -322,7 +341,7 @@ module core (
     .clock        (clock          ),
     .reset        (reset          ),
     .clear_en     (clear          ),
-    .load_en      (!iq_full       ),
+    .load_en      (!iq_full_reg   ),
     .ex_busy      (ex_int_busy    ),
     .rs1_index    (rs1_int_index  ),
     .rs2_index    (rs2_int_index  ),
@@ -341,7 +360,7 @@ module core (
     .clock        (clock          ),
     .reset        (reset          ),
     .clear_en     (clear          ),
-    .load_en      (!iq_full       ),
+    .load_en      (!iq_full_reg   ),
     .ex_busy      (ex_mem_busy    ),
     .rs1_index    (rs1_mem_index  ),
     .rs2_index    (rs2_mem_index  ),
@@ -515,9 +534,9 @@ module core (
     for (genvar i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
       assign rf_int_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
       assign rf_int_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
-      assign rf_int_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_valid;
-      assign clear_busy_index  [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_prf_int_index;
-      assign clear_busy_valid  [i + `ISSUE_WIDTH_INT] = ex_int_uop_out[i].rd_valid;
+      assign rf_int_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
+      assign clear_busy_index  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
+      assign clear_busy_valid  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
     end
   endgenerate
 
@@ -641,23 +660,23 @@ module core (
       print_uop(cm_uops_complete[3]);
     end
     $display("==============================");
-    $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|", 
+    $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|-Retire-|");
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
              id_insts_in[0].pc, rr_uops_in[0].pc, rob_uops_in[0].pc, is_int_uop_in[0].pc,
-             rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc, cm_uops_complete[0].pc);
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc, cm_uops_complete[0].pc, uop_retire[0].pc);
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
              id_insts_in[1].pc, rr_uops_in[1].pc, rob_uops_in[1].pc, is_int_uop_in[1].pc,
-             rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc, cm_uops_complete[1].pc);
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|", 
+             rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc, cm_uops_complete[1].pc, uop_retire[1].pc);
+    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
              id_insts_in[2].pc, rr_uops_in[2].pc, rob_uops_in[2].pc, is_int_uop_in[2].pc,
-             rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc, cm_uops_complete[2].pc);
-    $display("|%h|%h|%h|%h|        |        |        |        |", 
-             id_insts_in[3].pc, rr_uops_in[3].pc, rob_uops_in[3].pc, is_int_uop_in[3].pc);
-    $display("|        |        |        |%h|%h|%h|%h|%h|", 
+             rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc, cm_uops_complete[2].pc, uop_retire[2].pc);
+    $display("|%h|%h|%h|%h|        |        |        |        |%h|", 
+             id_insts_in[3].pc, rr_uops_in[3].pc, rob_uops_in[3].pc, is_int_uop_in[3].pc, uop_retire[3].pc);
+    $display("|        |        |        |%h|%h|%h|%h|%h|%h|", 
              is_mem_uop_in[0].pc, rf_int_uop_in[3].pc, ex_mem_uop_in[0].pc, wb_uops[3].pc, 
-             cm_uops_complete[3].pc);
-    $display("|        |        |        |%h|        |        |        |        |", 
-             is_mem_uop_in[1].pc);
+             cm_uops_complete[3].pc, uop_retire[4].pc);
+    $display("|        |        |        |%h|        |        |        |        |%h|", 
+             is_mem_uop_in[1].pc, uop_retire[5].pc);
     $display("|        |        |        |%h|        |        |        |        |", 
              is_mem_uop_in[2].pc);
     $display("|        |        |        |%h|        |        |        |        |", 
