@@ -52,6 +52,8 @@ int main(int argc, char** argv, char** env) {
 
   auto dmem = std::make_unique<DMem>(mem.get());
 
+  unsigned char core2dcache_data_size = 0;
+
   // Simulate until $finish
   while (!contextp->gotFinish()) {
     contextp->timeInc(1);  // 1 timeprecision period passes...
@@ -64,7 +66,8 @@ int main(int argc, char** argv, char** env) {
       top->icache2core_data_valid = 1;
 
       if(top->core2dcache_data_we) {
-        dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), top->core2dcache_data_size);
+        core2dcache_data_size = data_size_map[top->core2dcache_data_size];
+        dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), core2dcache_data_size);
       } else {
         dmem->read_transction(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
       }
