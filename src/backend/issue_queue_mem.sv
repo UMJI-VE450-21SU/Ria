@@ -177,7 +177,7 @@ module issue_queue_mem (
     end
   endgenerate
 
-  wire iq_mem_print = 1;
+  wire iq_mem_print = 0;
 
   always_ff @(posedge clock) begin
     if (iq_mem_print) begin

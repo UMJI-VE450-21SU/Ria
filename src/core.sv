@@ -142,24 +142,25 @@ module core (
       rr_uops_in      <= 0;
       id_uops_out_tmp <= 0;
       rr_stall_prev   <= 0;
-    end else if (cm_full & (~rr_stall_prev)) begin
-      // cm_full = 1; rr_stall_prev = 0;
-      // CM stage is full & previous cycle is not stall
+    end else if (rr_full & (~rr_stall_prev)) begin
+      // rr_full = 1; rr_stall_prev = 0;
+      // RR stage is full & previous cycle is not stall
       // -> Store data from ID stage
       rr_uops_in      <= 0;
       id_uops_out_tmp <= id_uops_out;
       rr_stall_prev   <= 1;
-    end else if (rr_stall_prev & (~cm_full)) begin
-      // cm_full = 0; rr_stall_prev = 1;
-      // CM Stage is not full & previous cycle is stall
+    end else if (rr_stall_prev & (~rr_full)) begin
+      // rr_full = 0; rr_stall_prev = 1;
+      // RR Stage is not full & previous cycle is stall
       // -> Output stored data
       rr_uops_in      <= id_uops_out_tmp;
+      id_uops_out_tmp <= 0;
       rr_stall_prev   <= 0;
-    end else if (cm_full) begin
-      // cm_full = 1; rr_stall_prev = 1;
+    end else if (rr_full) begin
+      // rr_full = 1; rr_stall_prev = 1;
       rr_uops_in      <= 0;
     end else begin
-      // cm_full = 0; rr_stall_prev = 0;
+      // rr_full = 0; rr_stall_prev = 0;
       rr_uops_in      <= id_uops_out;
     end
   end
@@ -203,24 +204,25 @@ module core (
       rob_uops_in     <= 0;
       rr_uops_out_tmp <= 0;
       dp_stall_prev   <= 0;
-    end else if (iq_full_reg & (~dp_stall_prev)) begin
-      // iq_full_reg = 1; dp_stall_prev = 0;
-      // IS stage is full & previous cycle is not stall
+    end else if (cm_full & (~dp_stall_prev)) begin
+      // cm_full = 1; dp_stall_prev = 0;
+      // DP stage is full & previous cycle is not stall
       // -> Store data from RR stage
       rob_uops_in     <= 0;
       rr_uops_out_tmp <= rr_uops_out;
       dp_stall_prev   <= 1;
-    end else if (dp_stall_prev & (~iq_full_reg)) begin
-      // iq_full_reg = 0; dp_stall_prev = 1;
-      // IS Stage is not full & previous cycle is stall
+    end else if (dp_stall_prev & (~cm_full)) begin
+      // cm_full = 0; dp_stall_prev = 1;
+      // DP Stage is not full & previous cycle is stall
       // -> Output stored data
       rob_uops_in     <= rr_uops_out_tmp;
+      rr_uops_out_tmp <= 0;
       dp_stall_prev   <= 0;
     end else if (cm_full) begin
-      // iq_full_reg = 1; rr_stall_prev = 1;
+      // cm_full = 1; dp_stall_prev = 1;
       rob_uops_in     <= 0;
     end else begin
-      // iq_full_reg = 0; rr_stall_prev = 0;
+      // cm_full = 0; dp_stall_prev = 0;
       rob_uops_in     <= rr_uops_out;
     end
   end
@@ -312,17 +314,25 @@ module core (
       dp_uop_to_int_tmp <= 0;
       dp_uop_to_mem_tmp <= 0;
       is_stall_prev     <= 0;
-    end else if (iq_full_reg & (~is_stall_prev)) begin
+    end else if (iq_full & (~is_stall_prev)) begin
+      // iq_full = 1; is_stall_prev = 0;
+      // IS stage is full & previous cycle is not stall
+      // -> Store data from DP stage
       is_int_uop_in     <= 0;
       is_mem_uop_in     <= 0;
       dp_uop_to_int_tmp <= dp_uop_to_int;
       dp_uop_to_mem_tmp <= dp_uop_to_mem;
       is_stall_prev     <= 1;
-    end else if (is_stall_prev & (~iq_full_reg)) begin
+    end else if (is_stall_prev & (~iq_full)) begin
+      // iq_full = 0; is_stall_prev = 1;
+      // IS Stage is not full & previous cycle is stall
+      // -> Output stored data
       is_int_uop_in     <= dp_uop_to_int_tmp;
       is_mem_uop_in     <= dp_uop_to_mem_tmp;
+      dp_uop_to_int_tmp <= 0;
+      dp_uop_to_mem_tmp <= 0;
       is_stall_prev     <= 0;
-    end else if (iq_full_reg) begin
+    end else if (iq_full) begin
       is_int_uop_in     <= 0;
       is_mem_uop_in     <= 0;
     end else begin
@@ -660,30 +670,34 @@ module core (
       print_uop(cm_uops_complete[3]);
     end
     $display("==============================");
-    $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|-Retire-|");
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             id_insts_in[0].pc, rr_uops_in[0].pc, rob_uops_in[0].pc, is_int_uop_in[0].pc,
+    $display("|---ID---|---RR---(--------)|---DP---(--------)|---IS---(--------)|---RF---|---EX---|---WB---|---CM---|-Retire-|");
+    $display("|%h|%h(%h)|%h(%h)|%h(%h)|%h|%h|%h|%h|%h|", 
+             id_insts_in[0].pc, rr_uops_in[0].pc, id_uops_out_tmp[0].pc, rob_uops_in[0].pc, rr_uops_out_tmp[0].pc,
+             is_int_uop_in[0].pc, dp_uop_to_int_tmp[0].pc,
              rf_int_uop_in[0].pc, ex_int_uop_in[0].pc, wb_uops[0].pc, cm_uops_complete[0].pc, uop_retire[0].pc);
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             id_insts_in[1].pc, rr_uops_in[1].pc, rob_uops_in[1].pc, is_int_uop_in[1].pc,
+    $display("|%h|%h(%h)|%h(%h)|%h(%h)|%h|%h|%h|%h|%h|", 
+             id_insts_in[1].pc, rr_uops_in[1].pc, id_uops_out_tmp[1].pc, rob_uops_in[1].pc, rr_uops_out_tmp[1].pc,
+             is_int_uop_in[1].pc, dp_uop_to_int_tmp[1].pc,
              rf_int_uop_in[1].pc, ex_int_uop_in[1].pc, wb_uops[1].pc, cm_uops_complete[1].pc, uop_retire[1].pc);
-    $display("|%h|%h|%h|%h|%h|%h|%h|%h|%h|", 
-             id_insts_in[2].pc, rr_uops_in[2].pc, rob_uops_in[2].pc, is_int_uop_in[2].pc,
+    $display("|%h|%h(%h)|%h(%h)|%h(%h)|%h|%h|%h|%h|%h|", 
+             id_insts_in[2].pc, rr_uops_in[2].pc, id_uops_out_tmp[2].pc, rob_uops_in[2].pc, rr_uops_out_tmp[2].pc,
+             is_int_uop_in[2].pc, dp_uop_to_int_tmp[2].pc,
              rf_int_uop_in[2].pc, ex_int_uop_in[2].pc, wb_uops[2].pc, cm_uops_complete[2].pc, uop_retire[2].pc);
-    $display("|%h|%h|%h|%h|        |        |        |        |%h|", 
-             id_insts_in[3].pc, rr_uops_in[3].pc, rob_uops_in[3].pc, is_int_uop_in[3].pc, uop_retire[3].pc);
-    $display("|        |        |        |%h|%h|%h|%h|%h|%h|", 
-             is_mem_uop_in[0].pc, rf_int_uop_in[3].pc, ex_mem_uop_in[0].pc, wb_uops[3].pc, 
-             cm_uops_complete[3].pc, uop_retire[4].pc);
-    $display("|        |        |        |%h|        |        |        |        |%h|", 
-             is_mem_uop_in[1].pc, uop_retire[5].pc);
-    $display("|        |        |        |%h|        |        |        |        |", 
-             is_mem_uop_in[2].pc);
-    $display("|        |        |        |%h|        |        |        |        |", 
-             is_mem_uop_in[3].pc);
-    $display("|full: %h |full: %h |full: %h |full: %h |        |        |        |        |", 
+    $display("|%h|%h(%h)|%h(%h)|%h(%h)|        |        |        |        |%h|", 
+             id_insts_in[3].pc, rr_uops_in[3].pc, id_uops_out_tmp[3].pc, rob_uops_in[3].pc, rr_uops_out_tmp[3].pc,
+             is_int_uop_in[3].pc, dp_uop_to_int_tmp[3].pc, uop_retire[3].pc);
+    $display("|        |                  |                  |%h(%h)|%h|%h|%h|%h|%h|", 
+             is_mem_uop_in[0].pc, dp_uop_to_mem_tmp[0].pc,
+             rf_int_uop_in[3].pc, ex_mem_uop_in[0].pc, wb_uops[3].pc, cm_uops_complete[3].pc, uop_retire[4].pc);
+    $display("|        |                  |                  |%h(%h)|        |        |        |        |%h|", 
+             is_mem_uop_in[1].pc, dp_uop_to_mem_tmp[1].pc, uop_retire[5].pc);
+    $display("|        |                  |                  |%h(%h)|        |        |        |        |", 
+             is_mem_uop_in[2].pc, dp_uop_to_mem_tmp[2].pc);
+    $display("|        |                  |                  |%h(%h)|        |        |        |        |", 
+             is_mem_uop_in[3].pc, dp_uop_to_mem_tmp[3].pc);
+    $display("|full: %h |full: %h           |full: %h           |full: %h           |        |        |        |        |", 
              id_stall_reg, rr_stall_prev, dp_stall_prev, iq_full_reg);
-    $display("|---ID---|---RR---|---DP---|---IS---|---RF---|---EX---|---WB---|---CM---|");
+    $display("|---ID---|---RR---(--------)|---DP---(--------)|---IS---(--------)|---RF---|---EX---|---WB---|---CM---|");
   end
 
 endmodule
