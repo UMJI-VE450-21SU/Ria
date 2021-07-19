@@ -149,22 +149,6 @@ module pipe_3 (
     end
   end
 
-  // Data memory / cache input
-  always_comb begin
-    core2dcache_addr = 0;
-    core2dcache_data = 0;
-    core2dcache_data_we = 0;
-    if (busy_reg) begin
-      core2dcache_addr = in1 + uop.imm;
-      if (is_st) begin
-        core2dcache_data = {32'b0, in2};
-        core2dcache_data_we = 1;
-      end
-    end
-  end
-
-  assign core2dcache_data_size = uop.mem_size;
-
   // Data memory / cache output (only for ld/ldu)
   always_comb begin
     data_out = 0;
@@ -193,13 +177,24 @@ module pipe_3 (
     if (reset) begin
       busy_reg <= 0;
       uop_reg  <= 0;
+      core2dcache_addr <= 0;
+      core2dcache_data <= 0;
+      core2dcache_data_we   <= 0;
+      core2dcache_data_size <= 0;
     end else if (!busy_reg & input_valid) begin
       busy_reg <= 1;
       uop_reg  <= uop;
-    end else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid) begin
+      core2dcache_addr <= in1 + uop.imm;
+      core2dcache_data <= {32'b0, in2};
+      core2dcache_data_we   <= (uop.mem_type == MEM_ST);
+      core2dcache_data_size <= uop.mem_size;
+    end else if (busy_reg & (((is_ld | is_ldu) & dcache2core_data_valid) | is_st)) begin
       busy_reg <= 0;
-    end else if (busy_reg & is_st) begin
-      busy_reg <= 0;
+      uop_reg  <= 0;
+      core2dcache_addr <= 0;
+      core2dcache_data <= 0;
+      core2dcache_data_we   <= 0;
+      core2dcache_data_size <= 0;
     end
   end
 
@@ -208,6 +203,8 @@ module pipe_3 (
       out <= 0;
     else
       out <= data_out[31:0];
+    $display("[EX-MEM] c2d_addr=%h, c2d_data=%h, c2d_we=%b, c2d_size=%h", 
+             core2dcache_addr, core2dcache_data, core2dcache_data_we, core2dcache_data_size);
   end
   assign uop_out = uop_reg;
 
