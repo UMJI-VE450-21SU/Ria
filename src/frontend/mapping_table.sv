@@ -11,25 +11,25 @@ module mapping_table (
   input         stall,
   input         recover,
 
-  input         [`RENAME_WIDTH-1:0]                           rd_valid,
+  input         [`RENAME_WIDTH-1:0]                           rd_int_valid,
 
-  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs1,
-  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs2,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs1_int,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs2_int,
   input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rd,
 
-  input         [`COMMIT_WIDTH-1:0]                           pre_prf_valid,
-  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] pre_prf,
+  input         [`COMMIT_WIDTH-1:0]                           pre_prf_i_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] pre_prf_i,
 
-  input         [`COMMIT_WIDTH-1:0]                           retire_valid,
-  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] retire_prf,
-  input         [`COMMIT_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] retire_arf,
+  input         [`COMMIT_WIDTH-1:0]                           retire_int_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] retire_prf_int,
+  input         [`COMMIT_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] retire_arf_int,
 
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prs1,
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prs2,
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prd,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prs1_int,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prs2_int,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prd_int,
 
   output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prev_rd,
-  output logic  [`RENAME_WIDTH-1:0]                           prev_rd_valid,
+  output logic  [`RENAME_WIDTH-1:0]                           prev_rd_int_valid,
 
   output logic                                                allocatable
 );
@@ -51,17 +51,17 @@ module mapping_table (
   logic [`ARF_INT_SIZE-1:0]                           arf_recover_next;
 
   free_list free_list (
-    .clock          (clock          ),
-    .reset          (reset          ),
-    .stall          (stall          ),
-    .recover        (recover        ),
-    .pre_prf_valid  (pre_prf_valid  ),
-    .pre_prf        (pre_prf        ),
-    .retire_valid   (retire_valid   ),
-    .retire_prf     (retire_prf     ),
-    .prf_req        (rd_valid       ),
-    .prf_out        (prf_out        ),
-    .allocatable    (allocatable    )
+    .clock            (clock            ),
+    .reset            (reset            ),
+    .stall            (stall            ),
+    .recover          (recover          ),
+    .pre_prf_i_valid  (pre_prf_i_valid  ),
+    .pre_prf_i        (pre_prf_i        ),
+    .retire_int_valid (retire_int_valid ),
+    .retire_prf_int   (retire_prf_int   ),
+    .prf_req          (rd_int_valid     ),
+    .prf_out          (prf_out          ),
+    .allocatable      (allocatable      )
   );
 
   always_comb begin
@@ -69,37 +69,37 @@ module mapping_table (
     arf_valid_next    = arf_valid;
     arf_recover_next  = arf_recover;
     prev_rd           = 0;
-    prev_rd_valid     = 0;
+    prev_rd_int_valid = 0;
     for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
       mp_tb_next[i] = mp_tb[i];
       r_rat_next[i] = r_rat[i];
     end
     for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
-      prd[i]  = 0;
-      prs1[i] = 0;
-      prs2[i] = 0;
+      prd_int[i]  = 0;
+      prs1_int[i] = 0;
+      prs2_int[i] = 0;
     end
 
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // Retire PRF
-      if (retire_valid[i]) begin
-        arf_recover_next[retire_arf[i]] = 1;
-        r_rat_next[retire_arf[i]]       = retire_prf[i];
+      if (retire_int_valid[i]) begin
+        arf_recover_next[retire_arf_int[i]] = 1;
+        r_rat_next[retire_arf_int[i]]       = retire_prf_int[i];
       end
     end
 
     if (allocatable) begin
       for (int i = 0; i < `RENAME_WIDTH; i = i + 1) begin
-        prd[i]  = 0;
-        prs1[i] = (rs1[i] == 0) ? 0 : mp_tb_next[rs1[i]];
-        prs2[i] = (rs2[i] == 0) ? 0 : mp_tb_next[rs2[i]];
-        if (rd_valid[i]) begin
+        prd_int[i]  = 0;
+        prs1_int[i] = (rs1_int[i] == 0) ? 0 : mp_tb_next[rs1_int[i]];
+        prs2_int[i] = (rs2_int[i] == 0) ? 0 : mp_tb_next[rs2_int[i]];
+        if (rd_int_valid[i]) begin
           // WAW: Return Previous PRF
           prev_rd[i] = mp_tb_next[rd[i]];
           if (arf_valid_next[rd[i]]) begin
-            prev_rd_valid[i] = 1;
+            prev_rd_int_valid[i] = 1;
           end
-          prd[i]                = prf_out[i];
+          prd_int[i]                = prf_out[i];
           mp_tb_next[rd[i]]     = prf_out[i];
           arf_valid_next[rd[i]] = 1;
         end

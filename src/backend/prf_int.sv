@@ -84,7 +84,7 @@ module prf_int (
     for (int i = 0; i < `PRF_INT_WAYS; i++) begin
       case (uop_in[i].rs1_source)
         RS_INVALID  : rs1_index[i] = 0;
-        RS_FROM_RF  : rs1_index[i] = uop_in[i].rs1_prf_int_index;
+        RS_FROM_IRF : rs1_index[i] = uop_in[i].rs1_prf_int_index;
         RS_FROM_IMM : rs1_index[i] = 0;
         RS_FROM_ZERO: rs1_index[i] = 0;
         RS_FROM_PC  : rs1_index[i] = 0;
@@ -93,7 +93,7 @@ module prf_int (
       endcase
       case (uop_in[i].rs2_source)
         RS_INVALID  : rs2_index[i] = 0;
-        RS_FROM_RF  : rs2_index[i] = uop_in[i].rs2_prf_int_index;
+        RS_FROM_IRF : rs2_index[i] = uop_in[i].rs2_prf_int_index;
         RS_FROM_IMM : rs2_index[i] = 0;
         RS_FROM_ZERO: rs2_index[i] = 0;
         RS_FROM_PC  : rs2_index[i] = 0;
@@ -108,7 +108,7 @@ module prf_int (
     for (int i = 0; i < `PRF_INT_WAYS; i++) begin
       case (uop_in[i].rs1_source)
         RS_INVALID  : rs1_data[i] = 0;
-        RS_FROM_RF  : rs1_data[i] = rs1_data_tmp[i];
+        RS_FROM_IRF : rs1_data[i] = rs1_data_tmp[i];
         RS_FROM_IMM : rs1_data[i] = uop_in[i].imm;
         RS_FROM_ZERO: rs1_data[i] = 0;
         RS_FROM_PC  : rs1_data[i] = uop_in[i].pc;
@@ -117,7 +117,7 @@ module prf_int (
       endcase
       case (uop_in[i].rs2_source)
         RS_INVALID  : rs2_data[i] = 0;
-        RS_FROM_RF  : rs2_data[i] = rs2_data_tmp[i];
+        RS_FROM_IRF : rs2_data[i] = rs2_data_tmp[i];
         RS_FROM_IMM : rs2_data[i] = uop_in[i].imm;
         RS_FROM_ZERO: rs2_data[i] = 0;
         RS_FROM_PC  : rs2_data[i] = uop_in[i].pc;

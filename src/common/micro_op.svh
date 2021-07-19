@@ -131,11 +131,12 @@ typedef enum logic [1:0] {
 
 typedef enum logic [2:0] { 
   RS_INVALID    = 3'h0,
-  RS_FROM_RF    = 3'h1,
-  RS_FROM_IMM   = 3'h2,
-  RS_FROM_ZERO  = 3'h3,
-  RS_FROM_PC    = 3'h4,
-  RS_FROM_NPC   = 3'h5          // PC +2/+4
+  RS_FROM_IRF   = 3'h1,
+  RS_FROM_FRF   = 3'h2,
+  RS_FROM_IMM   = 3'h3,
+  RS_FROM_ZERO  = 3'h4,
+  RS_FROM_PC    = 3'h5,
+  RS_FROM_NPC   = 3'h6          // PC +2/+4
 } rs_source_t;
 
 typedef struct packed {
@@ -172,33 +173,42 @@ typedef struct packed {
   rs_source_t     rs1_source;
   arf_int_index_t rs1_arf_int_index;
   prf_int_index_t rs1_prf_int_index;
-  logic           rs1_from_ctb;       // rs1 prf index from common tag bus
+  arf_fp_index_t  rs1_arf_fp_index;
+  prf_fp_index_t  rs1_prf_fp_index;
 
   rs_source_t     rs2_source;
   arf_int_index_t rs2_arf_int_index;
   prf_int_index_t rs2_prf_int_index;
-  logic           rs2_from_ctb;       // rs2 prf index from common tag bus
+  arf_fp_index_t  rs2_arf_fp_index;
+  prf_fp_index_t  rs2_prf_fp_index;
 
   rs_source_t     rs3_source;
   arf_int_index_t rs3_arf_int_index;
   prf_int_index_t rs3_prf_int_index;
-  logic           rs3_from_ctb;       // rs3 prf index from common tag bus
+  arf_fp_index_t  rs3_arf_fp_index;
+  prf_fp_index_t  rs3_prf_fp_index;
 
   arf_int_index_t rd_arf_int_index;
   prf_int_index_t rd_prf_int_index;
   prf_int_index_t rd_prf_int_index_prev;
   logic           rd_prf_int_index_prev_valid;
-  logic           rd_valid;
+  logic           rd_int_valid;
+
+  arf_fp_index_t  rd_arf_fp_index;
+  prf_fp_index_t  rd_prf_fp_index;
+  prf_fp_index_t  rd_prf_fp_index_prev;
+  logic           rd_prf_fp_index_prev_valid;
+  logic           rd_fp_valid;
 
   logic           valid;
   logic           complete;
 } micro_op_t;
 
 task print_uop(input micro_op_t uop);
-  $display("        pc=%h, iq_code=%h, fu_code=%h, imm=%h, rs1_arf=%h, rs1_prf=%h, rs2_arf=%h, rs2_prf=%h, rd_arf=%h, rd_prf=%h, rd_valid=%b, valid=%b",
+  $display("        pc=%h, iq_code=%h, fu_code=%h, imm=%h, rs1_arf=%h, rs1_prf=%h, rs2_arf=%h, rs2_prf=%h, rd_arf=%h, rd_prf=%h, rd_int_valid=%b, valid=%b",
            uop.pc, uop.iq_code, uop.fu_code, uop.imm, uop.rs1_arf_int_index, uop.rs1_prf_int_index,
            uop.rs2_arf_int_index, uop.rs2_prf_int_index, uop. rd_arf_int_index, uop.rd_prf_int_index, 
-           uop.rd_valid, uop.valid);
+           uop.rd_int_valid, uop.valid);
 endtask
 
 `endif  // __MICRO_OP_SVH__

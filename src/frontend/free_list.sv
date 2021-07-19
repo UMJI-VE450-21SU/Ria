@@ -12,8 +12,8 @@ module free_list (
 
   input       recover,
 
-  input         [`COMMIT_WIDTH-1:0]                           pre_prf_valid,
-  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] pre_prf,
+  input         [`COMMIT_WIDTH-1:0]                           pre_prf_i_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] pre_prf_i,
 
   input         [`COMMIT_WIDTH-1:0]                           retire_valid,
   input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] retire_prf,
@@ -57,11 +57,11 @@ module free_list (
 
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
       // Retire PRF
-      if (pre_prf_valid[i]) begin
-        free_num_next                 += 1;
-        free_list_next[pre_prf[i]]    = 0;
-        prf_recover_num_next          += 1;
-        prf_recover_next[pre_prf[i]]  = 0;
+      if (pre_prf_i_valid[i]) begin
+        free_num_next                   += 1;
+        free_list_next[pre_prf_i[i]]    = 0;
+        prf_recover_num_next            += 1;
+        prf_recover_next[pre_prf_i[i]]  = 0;
       end
       if (retire_valid[i]) begin
         prf_recover_num_next            -= 1;
