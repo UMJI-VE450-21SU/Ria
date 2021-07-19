@@ -58,6 +58,7 @@ module decode (
         uop.br_type           = BR_JALR;
         uop.imm               = `RV32_signext_I_Imm(inst);
         uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_int_index = `RV32_RS1(inst);
         uop.rs2_source        = RS_FROM_IMM;
         uop.rd_arf_int_index  = `RV32_RD(inst);
         uop.rd_valid          = 1;
