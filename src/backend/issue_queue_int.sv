@@ -152,6 +152,7 @@ endmodule
 module issue_queue_int (
   input  clock,
   input  reset,
+  input  clear_en,
   input  load_en,  // global load signal
 
   output [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
@@ -203,7 +204,7 @@ module issue_queue_int (
       issue_slot_int issue_slot_int_inst (
         .clock      (clock),
         .reset      (reset),
-        .clear      (clear[k]),
+        .clear      (clear[k] | clear_en),
         .load       (load[k] & load_en),
         .uop_in     (uop_to_slot[k]),
         .uop        (uop_to_issue[k]),

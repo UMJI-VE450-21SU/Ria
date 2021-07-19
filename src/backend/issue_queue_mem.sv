@@ -115,6 +115,7 @@ endmodule
 module issue_queue_mem (
   input  clock,
   input  reset,
+  input  clear_en,
   input  load_en,  // global load signal
 
   output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
@@ -162,7 +163,7 @@ module issue_queue_mem (
       issue_slot_mem issue_slot_mem_inst (
         .clock      (clock),
         .reset      (reset),
-        .clear      (clear[k]),
+        .clear      (clear_en),
         .load       (load[k] & load_en),
         .uop_in     (uop_to_slot[k]),
         .uop_new    (uop_to_issue[k + compress_offset]),
@@ -176,6 +177,19 @@ module issue_queue_mem (
       );
     end
   endgenerate
+
+  wire iq_mem_print = 0;
+
+  always_ff @(posedge clock) begin
+    if (iq_mem_print) begin
+      for (integer i = 0; i < `IQ_MEM_SIZE; i++) begin
+        $display("[IQ_MEM] slot %d (ready=%b)", i, ready[i]);
+        print_uop(uop_to_issue[i]);
+      end
+      $display("[IQ_MEM] clear=%b, ready=%b", clear, ready);
+      $display("[IQ_MEM] free_count_reg=%d, compress_offset=%d", free_count_reg, compress_offset);
+    end
+  end
 
   // Allocate input uops from tail - compress_offset
   always_comb begin
