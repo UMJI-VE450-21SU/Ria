@@ -101,6 +101,10 @@ int main(int argc, char** argv, char** env) {
     if (contextp->time() > 500) break;
   }
 
+  printf("Current memory layout: \n");
+
+  mem->print_all();
+
   // Final model cleanup
   top->final();
 
