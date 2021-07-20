@@ -202,14 +202,7 @@ module pipe_3 (
     end
   end
 
-  always_ff @(posedge clock) begin
-    if (reset | clear)
-      out <= 0;
-    else
-      out <= data_out[31:0];
-    $display("[EX-MEM] uop.pc=%h, c2d_addr=%h, c2d_data=%h, c2d_we=%b, c2d_size=%h", 
-             uop_reg.pc, core2dcache_addr, core2dcache_data, core2dcache_data_we, core2dcache_data_size);
-  end
+  assign out = data_out[31:0];
   assign uop_out = uop_reg;
 
   assign busy = busy_reg;
