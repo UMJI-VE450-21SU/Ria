@@ -148,7 +148,7 @@ module issue_queue_mem (
   assign iq_mem_full = free_count < `DISPATCH_WIDTH;
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear_en) begin
       free_count_reg <= `IQ_MEM_SIZE;
       tail_reg <= 0;
     end else begin
@@ -177,7 +177,7 @@ module issue_queue_mem (
     end
   endgenerate
 
-  wire iq_mem_print = 0;
+  wire iq_mem_print = 1;
 
   always_ff @(posedge clock) begin
     if (iq_mem_print) begin

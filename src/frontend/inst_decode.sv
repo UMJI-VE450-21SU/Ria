@@ -13,6 +13,8 @@ module decode (
 
   wire [31:0] pc   = fb_entry.pc;
   wire [31:0] inst = fb_entry.inst;
+  wire        pred_taken = fb_entry.pred_taken;
+  wire [31:0] pred_addr  = fb_entry.pred_addr;
 
   always_comb begin
     uop = 0;
@@ -20,6 +22,8 @@ module decode (
     uop.npc   = pc + 4;
     uop.inst  = inst;
     uop.valid = valid;
+    uop.pred_taken = pred_taken;
+    uop.pred_addr  = pred_addr;
     casez (inst) 
       `RV32_LUI: begin
         uop.iq_code           = IQ_INT;
@@ -50,7 +54,6 @@ module decode (
         uop.rs2_source        = RS_FROM_IMM;
         uop.rd_arf_int_index  = `RV32_RD(inst);
         uop.rd_valid          = 1;
-        uop.pred_taken        = 1;
       end
       `RV32_JALR: begin
         uop.iq_code           = IQ_INT;

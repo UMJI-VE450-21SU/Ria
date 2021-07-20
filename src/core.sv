@@ -460,6 +460,7 @@ module core (
   pipe_0_1 pipe_0 (
     .clock    (clock                  ),
     .reset    (reset                  ),
+    .clear    (clear                  ),
     .uop      (ex_int_uop_in      [0] ),
     .in1      (ex_int_rs1_data_in [0] ),
     .in2      (ex_int_rs2_data_in [0] ),
@@ -473,6 +474,7 @@ module core (
   pipe_0_1 pipe_1 (
     .clock    (clock                  ),
     .reset    (reset                  ),
+    .clear    (clear                  ),
     .uop      (ex_int_uop_in      [1] ),
     .in1      (ex_int_rs1_data_in [1] ),
     .in2      (ex_int_rs2_data_in [1] ),
@@ -486,6 +488,7 @@ module core (
   pipe_2 pipe_2 (
     .clock    (clock                 ),
     .reset    (reset                 ),
+    .clear    (clear                 ),
     .uop      (ex_int_uop_in      [2]),
     .in1      (ex_int_rs1_data_in [2]),
     .in2      (ex_int_rs2_data_in [2]),
@@ -501,6 +504,7 @@ module core (
   pipe_3 pipe_3 (
     .clock                  (clock                 ),
     .reset                  (reset                 ),
+    .clear                  (clear                 ),
     .uop                    (ex_mem_uop_in      [0]),
     .in1                    (ex_mem_rs1_data_in [0]),
     .in2                    (ex_mem_rs2_data_in [0]),

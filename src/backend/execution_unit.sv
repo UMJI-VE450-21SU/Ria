@@ -6,6 +6,7 @@
 // Pipe 0/1: ALU + BR
 module pipe_0_1 (
   input             clock,
+  input             clear,
   input             reset,
   input  micro_op_t uop,
   input  [31:0]     in1,
@@ -42,7 +43,7 @@ module pipe_0_1 (
   );
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear) begin
       uop_out <= 0;
     end else begin
       uop_out <= uop_next;
@@ -63,6 +64,7 @@ endmodule
 module pipe_2 (
   input             clock,
   input             reset,
+  input             clear,
   input  micro_op_t uop,
   input  [31:0]     in1,
   input  [31:0]     in2,
@@ -96,7 +98,7 @@ module pipe_2 (
   );
 
   always_ff @(posedge clock) begin
-    if (reset)
+    if (reset | clear)
       uop_reg <= 0;
     else if (!busy && uop.valid)
       uop_reg <= uop;
@@ -115,6 +117,7 @@ endmodule
 module pipe_3 (
   input               clock,
   input               reset,
+  input               clear,
   input  micro_op_t   uop,
   input  [31:0]       in1,
   input  [31:0]       in2,
@@ -175,7 +178,7 @@ module pipe_3 (
 
   // actually a 2-state FSM (IDLE, BUSY)
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear) begin
       busy_reg <= 0;
       uop_reg  <= 0;
       core2dcache_addr <= 0;
@@ -200,7 +203,7 @@ module pipe_3 (
   end
 
   always_ff @(posedge clock) begin
-    if (reset)
+    if (reset | clear)
       out <= 0;
     else
       out <= data_out[31:0];

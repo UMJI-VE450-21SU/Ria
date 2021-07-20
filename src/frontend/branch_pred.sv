@@ -10,7 +10,7 @@ module branch_pred (
   input reset,
 
   // Input to make prediction(s)
-  input               [31:0]                  PC,
+  input               [31:0]                  pc,
   input               [`FETCH_WIDTH-1:0]      is_branch,
   input               [`FETCH_WIDTH-1:0]      is_valid,
 
@@ -19,7 +19,7 @@ module branch_pred (
   output logic                                mispredict,
 
   // Output
-  output logic        [31:0]                  next_PC,
+  output logic        [31:0]                  next_pc,
   output logic        [`FETCH_WIDTH-1:0]      predictions
 );
 
@@ -57,8 +57,8 @@ module branch_pred (
   logic [31:0]                target_update    [`COMMIT_WIDTH-1:0];
 
   generate
-    assign BHT_PC_entry = PC[`BHT_INDEX_SIZE+1:2];
-    assign BTB_PC_entry = PC[`BTB_INDEX_SIZE+1:2];
+    assign BHT_PC_entry = pc[`BHT_INDEX_SIZE+1:2];
+    assign BTB_PC_entry = pc[`BTB_INDEX_SIZE+1:2];
     for (genvar i = 0; i < `COMMIT_WIDTH; i++) begin
       assign BHT_entry[i]     = uop_retire[i].pc[`BHT_INDEX_SIZE+1:2];
       assign BTB_entry[i]     = uop_retire[i].pc[`BTB_INDEX_SIZE+1:2];
@@ -85,7 +85,7 @@ module branch_pred (
     end
 
     mispredict = 0;
-    next_PC = PC + 4*`FETCH_WIDTH;
+    next_pc = pc + 4*`FETCH_WIDTH;
     LRU = `BTB_WIDTH-1;
     PHT_tmp = 0;
 
@@ -125,7 +125,7 @@ module branch_pred (
 
         if (uop_retire[i].pred_taken != uop_retire[i].br_taken && ~mispredict) begin
           mispredict = 1;
-          next_PC = target_update[i];
+          next_pc = target_update[i];
           break;
         end
       end
@@ -138,9 +138,9 @@ module branch_pred (
         if (PHT_next[BHT_next[(BHT_PC_entry + i)%`BHT_SIZE]][1] & is_branch[i] & is_valid[i]) begin
         // the current PC is a branch
           for (int j = 0; j < `BTB_WIDTH; j++) begin
-            if (BTB_valid_next[(BTB_PC_entry + i)%`BTB_SIZE][j] && BTB_PC_tag_next[(BTB_PC_entry + i)%`BTB_SIZE][j] == PC[31:32-`BTB_TAG_SIZE])begin
+            if (BTB_valid_next[(BTB_PC_entry + i)%`BTB_SIZE][j] && BTB_PC_tag_next[(BTB_PC_entry + i)%`BTB_SIZE][j] == pc[31:32-`BTB_TAG_SIZE])begin
               // predicted taken
-              next_PC = BTB_target_next[(BTB_PC_entry+i)%`BTB_SIZE][j];
+              next_pc = BTB_target_next[(BTB_PC_entry+i)%`BTB_SIZE][j];
               branch  = 1;
               predictions[i] = 1;
               break;
@@ -153,7 +153,7 @@ module branch_pred (
     end
   end
 
-// Sequential Logic
+  // Sequential Logic
   always_ff @(posedge clock) begin
     if (reset) begin
       // Upon reset, clear everything stored
