@@ -9,7 +9,7 @@ endif
 
 SOFTWARE_SUBDIR := software
 
-SOFTWARE_TARGET := c_example
+SOFTWARE_TARGET := c_example c_hello
 
 SOFTWARE_TARGET_PATH := $(addprefix $(SOFTWARE_SUBDIR)/, $(SOFTWARE_TARGET))
 
@@ -56,10 +56,10 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
-SIMULATOR_PROG = software/c_example/c_example.bin
+SIMULATOR_PROG = software/c_hello/c_hello.bin
 #SIMULATOR_PROG = myfile
 # the dmem init
-SIMULATOR_DATA_INIT = software/c_example/c_example.bin
+SIMULATOR_DATA_INIT = software/c_hello/c_hello.bin
 
 default: run
 

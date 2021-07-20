@@ -7,6 +7,6 @@ _start:
   j     halt
 
 halt:
-  li    t1, 1
-  sw    t1, -4(x0)
+  #li    t1, 1
+  #sw    t1, -4(x0)
   j     halt

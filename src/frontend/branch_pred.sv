@@ -132,7 +132,7 @@ module branch_pred (
     end
 
     // See if something should be predicted taken
-    if(~mispredict) begin
+    if (~mispredict) begin
       for (int i = 0; i < `FETCH_WIDTH; i++) begin
         // only need to examine the current 4 insts
         if (PHT_next[BHT_next[(BHT_PC_entry + i)%`BHT_SIZE]][1] & is_branch[i] & is_valid[i]) begin

@@ -32,8 +32,6 @@ module inst_fetch (
   /*       Debug purpose - Add hash to PC */
 
   reg   [31:0] pc;
-  wire  [31:0] pc_aligned;
-  wire  [1:0]  pc_offset;
   logic        pc_enable;
   logic [31:0] next_pc;
 
@@ -41,7 +39,7 @@ module inst_fetch (
   logic                     mispredict;
   logic [`FETCH_WIDTH-1:0]  predictions;
 
-  branch_pred br_pred(
+  branch_pred br_pred (
     .clock      (clock),
     .reset      (reset),
     .pc         (pc),
@@ -54,8 +52,6 @@ module inst_fetch (
   );
 
   assign pc_enable = ~reset & ~stall;
-  assign pc_aligned = {pc[31:4], {4'b0000}};
-  assign pc_offset = pc[3:2];
 
   assign insts_out_valid = (pc_enable | mispredict) & icache2core_data_valid;
 
@@ -66,23 +62,25 @@ module inst_fetch (
       pc <= next_pc;
   end
 
-  assign core2icache_addr = pc_aligned;
+  assign core2icache_addr = pc;
 
   generate
     for (genvar i = 0; i < `FETCH_WIDTH; i++) begin
       assign insts_out[i].inst        = icache2core_data[(i+1)*32-1:i*32];
-      assign insts_out[i].pc          = pc_aligned + i * 4;
+      assign insts_out[i].pc          = pc + i * 4;
       assign is_branch[i]             = (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_BRANCH) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JALR) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL);
       assign insts_out[i].pred_taken  = predictions[i];
-      assign insts_out[i].pred_addr   = predictions[i]? next_pc:0;
+      assign insts_out[i].pred_addr   = predictions[i] ? next_pc:0;
     end
   endgenerate
 
   always_comb begin
-    insts_out[0].valid = insts_out_valid && (pc_offset == 2'b00);
-    insts_out[1].valid = insts_out_valid && ((insts_out[0].valid && !predictions[0]) || pc_offset == 2'b01);
-    insts_out[2].valid = insts_out_valid && ((insts_out[1].valid && !predictions[1]) || pc_offset == 2'b10);
-    insts_out[3].valid = insts_out_valid && ((insts_out[2].valid && !predictions[2]) || pc_offset == 2'b11);
+    insts_out[0].valid = insts_out_valid;
+    insts_out[1].valid = insts_out_valid && insts_out[0].valid && !predictions[0];
+    insts_out[2].valid = insts_out_valid && insts_out[1].valid && !predictions[1];
+    insts_out[3].valid = insts_out_valid && insts_out[2].valid && !predictions[2];
+    // $display("[IF] insts_out.valid=%b%b%b%b", insts_out[3].valid, insts_out[2].valid, insts_out[1].valid, insts_out[0].valid);
+    // $display("[IF] predictions=%b", predictions);
   end
 
 endmodule
