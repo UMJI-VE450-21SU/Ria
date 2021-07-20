@@ -26,6 +26,7 @@ module issue_slot_mem (
 );
 
   wire rs1_ready, rs2_ready;
+  reg  is_new = 0;
 
   always_comb begin
     if (load & uop_in.valid) begin
@@ -38,18 +39,22 @@ module issue_slot_mem (
   end
 
   always_ff @ (posedge clock) begin
-    if (reset | clear)
+    if (reset | clear) begin
       uop <= 0;
-    else if (load & uop_in.valid)
+      is_new <= 0;
+    end else if (load & uop_in.valid) begin
       uop <= uop_in;
-    else
+      is_new <= 1;
+    end else begin
       uop <= uop_new;
+      is_new <= 0;
+    end
   end
 
   assign free = ~uop.valid;
   assign rs1_ready = ~rs1_busy;
   assign rs2_ready = ~rs2_busy;
-  assign ready = rs1_ready & rs2_ready & uop.valid;
+  assign ready = rs1_ready & rs2_ready & uop.valid & ~is_new;
 
 endmodule
 
@@ -177,7 +182,7 @@ module issue_queue_mem (
     end
   endgenerate
 
-  wire iq_mem_print = 1;
+  wire iq_mem_print = 0;
 
   always_ff @(posedge clock) begin
     if (iq_mem_print) begin
