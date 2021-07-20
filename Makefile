@@ -9,8 +9,7 @@ endif
 
 SOFTWARE_SUBDIR := software
 
-SOFTWARE_TARGET := c_example \
-				   c_test \
+SOFTWARE_TARGET := c_example
 
 SOFTWARE_TARGET_PATH := $(addprefix $(SOFTWARE_SUBDIR)/, $(SOFTWARE_TARGET))
 
@@ -43,6 +42,8 @@ VERILATOR_FLAGS += --trace
 # Check SystemVerilog assertions
 VERILATOR_FLAGS += --assert
 
+VERILATOR_FLAGS += --unroll-count 128
+
 VERILOG_ROOT := src
 # Input files for Verilator
 VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
@@ -55,10 +56,10 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
-SIMULATOR_PROG = software/asm_example/asm_example.bin
+SIMULATOR_PROG = software/c_example/c_example.bin
 #SIMULATOR_PROG = myfile
 # the dmem init
-SIMULATOR_DATA_INIT = software/asm_example/asm_example.bin
+SIMULATOR_DATA_INIT = software/c_example/c_example.bin
 
 default: run
 
