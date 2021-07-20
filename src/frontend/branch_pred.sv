@@ -163,6 +163,7 @@ module branch_pred (
       for (int i = 0; i < `BTB_SIZE; i++) begin
         BTB_valid[i]  <= 0;
         BTB_target[i] <= 0;
+        BTB_PC_tag[i] <= 0;
       end
       // The initial prediction stage are weakly not taken
       for (int i = 0; i < `PHT_SIZE; i++) begin
@@ -175,6 +176,7 @@ module branch_pred (
       for (int i = 0; i < `BTB_SIZE; i++) begin
         BTB_valid[i]  <= BTB_valid_next[i];
         BTB_target[i] <= BTB_target_next[i];
+        BTB_PC_tag[i] <= BTB_PC_tag_next[i];
       end
       for (int i = 0; i < `PHT_SIZE; i++) begin
         PHT[i] <= PHT_next[i];
