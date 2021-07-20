@@ -135,12 +135,12 @@ module branch_pred (
         if(~mispredict) begin
             for (int i = 0; i < `FETCH_WIDTH; i++) begin
                 // only need to examine the current 4 insts
-                if (PHT_next[BHT_next[(BHT_PC_entry + i)%]][1] & is_branch[i] & is_valid[i]) begin
+                if (PHT_next[BHT_next[(BHT_PC_entry + i)%`BHT_SIZE]][1] & is_branch[i] & is_valid[i]) begin
                 // the current PC is a branch
                     for (int j = 0; j < `BTB_WIDTH; j++) begin
-                        if (BTB_valid_next[BTB_PC_entry + i][j] && BTB_PC_tag_next[BTB_PC_entry + i][j] == PC[31:32-`BTB_TAG_SIZE])begin
+                        if (BTB_valid_next[(BTB_PC_entry + i)%`BTB_SIZE][j] && BTB_PC_tag_next[(BTB_PC_entry + i)%`BTB_SIZE][j] == PC[31:32-`BTB_TAG_SIZE])begin
                             // predicted taken
-                            next_PC = BTB_target_next[BTB_PC_entry+i][j];
+                            next_PC = BTB_target_next[(BTB_PC_entry+i)%`BTB_SIZE][j];
                             branch  = 1;
                             predictions[i] = 1;
                             break;
