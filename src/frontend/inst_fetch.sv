@@ -73,7 +73,7 @@ module inst_fetch (
       assign insts_out[i].inst        = icache2core_data[(i+1)*32-1:i*32];
       // assign insts_out[i].pc   = pc_aligned + i * 4;
       assign insts_out[i].pc          = pc_aligned + i * 4 + (counter << 16);  // todo: Debug purpose - Add hash to PC
-      assign is_branch[i]             = (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_BRANCH) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JALR) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL));
+      assign is_branch[i]             = (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_BRANCH) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JALR) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL);
       assign insts_out[i].pred_taken  = predictions[i];
       assign insts_out[i].pred_addr   = predictions[i]? next_PC:0;
     end

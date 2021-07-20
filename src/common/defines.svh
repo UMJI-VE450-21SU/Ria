@@ -25,7 +25,7 @@
 `define BTB_INDEX_SIZE      5   // log2(BTB_SIZE)
 `define BTB_WIDTH           4
 `define BTB_WIDTH_INDEX     2   // log2(BTB_WIDTH)
-`define BTB_TAG_SIZE        `BTB_SIZE - 2 - `BTB_INDEX_SIZE - `BTB_WIDTH_INDEX // 32-2-7=23
+`define BTB_TAG_SIZE        (`BTB_SIZE - 2 - `BTB_INDEX_SIZE - `BTB_WIDTH_INDEX) // 32-2-7=23
 
 `define FB_SIZE             16
 `define FB_ADDR             4
