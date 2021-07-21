@@ -72,7 +72,9 @@ module issue_queue_mem_output_selector (
     readys[0] = ready;
     for (int i = `ISSUE_WIDTH_MEM; i < `IQ_MEM_SIZE; i++) begin
       if (is_store[i]) begin
-        readys[0][i] = 0;
+        for (int j = i; j < `IQ_MEM_SIZE; j++) begin
+          readys[0][j] = 0;
+        end
       end
     end
   end
