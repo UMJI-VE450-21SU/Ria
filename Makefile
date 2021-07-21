@@ -11,6 +11,8 @@ SOFTWARE_SUBDIR := software
 
 SOFTWARE_TARGET := c_example \
 				   c_test \
+				   hello \
+				   sobel
 
 SOFTWARE_TARGET_PATH := $(addprefix $(SOFTWARE_SUBDIR)/, $(SOFTWARE_TARGET))
 
@@ -55,10 +57,10 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
-SIMULATOR_PROG = software/c_example/c_example.bin
+SIMULATOR_PROG = prog/bin/c_example.bin
 #SIMULATOR_PROG = myfile
 # the dmem init
-SIMULATOR_DATA_INIT = software/c_example/c_example.bin
+#SIMULATOR_DATA_INIT = software/c_example/c_example.bin
 
 default: run
 
@@ -78,15 +80,18 @@ build: verilate
 run: build
 	@rm -rf logs
 	@mkdir -p logs
-	obj_dir/Vtop ${SIMULATOR_PROG} ${SIMULATOR_DATA_INIT} +trace
+	obj_dir/Vtop ${SIMULATOR_PROG} +trace
 	@echo "-- DONE --------------------"
 	@echo "To see waveforms, open vlt_dump.vcd in a waveform viewer"
 	@echo
 
+view-wave: run
+	gtkwave obj_dir/vlt_dump.vcd
+
 
 ######################################################################
 # Other targets
-.PHONY: build-soft $(SOFTWARE_TARGET_PATH)
+.PHONY: build-soft $(SOFTWARE_TARGET_PATH) install-soft sim-spike
 
 build-soft: $(SOFTWARE_TARGET_PATH)
 
@@ -94,9 +99,28 @@ export SOFTWARE_TARGET
 $(SOFTWARE_TARGET_PATH):
 	$(MAKE) -C $@
 
+SOFTWARE_ELF := $(foreach target, ${SOFTWARE_TARGET}, $(addsuffix .elf, $(addprefix $(SOFTWARE_SUBDIR)/$(target)/, $(target))))
+SOFTWARE_BIN := $(foreach target, ${SOFTWARE_TARGET}, $(addsuffix .bin, $(addprefix $(SOFTWARE_SUBDIR)/$(target)/, $(target))))
+install-soft: build-soft
+	cp ${SOFTWARE_ELF} prog/elf
+	cp ${SOFTWARE_BIN} prog/bin
+
 
 show-config:
 	$(VERILATOR) -V
+
+####### spike software, will be merged to the verilator flow when everthing is done ########
+
+SPIKE_BIN := bin/spike
+SPIKE_PROG_DIR := spike-software
+SPIKE_PROG := sobel.elf
+SPIKE_OPT := --isa=rv32i --priv=mu
+
+sim-spike: make-spike
+	$(SPIKE_BIN) $(SPIKE_OPT) $(SPIKE_PROG_DIR)/$(SPIKE_PROG)
+
+make-spike:
+	$(MAKE) -C $(SPIKE_PROG_DIR)
 
 maintainer-copy::
 clean mostlyclean distclean maintainer-clean::

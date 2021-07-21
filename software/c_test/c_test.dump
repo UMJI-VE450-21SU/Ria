@@ -5,8 +5,8 @@ c_test.elf:     file format elf32-littleriscv
 Disassembly of section .text:
 
 10000000 <_start>:
-10000000:	10010137          	lui	x2,0x10010
-10000004:	ff010113          	addi	x2,x2,-16 # 1000fff0 <main+0xffe4>
+10000000:	80010137          	lui	x2,0x80010
+10000004:	ff010113          	addi	x2,x2,-16 # 8000fff0 <main+0x7000ffe4>
 10000008:	004000ef          	jal	x1,1000000c <main>
 
 Disassembly of section .text.startup:
