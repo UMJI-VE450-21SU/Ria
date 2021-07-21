@@ -12,6 +12,10 @@
 typedef struct packed {
   logic [31:0]  pc;
   inst_t        inst;   // fetched instruction
+  logic         valid;
+  // branch prediction
+  logic         pred_taken;
+  logic [31:0]  pred_addr;
 } fb_entry_t;
 
 typedef enum logic [1:0] {
@@ -34,14 +38,16 @@ typedef enum logic [3:0] {
   FU_CSR  = 4'h9
 } fu_code_t;
 
-typedef enum logic [2:0] {
-  BR_X    = 3'h0,
-  BR_EQ   = 3'h1,
-  BR_NE   = 3'h2,
-  BR_LT   = 3'h3,
-  BR_GE   = 3'h4,
-  BR_LTU  = 3'h5,
-  BR_GEU  = 3'h6
+typedef enum logic [3:0] {
+  BR_X    = 4'h0,
+  BR_EQ   = 4'h1,
+  BR_NE   = 4'h2,
+  BR_LT   = 4'h3,
+  BR_GE   = 4'h4,
+  BR_LTU  = 4'h5,
+  BR_GEU  = 4'h6,
+  BR_JAL  = 4'h7,
+  BR_JALR = 4'h8
 } br_type_t;
 
 typedef enum logic [3:0] {
@@ -73,6 +79,47 @@ typedef enum logic [1:0] {
 } idiv_type_t;
 
 typedef enum logic [1:0] {
+  FP_F  = 2'h0,
+  FP_D  = 2'h1,
+  FP_Q  = 2'h2
+} fp_type_t;
+
+typedef enum logic [4:0] {
+  FPU_X     = 5'h0,
+  FPU_ADD   = 5'h1,
+  FPU_SUB   = 5'h2,
+  FPU_SQRT  = 5'h3,
+  FPU_SGNJ  = 5'h4,
+  FPU_SGNJN = 5'h5,
+  FPU_SGNJX = 5'h6,
+  FPU_MIN   = 5'h7,
+  FPU_MAX   = 5'h8,
+  FPU_CVTW  = 5'h9,
+  FPU_CVTWU = 5'ha,
+  FPU_MVX   = 5'hb,
+  FPU_EQ    = 5'hc,
+  FPU_LT    = 5'hd,
+  FPU_LE    = 5'he,
+  FPU_CLASS = 5'hf,
+  FPU_CVTS  = 5'h10,
+  FPU_CVTSU = 5'h11,
+  FPU_MVW   = 5'h12,
+  FPU_MADD  = 5'h13,
+  FPU_MSUB  = 5'h14,
+  FPU_NMSUB = 5'h15,
+  FPU_NMADD = 5'h16
+} fpu_type_t;
+
+typedef enum logic [2:0] {
+  RM_RNE  = 3'h0,
+  RM_RTZ  = 3'h1,
+  RM_RDN  = 3'h2,
+  RM_RUP  = 3'h3,
+  RM_RMM  = 3'h4,
+  RM_DYN  = 3'h7
+} rm_type_t;
+
+typedef enum logic [1:0] {
   MEM_LD  = 2'h0,
   MEM_LDU = 2'h1,
   MEM_ST  = 2'h2
@@ -99,16 +146,21 @@ typedef struct packed {
   logic [31:0]    npc;          // Next PC = PC +2/+4
   inst_t          inst;
 
-  cp_index_t      cp_index;
   rob_index_t     rob_index;
 
   iq_code_t       iq_code;      // which issue unit do we use?
   fu_code_t       fu_code;      // which functional unit do we use?
 
   br_type_t       br_type;
+
   alu_type_t      alu_type;
   imul_type_t     imul_type;
   idiv_type_t     idiv_type;
+
+  fp_type_t       fp_type;
+  fpu_type_t      fpu_type;
+  rm_type_t       rm_type;
+
   mem_type_t      mem_type;
   mem_size_t      mem_size;
 
@@ -129,6 +181,11 @@ typedef struct packed {
   arf_int_index_t rs2_arf_int_index;
   prf_int_index_t rs2_prf_int_index;
   logic           rs2_from_ctb;       // rs2 prf index from common tag bus
+
+  rs_source_t     rs3_source;
+  arf_int_index_t rs3_arf_int_index;
+  prf_int_index_t rs3_prf_int_index;
+  logic           rs3_from_ctb;       // rs3 prf index from common tag bus
 
   arf_int_index_t rd_arf_int_index;
   prf_int_index_t rd_prf_int_index;

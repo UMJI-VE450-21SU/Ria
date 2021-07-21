@@ -13,12 +13,13 @@ module fetch_buffer (
   input                                 insts_in_valid,
 
   output fb_entry_t [`FETCH_WIDTH-1:0]  insts_out,
-  output logic      [`FETCH_WIDTH-1:0]  insts_out_valid,
+  output            [`FETCH_WIDTH-1:0]  insts_out_valid,
 
   output logic                          full  // Connect to inst_fetch
 );
 
   logic [`FETCH_WIDTH-1:0] ready_hub;
+  logic [`FETCH_WIDTH-1:0] insts_out_valid_tmp;
 
   fifo #(
     .WIDTH      ($bits(fb_entry_t)),
@@ -29,12 +30,16 @@ module fetch_buffer (
     .enq_valid  (insts_in_valid),
     .enq_data   (insts_in),
     .enq_ready  (ready_hub),
-    .deq_valid  (insts_out_valid),
+    .deq_valid  (insts_out_valid_tmp),
     .deq_data   (insts_out),
     .deq_ready  (insts_in_valid)
   );
 
   assign full = (~ready_hub == 0);
 
-endmodule
+  generate
+    for (genvar i = 0; i < `FETCH_WIDTH; i++)
+      assign insts_out_valid[i] = insts_out_valid_tmp[i] & insts_out[i].valid;
+  endgenerate
 
+endmodule

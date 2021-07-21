@@ -47,7 +47,7 @@ module issue_slot_int (
   assign free = ~uop.valid;
   assign rs1_ready = ~rs1_busy;
   assign rs2_ready = ~rs2_busy;
-  assign ready = rs1_ready & rs2_ready;
+  assign ready = rs1_ready & rs2_ready & uop.valid;
 
 endmodule
 
@@ -71,28 +71,72 @@ module issue_queue_int_selector (ready, sel, sel_valid);
     end
   endgenerate
 
+  // always_comb begin
+  //   for (int i = 0; i < REQS; i++) begin
+  //     sel_valid[i] = 1;
+  //     casez (readys[i])
+  //       16'b???????????????1: sel[i] = 4'b0000;
+  //       16'b??????????????10: sel[i] = 4'b0001;
+  //       16'b?????????????100: sel[i] = 4'b0010;
+  //       16'b????????????1000: sel[i] = 4'b0011;
+  //       16'b???????????10000: sel[i] = 4'b0100;
+  //       16'b??????????100000: sel[i] = 4'b0101;
+  //       16'b?????????1000000: sel[i] = 4'b0110;
+  //       16'b????????10000000: sel[i] = 4'b0111;
+  //       16'b???????100000000: sel[i] = 4'b1000;
+  //       16'b??????1000000000: sel[i] = 4'b1001;
+  //       16'b?????10000000000: sel[i] = 4'b1010;
+  //       16'b????100000000000: sel[i] = 4'b1011;
+  //       16'b???1000000000000: sel[i] = 4'b1100;
+  //       16'b??10000000000000: sel[i] = 4'b1101;
+  //       16'b?100000000000000: sel[i] = 4'b1110;
+  //       16'b1000000000000000: sel[i] = 4'b1111;
+  //       default: begin
+  //         sel[i] = 4'b0000;
+  //         sel_valid[i] = 0;
+  //       end
+  //     endcase
+  //   end
+  // end
+
   always_comb begin
     for (int i = 0; i < REQS; i++) begin
       sel_valid[i] = 1;
       casez (readys[i])
-        16'b???????????????1: sel[i] = 4'b0000;
-        16'b??????????????10: sel[i] = 4'b0001;
-        16'b?????????????100: sel[i] = 4'b0010;
-        16'b????????????1000: sel[i] = 4'b0011;
-        16'b???????????10000: sel[i] = 4'b0100;
-        16'b??????????100000: sel[i] = 4'b0101;
-        16'b?????????1000000: sel[i] = 4'b0110;
-        16'b????????10000000: sel[i] = 4'b0111;
-        16'b???????100000000: sel[i] = 4'b1000;
-        16'b??????1000000000: sel[i] = 4'b1001;
-        16'b?????10000000000: sel[i] = 4'b1010;
-        16'b????100000000000: sel[i] = 4'b1011;
-        16'b???1000000000000: sel[i] = 4'b1100;
-        16'b??10000000000000: sel[i] = 4'b1101;
-        16'b?100000000000000: sel[i] = 4'b1110;
-        16'b1000000000000000: sel[i] = 4'b1111;
+        32'b???????????????????????????????1: sel[i] = 5'b00000;
+        32'b??????????????????????????????10: sel[i] = 5'b00001;
+        32'b?????????????????????????????100: sel[i] = 5'b00010;
+        32'b????????????????????????????1000: sel[i] = 5'b00011;
+        32'b???????????????????????????10000: sel[i] = 5'b00100;
+        32'b??????????????????????????100000: sel[i] = 5'b00101;
+        32'b?????????????????????????1000000: sel[i] = 5'b00110;
+        32'b????????????????????????10000000: sel[i] = 5'b00111;
+        32'b???????????????????????100000000: sel[i] = 5'b01000;
+        32'b??????????????????????1000000000: sel[i] = 5'b01001;
+        32'b?????????????????????10000000000: sel[i] = 5'b01010;
+        32'b????????????????????100000000000: sel[i] = 5'b01011;
+        32'b???????????????????1000000000000: sel[i] = 5'b01100;
+        32'b??????????????????10000000000000: sel[i] = 5'b01101;
+        32'b?????????????????100000000000000: sel[i] = 5'b01110;
+        32'b????????????????1000000000000000: sel[i] = 5'b01111;
+        32'b???????????????10000000000000000: sel[i] = 5'b10000;
+        32'b??????????????100000000000000000: sel[i] = 5'b10001;
+        32'b?????????????1000000000000000000: sel[i] = 5'b10010;
+        32'b????????????10000000000000000000: sel[i] = 5'b10011;
+        32'b???????????100000000000000000000: sel[i] = 5'b10100;
+        32'b??????????1000000000000000000000: sel[i] = 5'b10101;
+        32'b?????????10000000000000000000000: sel[i] = 5'b10110;
+        32'b????????100000000000000000000000: sel[i] = 5'b10111;
+        32'b???????1000000000000000000000000: sel[i] = 5'b11000;
+        32'b??????10000000000000000000000000: sel[i] = 5'b11001;
+        32'b?????100000000000000000000000000: sel[i] = 5'b11010;
+        32'b????1000000000000000000000000000: sel[i] = 5'b11011;
+        32'b???10000000000000000000000000000: sel[i] = 5'b11100;
+        32'b??100000000000000000000000000000: sel[i] = 5'b11101;
+        32'b?1000000000000000000000000000000: sel[i] = 5'b11110;
+        32'b10000000000000000000000000000000: sel[i] = 5'b11111;
         default: begin
-          sel[i] = 4'b0000;
+          sel[i] = 5'b00000;
           sel_valid[i] = 0;
         end
       endcase
@@ -108,6 +152,8 @@ endmodule
 module issue_queue_int (
   input  clock,
   input  reset,
+  input  clear_en,
+  input  load_en,  // global load signal
 
   output [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
   output [`IQ_INT_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
@@ -131,14 +177,13 @@ module issue_queue_int (
 
   logic [`IQ_INT_SIZE-1:0] free, load;
 
-  logic [`IQ_INT_SIZE-1:0] ready, ready_alu, ready_br, ready_imul, ready_idiv;
+  logic [`IQ_INT_SIZE-1:0] ready, ready_alu_br, ready_imul_idiv;
   logic [`IQ_INT_SIZE-1:0] clear;
 
-  logic [$clog2(`IQ_INT_SIZE)-1:0] clear_br, clear_imul, clear_idiv;
-  logic                            clear_br_valid, clear_imul_valid, clear_idiv_valid;
-
-  logic [`ISSUE_WIDTH_INT-1:0][$clog2(`IQ_INT_SIZE)-1:0] clear_alu;
-  logic [`ISSUE_WIDTH_INT-1:0]                           clear_alu_valid;
+  logic [1:0][$clog2(`IQ_INT_SIZE)-1:0] clear_alu_br;         // Pipe 0/1 for alu/br
+  logic [1:0]                           clear_alu_br_valid;
+  logic [$clog2(`IQ_INT_SIZE)-1:0]      clear_imul_idiv;      // Pipe 2 for imul/idiv
+  logic                                 clear_imul_idiv_valid;
 
   micro_op_t [`IQ_INT_SIZE-1:0] uop_to_slot, uop_to_issue;
 
@@ -147,7 +192,7 @@ module issue_queue_int (
   assign iq_int_full = free_count < `DISPATCH_WIDTH;
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear_en) begin
       free_count_reg <= `IQ_INT_SIZE;
     end else begin
       free_count_reg <= free_count;
@@ -159,8 +204,8 @@ module issue_queue_int (
       issue_slot_int issue_slot_int_inst (
         .clock      (clock),
         .reset      (reset),
-        .clear      (clear[k]),
-        .load       (load[k]),
+        .clear      (clear[k] | clear_en),
+        .load       (load[k] & load_en),
         .uop_in     (uop_to_slot[k]),
         .uop        (uop_to_issue[k]),
         .rs1_index  (rs1_index[k]),
@@ -170,12 +215,29 @@ module issue_queue_int (
         .ready      (ready[k]),
         .free       (free[k])
       );
-      assign ready_alu[k]  = ready[k] & (uop_to_issue[k].fu_code == FU_ALU);
-      assign ready_br[k]   = ready[k] & (uop_to_issue[k].fu_code == FU_BR);
-      assign ready_imul[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IMUL);
-      assign ready_idiv[k] = ready[k] & (uop_to_issue[k].fu_code == FU_IDIV);
+      assign ready_alu_br[k]    = ready[k] & 
+                                  ((uop_to_issue[k].fu_code == FU_ALU) | 
+                                   (uop_to_issue[k].fu_code == FU_BR));
+      assign ready_imul_idiv[k] = ready[k] & 
+                                  ((uop_to_issue[k].fu_code == FU_IMUL) | 
+                                   (uop_to_issue[k].fu_code == FU_IDIV));
     end
   endgenerate
+
+  wire iq_int_print = 0;
+
+  always_ff @(posedge clock) begin
+    if (iq_int_print) begin
+      for (integer i = 0; i < `IQ_INT_SIZE; i++) begin
+        $display("[IQ_INT] slot %d (ready=%b)", i, ready[i]);
+        print_uop(uop_to_issue[i]);
+      end
+      $display("[IQ_INT] clear=%b, ready_alu_br=%b", clear, ready_alu_br);
+      $display("[IQ_INT] clear_alu_br[0]=%h, clear_alu_br[1]=%h", clear_alu_br[0], clear_alu_br[1]);
+      $display("[IQ_INT] clear_alu_br_valid[0]=%h, clear_alu_br_valid[1]=%h", clear_alu_br_valid[0], clear_alu_br_valid[1]);
+      $display("[IQ_INT] free_count_reg=%d", free_count_reg);
+    end
+  end
 
   // Input selector
   issue_queue_int_selector #(
@@ -211,43 +273,24 @@ module issue_queue_int (
   end
 
   // Output selector
-  // todo: Adjust for different execution pipes
   issue_queue_int_selector #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_br (
-    .ready      (ready_br),
-    .sel        (clear_br),
-    .sel_valid  (clear_br_valid)
+    /*REQS=*/  2,
+    /*WIDTH=*/ `IQ_INT_SIZE
+  ) output_selector_alu_br (
+    .ready      (ready_alu_br),
+    .sel        (clear_alu_br),
+    .sel_valid  (clear_alu_br_valid)
   );
 
   issue_queue_int_selector #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_imul (
-    .ready      (ready_imul),
-    .sel        (clear_imul),
-    .sel_valid  (clear_imul_valid)
+    /*REQS=*/  1,
+    /*WIDTH=*/ `IQ_INT_SIZE
+  ) output_selector_imul_idiv (
+    .ready      (ready_imul_idiv),
+    .sel        (clear_imul_idiv),
+    .sel_valid  (clear_imul_idiv_valid)
   );
 
-  issue_queue_int_selector #(
-    /*REQS=*/ 1,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_idiv (
-    .ready      (ready_idiv),
-    .sel        (clear_idiv),
-    .sel_valid  (clear_idiv_valid)
-  );
-
-  issue_queue_int_selector #(
-    /*REQS=*/ `ISSUE_WIDTH_INT,
-    /*WIDTH=*/`IQ_INT_SIZE
-  ) output_selector_alu (
-    .ready      (ready_alu),
-    .sel        (clear_alu),
-    .sel_valid  (clear_alu_valid)
-  );
-  
   always_comb begin
     uop_out_count = 0;
     for (int i = 0; i < `IQ_INT_SIZE; i++) begin
@@ -259,42 +302,19 @@ module issue_queue_int (
 
   // Select part of ready instructions to be issued
   always_comb begin
-    uop_out[0] = 0;
-    uop_out[1] = 0;
-    uop_out[2] = 0;
+    uop_out = 0;
     clear = 0;
-    // Execution pipe 0 (ALU+Branch): Branch > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-      if ((clear_br == j) & clear_br_valid) begin
-        uop_out[0] = uop_to_issue[j];
-        clear[j] = 1;
-        break;
-      end else if ((clear_alu[0] == j) & clear_alu_valid[0]) begin
-        uop_out[0] = uop_to_issue[j];
-        clear[j] = 1;
-      end
+    if (clear_alu_br_valid[0]) begin
+      uop_out[0] = uop_to_issue[clear_alu_br[0]];
+      clear[clear_alu_br[0]] = 1;
     end
-    // Execution pipe 1 (ALU+IntMult): IntMult > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-      if ((clear_imul == j) & clear_imul_valid) begin
-        uop_out[1] = uop_to_issue[j];
-        clear[j] = 1;
-        break;
-      end else if ((clear_alu[1] == j) & clear_alu_valid[1]) begin
-        uop_out[1] = uop_to_issue[j];
-        clear[j] = 1;
-      end
+    if (clear_alu_br_valid[1]) begin
+      uop_out[1] = uop_to_issue[clear_alu_br[1]];
+      clear[clear_alu_br[1]] = 1;
     end
-    // Execution pipe 1 (ALU+IntDiv): IntDiv > ALU
-    for (int j = 0; j < `IQ_INT_SIZE; j++) begin
-      if ((clear_idiv == j) & clear_idiv_valid) begin
-        uop_out[2] = uop_to_issue[j];
-        clear[j] = 1;
-        break;
-      end else if ((clear_alu[2] == j) & clear_alu_valid[2]) begin
-        uop_out[2] = uop_to_issue[j];
-        clear[j] = 1;
-      end
+    if (clear_imul_idiv_valid) begin
+      uop_out[2] = uop_to_issue[clear_imul_idiv];
+      clear[clear_imul_idiv] = 1;
     end
   end
 

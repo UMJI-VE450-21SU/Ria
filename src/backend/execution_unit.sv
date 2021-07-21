@@ -3,9 +3,10 @@
 // Author:  Li Shi
 // Date:    2021/06/21
 
-// Pipe 0: ALU + BR
-module pipe_0 (
+// Pipe 0/1: ALU + BR
+module pipe_0_1 (
   input             clock,
+  input             clear,
   input             reset,
   input  micro_op_t uop,
   input  [31:0]     in1,
@@ -37,20 +38,20 @@ module pipe_0 (
     .in1      (in1),
     .in2      (in2),
     .br_taken (br_taken),
-    .br_addr  (br_out),
+    .br_out   (br_out),
     .br_uop   (br_uop)
   );
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear) begin
       uop_out <= 0;
     end else begin
       uop_out <= uop_next;
     end
   end
 
-  assign out = ({32{uop.fu_code == FU_ALU}} & alu_out) |
-               ({32{uop.fu_code == FU_BR}} & br_out);
+  assign out = ({32{uop_out.fu_code == FU_ALU}} & alu_out) |
+               ({32{uop_out.fu_code == FU_BR}} & br_out);
 
   assign uop_next = {uop.fu_code == FU_BR} ? br_uop : uop;
 
@@ -59,10 +60,11 @@ module pipe_0 (
 endmodule
 
 
-// Pipe 1: ALU + IMUL
-module pipe_1 (
+// Pipe 2: IMUL + IDIV
+module pipe_2 (
   input             clock,
   input             reset,
+  input             clear,
   input  micro_op_t uop,
   input  [31:0]     in1,
   input  [31:0]     in2,
@@ -71,38 +73,9 @@ module pipe_1 (
   output            busy
 );
 
-  wire                            input_valid = uop.valid;
-  micro_op_t [`IMUL_LATENCY-1:0]  uop_fifo;
-  logic [31:0]                    alu_out, imul_out;
-
-  always_ff @(posedge clock) begin
-    if (reset) begin
-      uop_fifo <= 0;
-    end else begin
-      if (input_valid & (uop.fu_code == FU_ALU)) begin
-        uop_fifo[0] <= uop;
-      end else begin
-        uop_fifo[0] <= uop_fifo[1];
-      end
-      for (int i = 1; i < `IMUL_LATENCY - 1; i++) begin
-        uop_fifo[i] <= uop_fifo[i + 1];
-      end
-      if (input_valid & (uop.fu_code == FU_IMUL)) begin
-        uop_fifo[`IMUL_LATENCY - 1] <= uop;
-      end else begin
-        uop_fifo[`IMUL_LATENCY - 1] <= 0;
-      end
-    end
-  end
-
-  alu alu_inst (
-    .clock    (clock),
-    .reset    (reset),
-    .uop      (uop),
-    .in1      (in1),
-    .in2      (in2),
-    .out      (alu_out)
-  );
+  micro_op_t   uop_reg;
+  logic [31:0] imul_out, idiv_out;
+  logic        imul_busy, idiv_busy, ready;
 
   imul imul_inst (
     .clock    (clock),
@@ -110,78 +83,32 @@ module pipe_1 (
     .uop      (uop),
     .in1      (in1),
     .in2      (in2),
-    .out      (imul_out)
+    .out      (imul_out),
+    .busy     (imul_busy)
   );
 
-  assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IMUL}} & imul_out);
-  assign uop_out = uop_fifo[0];
-
-  assign busy = 1'b0;
-
-endmodule
-
-
-// Pipe 2: ALU + IDIV
-module pipe_2 (
-  input             clock,
-  input             reset,
-  input  micro_op_t uop,
-  input  [31:0]     in1,
-  input  [31:0]     in2,
-  output micro_op_t uop_out,
-  output [31:0]     out,
-  output            busy
-);
-
-  wire                            input_valid = uop.valid;
-  micro_op_t [`IDIV_LATENCY-1:0]  uop_fifo;
-  logic [31:0]                    alu_out, idiv_out;
+  idiv idiv_inst (
+    .clock    (clock),
+    .reset    (reset),
+    .uop      (uop),
+    .in1      (in1),
+    .in2      (in2),
+    .out      (idiv_out),
+    .busy     (idiv_busy)
+  );
 
   always_ff @(posedge clock) begin
-    if (reset) begin
-      uop_fifo <= 0;
-    end else begin
-      if (input_valid & (uop.fu_code == FU_ALU)) begin
-        uop_fifo[0] <= uop;
-      end else begin
-        uop_fifo[0] <= uop_fifo[1];
-      end
-      for (int i = 1; i < `IDIV_LATENCY - 1; i++) begin
-        uop_fifo[i] <= uop_fifo[i + 1];
-      end
-      if (input_valid & (uop.fu_code == FU_IDIV)) begin
-        uop_fifo[`IDIV_LATENCY - 1] <= uop;
-      end else begin
-        uop_fifo[`IDIV_LATENCY - 1] <= 0;
-      end
-    end
+    if (reset | clear)
+      uop_reg <= 0;
+    else if (!busy && uop.valid)
+      uop_reg <= uop;
   end
 
-  alu alu_inst (
-    .clock    (clock),
-    .reset    (reset),
-    .uop      (uop),
-    .in1      (in1),
-    .in2      (in2),
-    .out      (alu_out)
-  );
+  assign out = ({32{uop_out.fu_code == FU_IMUL}} & imul_out) |
+               ({32{uop_out.fu_code == FU_IDIV}} & idiv_out);
 
-  // todo: Add a idiv module
-  imul idiv_inst (
-    .clock    (clock),
-    .reset    (reset),
-    .uop      (uop),
-    .in1      (in1),
-    .in2      (in2),
-    .out      (idiv_out)
-  );
-
-  assign out = ({32{uop_fifo[0].fu_code == FU_ALU}}  & alu_out) |
-               ({32{uop_fifo[0].fu_code == FU_IDIV}} & idiv_out);
-  assign uop_out = uop_fifo[0];
-
-  assign busy = 1'b0;
+  assign busy = imul_busy | idiv_busy;  // busy is synchronous signal
+  assign uop_out = busy ? 0 : uop_reg;  // uop_out is synchronous signal
 
 endmodule
 
@@ -190,6 +117,7 @@ endmodule
 module pipe_3 (
   input               clock,
   input               reset,
+  input               clear,
   input  micro_op_t   uop,
   input  [31:0]       in1,
   input  [31:0]       in2,
@@ -208,6 +136,7 @@ module pipe_3 (
   
   micro_op_t uop_reg;
   wire input_valid = uop.valid & (uop.fu_code == FU_MEM);
+  wire complete = ((is_ld | is_ldu) & dcache2core_data_valid) | is_st;
   reg  is_ld, is_ldu, is_st;
   reg  busy_reg;
   logic [63:0] data_out;
@@ -223,22 +152,6 @@ module pipe_3 (
       is_st  <= (uop.mem_type == MEM_ST);
     end
   end
-
-  // Data memory / cache input
-  always_comb begin
-    core2dcache_addr = 0;
-    core2dcache_data = 0;
-    core2dcache_data_we = 0;
-    if (busy_reg) begin
-      core2dcache_addr = in1 + uop.imm;
-      if (is_st) begin
-        core2dcache_data = {32'b0, in2};
-        core2dcache_data_we = 1;
-      end
-    end
-  end
-
-  assign core2dcache_data_size = uop.mem_size;
 
   // Data memory / cache output (only for ld/ldu)
   always_comb begin
@@ -265,25 +178,31 @@ module pipe_3 (
 
   // actually a 2-state FSM (IDLE, BUSY)
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear) begin
       busy_reg <= 0;
       uop_reg  <= 0;
-    end else if (!busy_reg & input_valid) begin
+      core2dcache_addr <= 0;
+      core2dcache_data <= 0;
+      core2dcache_data_we   <= 0;
+      core2dcache_data_size <= 0;
+    end else if ((!busy_reg | (busy_reg & complete)) & input_valid) begin
       busy_reg <= 1;
       uop_reg  <= uop;
-    end else if (busy_reg & (is_ld | is_ldu) & dcache2core_data_valid) begin
+      core2dcache_addr <= in1 + uop.imm;
+      core2dcache_data <= {32'b0, in2};
+      core2dcache_data_we   <= (uop.mem_type == MEM_ST);
+      core2dcache_data_size <= uop.mem_size;
+    end else if (busy_reg & complete & !input_valid) begin
       busy_reg <= 0;
-    end else if (busy_reg & is_st) begin
-      busy_reg <= 0;
+      uop_reg  <= 0;
+      core2dcache_addr <= 0;
+      core2dcache_data <= 0;
+      core2dcache_data_we   <= 0;
+      core2dcache_data_size <= 0;
     end
   end
 
-  always_ff @(posedge clock) begin
-    if (reset)
-      out <= 0;
-    else
-      out <= data_out[31:0];
-  end
+  assign out = data_out[31:0];
   assign uop_out = uop_reg;
 
   assign busy = busy_reg;

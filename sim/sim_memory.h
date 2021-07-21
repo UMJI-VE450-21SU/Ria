@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 
+static unsigned char data_size_map[4] = {1, 2, 4, 8};
 
 /*
  * This memory expect to provide 4Gb address space

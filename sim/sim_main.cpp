@@ -52,6 +52,12 @@ int main(int argc, char** argv, char** env) {
 
   auto dmem = std::make_unique<DMem>(mem.get());
 
+  unsigned char core2dcache_data_size = 0;
+
+  unsigned char finish_flag = 0;
+
+  char char_print = 0;
+
   // Simulate until $finish
   while (!contextp->gotFinish()) {
     contextp->timeInc(1);  // 1 timeprecision period passes...
@@ -64,13 +70,21 @@ int main(int argc, char** argv, char** env) {
       top->icache2core_data_valid = 1;
 
       if(top->core2dcache_data_we) {
-        dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), top->core2dcache_data_size);
+        core2dcache_data_size = data_size_map[top->core2dcache_data_size];
+        if (top->core2dcache_addr == 0xFFFFFFFC) {
+          // When we write a non-zero value to [0xFFFFFFFC], halt the simulation
+          finish_flag = top->core2dcache_data ? 1 : 0;
+        } else if (top->core2dcache_addr == 0xFFFFFFF8 && top->clock == 1) {
+          // When we write a character to [0xFFFFFFF8], print it to stderr (only 1 character)
+          fprintf(stderr, "%c", *(reinterpret_cast<char *>(&(top->core2dcache_data))));
+        } else {
+          dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), core2dcache_data_size);
+        }
       } else {
         dmem->read_transction(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
       }
       top->dcache2core_data_valid = 1;
     }
-
 
     top->eval();
 
@@ -95,8 +109,16 @@ int main(int argc, char** argv, char** env) {
     }
     printf("\n");
 
-    if (contextp->time() > 500) break;
+    if (contextp->time() > 1000)
+      finish_flag = 1;
+
+    if (finish_flag)
+      break;
   }
+
+  printf("Current memory layout: \n");
+
+  mem->print_all();
 
   // Final model cleanup
   top->final();

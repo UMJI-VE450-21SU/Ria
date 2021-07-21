@@ -1,6 +1,5 @@
 # Master Makefile dependencies
-TARGET := c_test
-INCLUDE_LIB := true
-GCC_OPTS += -O2 -flto
+TARGET := c_hello
+INCLUDE_LIB := false
 
 include ../Makefile.gcc.in

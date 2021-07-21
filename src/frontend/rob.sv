@@ -8,123 +8,94 @@
 module rob (
   input           clock,
   input           reset,
-  input           input_valid,
 
-  input   micro_op_t  [`COMMIT_WIDTH-1:0]   uop_complete,
-  input   micro_op_t  [`RENAME_WIDTH-1:0]   uop_in,
+  input   micro_op_t  [`COMMIT_WIDTH-1:0] uop_complete,
+  input   micro_op_t  [`RENAME_WIDTH-1:0] uop_in,
 
-  output  micro_op_t  [`RENAME_WIDTH-1:0]   uop_out,
+  output  micro_op_t  [`RENAME_WIDTH-1:0] uop_out,
 
-  output  reg                               recover,
-  output  micro_op_t                        uop_recover,
-  output  micro_op_t  [`COMMIT_WIDTH-1:0]   uop_retire,
-  output  reg         [`ARF_INT_SIZE-1:0]   arf_recover,
-  output  reg         [`PRF_INT_SIZE-1:0]   prf_recover,
-  output  reg                               prediction,
-  output  reg                               prediction_hit,
+  output  reg                             recover,
+  output  micro_op_t                      uop_recover,
+  output  micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire,
 
-  output  reg                               allocatable,
-  output  reg                               ready
+  output  reg                             allocatable
 );
 
-  micro_op_t    op_list                     [`ROB_SIZE-1:0];
-  micro_op_t    op_list_next                [`ROB_SIZE-1:0];
+  micro_op_t    op_list                   [`ROB_SIZE-1:0];
+  micro_op_t    op_list_next              [`ROB_SIZE-1:0];
 
-  rob_index_t                               rob_head;
-  reg           [`ROB_INDEX_SIZE:0]         rob_size;
+  rob_index_t                             rob_head;
+  reg           [`ROB_INDEX_SIZE:0]       rob_size;
 
-  rob_index_t                               rob_head_next;
-  logic         [`ROB_INDEX_SIZE:0]         rob_size_next;
-  logic         [`RENAME_WIDTH:0]           rob_size_increment;
-  logic                                     valid_tmp;
+  rob_index_t                             rob_head_next;
+  logic         [`ROB_INDEX_SIZE:0]       rob_size_next;
 
-  micro_op_t    uop_out_next                [`RENAME_WIDTH-1:0];
-  logic                                     recover_next;
-  micro_op_t    uop_retire_next             [`COMMIT_WIDTH-1:0];
-  micro_op_t                                uop_recover_next;
-  logic         [`ARF_INT_SIZE-1:0]         arf_recover_next;
-  logic         [`PRF_INT_SIZE-1:0]         prf_recover_next;
-  logic                                     allocatable_next;
-  logic                                     prediction_next;
-  logic                                     prediction_hit_next;
-
-  micro_op_t    uop_complete_locker         [`COMMIT_WIDTH-1:0];
-  micro_op_t    uop_in_locker               [`RENAME_WIDTH-1:0];
+  logic                                   uop_valid;
 
   always_comb begin
-    rob_head_next       = rob_head;
-    rob_size_next       = rob_size;
-    recover_next        = 0;
-    uop_recover_next    = 0;
-    arf_recover_next    = 1;
-    prf_recover_next    = 1;
-    allocatable_next    = 1;
-    rob_size_increment  = 0;
-    prediction_next     = 0;
-    prediction_hit_next = 1;
+    rob_head_next = rob_head;
+    rob_size_next = rob_size;
+    uop_valid     = 0;
+    recover       = 0;
+    uop_recover   = 0;
+    allocatable   = 1;
     for (int i = 0; i < `ROB_SIZE; ++i) begin
       op_list_next[i] = op_list[i];
     end
     for (int i = 0; i < `RENAME_WIDTH; ++i) begin
-      uop_out_next[i] = uop_in[i];
+      uop_out[i] = 0;
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
-      uop_retire_next[i] = 0;
+      uop_retire[i] = 0;
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
-      // Update completed uop
-      valid_tmp = uop_complete_locker[i].valid;
-      if (uop_complete_locker[i].valid) begin
-        op_list_next[uop_complete_locker[i].rob_index]            = uop_complete_locker[i];
-        op_list_next[uop_complete_locker[i].rob_index].complete   = 1;
-        // A branch-type uop
-        if (uop_complete_locker[i].br_type != BR_X) begin
-          prediction_next = 1;
-          // A Mis-Prediction uop
-          if (uop_complete_locker[i].pred_taken != uop_complete_locker[i].br_taken) begin
-            recover_next        = 1;
-            uop_recover_next    = uop_complete_locker[i];
-            prediction_hit_next = 0;
-          end
-        end
+      uop_valid = uop_complete[i].valid;
+      if (uop_valid) begin
+        // Update completed uop
+        op_list_next[uop_complete[i].rob_index]          = uop_complete[i];
+        op_list_next[uop_complete[i].rob_index].complete = 1;
       end
     end
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
-      // A retirable uop
+      if (i >= rob_size_next) begin
+        // Not enough uop to retire
+        break;
+      end
       if (op_list_next[rob_head + i].complete) begin
+        // A retirable uop
         rob_head_next += 1;
         rob_size_next -= 1;
+        uop_retire[i] = op_list_next[rob_head + i];
+        if (uop_retire[i].br_type != BR_X) begin
+          // Branch-type uop
+          // Jump-type uop
+          if (uop_retire[i].pred_taken != uop_retire[i].br_taken) begin
+            // A Mis-Prediction uop
+            recover       = 1;
+            uop_recover   = uop_retire[i];
+            rob_head_next = 0;
+            rob_size_next = 0;
+            break;
+          end
+        end
       end else begin
         break;
       end
     end
-    if (recover_next) begin
-      for (int i = 0; i < rob_size_next; ++i) begin
-        arf_recover_next[op_list_next[rob_head_next + i].rd_arf_int_index]      = 1;
-        prf_recover_next[op_list_next[rob_head_next + i].rd_prf_int_index]      = 1;
-        prf_recover_next[op_list_next[rob_head_next + i].rd_prf_int_index_prev] = 1;
-      end
-    end else begin
+    if (~recover) begin
       for (int i = 0; i < `RENAME_WIDTH; ++i) begin
-        if (uop_in_locker[i].valid) begin
-          rob_size_increment += 1;
-        end
-      end
-      if (rob_size_increment <= `ROB_SIZE - rob_size_next) begin
-        allocatable_next = 1;
-      end else begin
-        allocatable_next = 0;
-      end
-      if (allocatable_next) begin
-        for (int i = 0; i < `RENAME_WIDTH; ++i) begin
-          if (uop_in_locker[i].valid) begin
-            op_list_next[rob_head_next + rob_size_next] = uop_in_locker[i];
+        if (rob_size_next < `ROB_SIZE) begin
+          // Have enough rob space to store uop
+          if (uop_in[i].valid) begin
+            // A valid uop to store
+            op_list_next[rob_head_next + rob_size_next]           = uop_in[i];
+            op_list_next[rob_head_next + rob_size_next].rob_index = rob_head_next + rob_size_next;
+
+            uop_out[i]    = op_list_next[rob_head_next + rob_size_next];
             rob_size_next += 1;
           end
-        end
-      end else begin
-        for (int i = 0; i < `RENAME_WIDTH; ++i) begin
-          uop_out_next[i] = 0;
+        end else begin
+          allocatable = 0;
         end
       end
     end
@@ -134,38 +105,27 @@ module rob (
     if (reset) begin
       rob_head <= 0;
       rob_size <= 0;
+      for (int i = 0; i < `ROB_SIZE; ++i) begin
+        op_list[i] <= 0;
+      end
     end else begin
       rob_head <= rob_head_next;
       rob_size <= rob_size_next;
-    end
-    if (input_valid & ready) begin
-      for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
-        uop_complete_locker[i] <= uop_complete[i];
-      end
-      for (int i = 0; i < `RENAME_WIDTH; ++i) begin
-        uop_in_locker[i] <= uop_in[i];
-      end
-      ready <= 0;
-    end else begin
-      ready <= 1;
-    end
-    for (int i = 0; i < `RENAME_WIDTH; ++i) begin
-      uop_out[i] <= uop_out_next[i];
-    end
-    recover         <= recover_next;
-    uop_recover     <= uop_recover_next;
-    arf_recover     <= arf_recover_next;
-    prf_recover     <= prf_recover_next;
-    allocatable     <= allocatable_next;
-    prediction      <= prediction_next;
-    prediction_hit  <= prediction_hit_next;
-    if (ready) begin
       for (int i = 0; i < `ROB_SIZE; ++i) begin
         op_list[i] <= op_list_next[i];
       end
-      for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
-        uop_retire[i] <= uop_retire_next[i];
+    end
+  end
+
+  wire rob_print = 0;
+
+  always_ff @(posedge clock) begin
+    if (rob_print) begin
+      for (integer i = 0; i < `ROB_SIZE; i++) begin
+        $display("[ROB] slot %d", i);
+        print_uop(op_list[i]);
       end
+      $display("[ROB] head=%d, size=%d, recover=%d", rob_head, rob_size, recover);
     end
   end
 

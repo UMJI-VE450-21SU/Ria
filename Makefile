@@ -9,10 +9,7 @@ endif
 
 SOFTWARE_SUBDIR := software
 
-SOFTWARE_TARGET := c_example \
-				   c_test \
-				   hello \
-				   sobel
+SOFTWARE_TARGET := c_example c_hello
 
 SOFTWARE_TARGET_PATH := $(addprefix $(SOFTWARE_SUBDIR)/, $(SOFTWARE_TARGET))
 
@@ -44,6 +41,8 @@ VERILATOR_FLAGS += -Wno-PINMISSING
 VERILATOR_FLAGS += --trace
 # Check SystemVerilog assertions
 VERILATOR_FLAGS += --assert
+
+VERILATOR_FLAGS += --unroll-count 128
 
 VERILOG_ROOT := src
 # Input files for Verilator
