@@ -47,20 +47,52 @@ void StoreBuffer::FlushStoreBuffer() {
   }
 }
 
-void StoreBuffer::LoadData(unsigned int addr, char* dest) {
+void StoreBuffer::LoadData(unsigned int load_addr, char* dest) {
+  unsigned int addr, size;
+  int offset;
   unsigned long long data;
-  unsigned char size;
-  bool in_buffer = false;
-  for (auto i = buffer.rbegin(); i != buffer.rend(); i++) {
+  char* data_ptr = reinterpret_cast<char *>(&data);
+  dmem->read_transction(load_addr, dest);
+  for (auto i = buffer.begin(); i != buffer.end(); i++) {
+    addr = (*i)->addr;
+    data = (*i)->data;
+    size = data_size_map[(*i)->size];
+    offset = addr - load_addr;
+    if (size == 1) { // byte
+      if (offset >= 0 && offset <= 7) {
+        memcpy(dest + offset, data_ptr, size);
+      }
+    } else if (size == 2) { // half word
+      if (offset >= 0 && offset <= 6) {
+        memcpy(dest + offset, data_ptr, size);
+      } else if (offset == 7) {
+        memcpy(dest + offset, data_ptr, 8 - offset);
+      } else if (offset == -1) {
+        memcpy(dest, data_ptr - offset, size + offset);
+      }
+    } else if (size == 4) { // word
+      if (offset >= 0 && offset <= 4) {
+        memcpy(dest + offset, data_ptr, size);
+      } else if (offset > 4 && offset <= 7) {
+        memcpy(dest + offset, data_ptr, 8 - offset);
+      } else if (offset >= -3 && offset < 0) {
+        memcpy(dest, data_ptr - offset, size + offset);
+      }
+    } else if (size == 8) { // double word
+      if (offset == 0) {
+        memcpy(dest + offset, data_ptr, size);
+      } else if (offset > 0 && offset <= 7) {
+        memcpy(dest + offset, data_ptr, 8 - offset);
+      } else if (offset >= -7 && offset < 0) {
+        memcpy(dest, data_ptr - offset, size + offset);
+      }
+    }
     if ((*i)->addr == addr) {
       data = (*i)->data;
       size = (*i)->size;
-      in_buffer = true;
       break;
     }
   }
-  dmem->read_transction(addr, dest);
-  if (in_buffer) {
-    memcpy(dest, &data, data_size_map[size]);
-  }
+  memcpy(dest, &data, data_size_map[size]);
+
 }

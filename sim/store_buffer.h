@@ -31,7 +31,7 @@ public:
 
   void FlushStoreBuffer();
 
-  void LoadData(unsigned int addr, char* dest);
+  void LoadData(unsigned int load_addr, char* dest);
 
 private:
   std::unique_ptr<DMem> dmem;
