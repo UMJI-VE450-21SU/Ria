@@ -105,7 +105,7 @@ module scoreboard_int (
     end
   end
 
-  wire sb_int_print = 1;
+  wire sb_int_print = 0;
 
   always_ff @(posedge clock) begin
     if (sb_int_print) begin

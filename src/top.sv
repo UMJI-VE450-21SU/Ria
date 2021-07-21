@@ -20,21 +20,27 @@ module top (
   output logic [63:0]  core2dcache_data,
   output logic         core2dcache_data_we,
   output mem_size_t    core2dcache_data_size,
-  output logic [31:0]  core2dcache_addr
+  output logic [31:0]  core2dcache_addr,
+
+  // ======= store buffer related ============
+  output logic [`COMMIT_WIDTH-1:0] store_retire,
+  output logic                     recover
 );
 
   core core (
-    .clock                  (clock),
-    .reset                  (reset),
-    .icache2core_data       (icache2core_data),
-    .icache2core_data_valid (icache2core_data_valid),
-    .core2icache_addr       (core2icache_addr),
-    .dcache2core_data       (dcache2core_data),
-    .dcache2core_data_valid (dcache2core_data_valid),
-    .core2dcache_data       (core2dcache_data),
-    .core2dcache_data_we    (core2dcache_data_we),
-    .core2dcache_data_size  (core2dcache_data_size),
-    .core2dcache_addr       (core2dcache_addr)
+    .clock                  (clock                  ),
+    .reset                  (reset                  ),
+    .icache2core_data       (icache2core_data       ),
+    .icache2core_data_valid (icache2core_data_valid ),
+    .core2icache_addr       (core2icache_addr       ),
+    .dcache2core_data       (dcache2core_data       ),
+    .dcache2core_data_valid (dcache2core_data_valid ),
+    .core2dcache_data       (core2dcache_data       ),
+    .core2dcache_data_we    (core2dcache_data_we    ),
+    .core2dcache_data_size  (core2dcache_data_size  ),
+    .core2dcache_addr       (core2dcache_addr       ),
+    .store_retire           (store_retire           ),
+    .recover                (recover                )
   );
 
   initial begin

@@ -48,7 +48,7 @@ VERILOG_ROOT := src
 # Input files for Verilator
 VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
 
-SIM_SRC := $(wildcard sim/sim_*.cpp)
+SIM_SRC := sim/sim_memory.cpp sim/store_buffer.cpp sim/sim_main.cpp
 
 VERILATOR_OPTIONS := input.vc
 
@@ -56,10 +56,10 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
-SIMULATOR_PROG = software/c_hello/c_hello.bin
+SIMULATOR_PROG = software/c_example/c_example.bin
 #SIMULATOR_PROG = myfile
 # the dmem init
-SIMULATOR_DATA_INIT = software/c_hello/c_hello.bin
+SIMULATOR_DATA_INIT = software/c_example/c_example.bin
 
 default: run
 

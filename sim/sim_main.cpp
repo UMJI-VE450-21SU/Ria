@@ -9,6 +9,7 @@
 #include "Vtop.h"
 
 #include "sim_memory.h"
+#include "store_buffer.h"
 
 // Legacy function required only so linking works on Cygwin and MSVC++
 double sc_time_stamp() { return 0; }
@@ -52,11 +53,11 @@ int main(int argc, char** argv, char** env) {
 
   auto dmem = std::make_unique<DMem>(mem.get());
 
-  unsigned char core2dcache_data_size = 0;
-
   unsigned char finish_flag = 0;
 
   char char_print = 0;
+
+  StoreBuffer store_buffer(std::move(dmem));
 
   // Simulate until $finish
   while (!contextp->gotFinish()) {
@@ -65,23 +66,22 @@ int main(int argc, char** argv, char** env) {
 
     top->reset = contextp->time() < 4 ? 1 : 0;
 
-    if(contextp->time() >= 4) {
+    if (contextp->time() >= 4) {
       imem->read_transction(top->core2icache_addr, reinterpret_cast<char *>(top->icache2core_data));
       top->icache2core_data_valid = 1;
-
-      if(top->core2dcache_data_we) {
-        core2dcache_data_size = data_size_map[top->core2dcache_data_size];
-        if (top->core2dcache_addr == 0xFFFFFFFC) {
-          // When we write a non-zero value to [0xFFFFFFFC], halt the simulation
-          finish_flag = top->core2dcache_data ? 1 : 0;
-        } else if (top->core2dcache_addr == 0xFFFFFFF8 && top->clock == 1) {
-          // When we write a character to [0xFFFFFFF8], print it to stderr (only 1 character)
-          fprintf(stderr, "%c", *(reinterpret_cast<char *>(&(top->core2dcache_data))));
-        } else {
-          dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), core2dcache_data_size);
-        }
-      } else {
-        dmem->read_transction(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
+      if (top->clock == 1) {
+        // When store instructions retire, write data to memory
+        if (store_buffer.CommitStoreRequest(__builtin_popcount(top->store_retire)) == -1)
+          finish_flag = 1;
+        // Branch mis-prediction -> flush store buffer
+        if (top->recover)
+          store_buffer.FlushStoreBuffer();
+        // Execute store instructions -> add store requests to store buffer
+        if (top->core2dcache_data_we)
+          store_buffer.AddStoreRequest(new store_request_t(top->core2dcache_addr, top->core2dcache_data, top->core2dcache_data_size));
+        // Execute load instructions -> first check store buffer then check memory
+        else
+          store_buffer.LoadData(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
       }
       top->dcache2core_data_valid = 1;
     }
