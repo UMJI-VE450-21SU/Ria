@@ -109,7 +109,7 @@ int main(int argc, char** argv, char** env) {
     }
     printf("\n");
 
-    if (contextp->time() > 500)
+    if (contextp->time() > 1000)
       finish_flag = 1;
 
     if (finish_flag)

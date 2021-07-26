@@ -26,6 +26,7 @@ module issue_slot_mem (
 );
 
   wire rs1_ready, rs2_ready;
+  reg  is_new = 0;
 
   always_comb begin
     if (load & uop_in.valid) begin
@@ -38,18 +39,22 @@ module issue_slot_mem (
   end
 
   always_ff @ (posedge clock) begin
-    if (reset | clear)
+    if (reset | clear) begin
       uop <= 0;
-    else if (load & uop_in.valid)
+      is_new <= 0;
+    end else if (load & uop_in.valid) begin
       uop <= uop_in;
-    else
+      is_new <= 1;
+    end else begin
       uop <= uop_new;
+      is_new <= 0;
+    end
   end
 
   assign free = ~uop.valid;
   assign rs1_ready = ~rs1_busy;
   assign rs2_ready = ~rs2_busy;
-  assign ready = rs1_ready & rs2_ready & uop.valid;
+  assign ready = rs1_ready & rs2_ready & uop.valid & ~is_new;
 
 endmodule
 
@@ -67,7 +72,9 @@ module issue_queue_mem_output_selector (
     readys[0] = ready;
     for (int i = `ISSUE_WIDTH_MEM; i < `IQ_MEM_SIZE; i++) begin
       if (is_store[i]) begin
-        readys[0][i] = 0;
+        for (int j = i; j < `IQ_MEM_SIZE; j++) begin
+          readys[0][j] = 0;
+        end
       end
     end
   end
@@ -134,7 +141,7 @@ module issue_queue_mem (
   logic [$clog2(`IQ_MEM_SIZE):0]  uop_in_count, uop_out_count;
   logic [$clog2(`IQ_MEM_SIZE):0]  free_count, tail;
   reg   [$clog2(`IQ_MEM_SIZE):0]  free_count_reg, tail_reg;
-  logic [$clog2(`IQ_MEM_SIZE):0]  compress_offset;
+  logic [`IQ_MEM_SIZE-1:0]        compress_offset;  // 1 - compress, 0 - not compress
 
   logic       [`IQ_MEM_SIZE-1:0]    free, load;
   logic       [`IQ_MEM_SIZE-1:0]    ready, is_store, clear;
@@ -146,10 +153,9 @@ module issue_queue_mem (
   // If #free slots < dispatch width, set the issue queue as full
   assign free_count = free_count_reg - uop_in_count + uop_out_count;
   assign iq_mem_full = free_count < `DISPATCH_WIDTH;
-  assign compress_offset = uop_out_count;
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear_en) begin
       free_count_reg <= `IQ_MEM_SIZE;
       tail_reg <= 0;
     end else begin
@@ -166,7 +172,7 @@ module issue_queue_mem (
         .clear      (clear_en),
         .load       (load[k] & load_en),
         .uop_in     (uop_to_slot[k]),
-        .uop_new    (uop_to_issue[k + compress_offset]),
+        .uop_new    (uop_to_issue[k + compress_offset[k]]),
         .uop        (uop_to_issue[k]),
         .rs1_index  (rs1_index[k]),
         .rs2_index  (rs2_index[k]),
@@ -182,28 +188,28 @@ module issue_queue_mem (
 
   always_ff @(posedge clock) begin
     if (iq_mem_print) begin
+      $display("[IQ_MEM] clear=%b, ready=%b, load=%b, compress_offset=%b", clear, ready, load, compress_offset);
+      $display("[IQ_MEM] tail_reg=%d, free_count_reg=%d, #uop_in=%d, #uop_out=%d", tail_reg, free_count_reg, uop_in_count, uop_out_count);
       for (integer i = 0; i < `IQ_MEM_SIZE; i++) begin
-        $display("[IQ_MEM] slot %d (ready=%b)", i, ready[i]);
+        $display("[IQ_MEM] slot %d (ready=%b, is_store=%b)", i, ready[i], is_store[i]);
         print_uop(uop_to_issue[i]);
       end
-      $display("[IQ_MEM] clear=%b, ready=%b", clear, ready);
-      $display("[IQ_MEM] free_count_reg=%d, compress_offset=%d", free_count_reg, compress_offset);
     end
   end
 
-  // Allocate input uops from tail - compress_offset
+  // Allocate input uops from tail - uop_out_count
   always_comb begin
     uop_to_slot = 0;
     load = 0;
     uop_in_count = 0;
     for (int i = 0; i < `DISPATCH_WIDTH; i++) begin
-      uop_to_slot[i + tail_reg - compress_offset] = uop_in[i];
-      load[i + tail_reg - compress_offset] = 1;
+      uop_to_slot[i + tail_reg - uop_out_count] = uop_in[i];
+      load[i + tail_reg - uop_out_count] = 1;
       if (uop_in[i].valid) begin
         uop_in_count = uop_in_count + 1;
       end
     end
-    tail = tail_reg + uop_in_count - compress_offset;
+    tail = tail_reg + uop_in_count - uop_out_count;
   end
   
   // Output selector
@@ -213,6 +219,15 @@ module issue_queue_mem (
     .sel        (output_sel),
     .sel_valid  (output_sel_valid)
   );
+
+  always_comb begin
+    compress_offset = 0;
+    for (int i = 0; i < `IQ_MEM_SIZE; i++) begin
+      if (output_sel_valid[0]) begin
+        compress_offset[i] = (i < output_sel[0]) ? 0 : 1;
+      end
+    end
+  end
 
   always_comb begin
     for (int i = 0; i < `IQ_MEM_SIZE; i++) begin

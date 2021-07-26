@@ -192,7 +192,7 @@ module issue_queue_int (
   assign iq_int_full = free_count < `DISPATCH_WIDTH;
 
   always_ff @(posedge clock) begin
-    if (reset) begin
+    if (reset | clear_en) begin
       free_count_reg <= `IQ_INT_SIZE;
     end else begin
       free_count_reg <= free_count;
