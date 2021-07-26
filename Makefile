@@ -26,7 +26,7 @@ endif
 VERILATOR_FLAGS += --top-module top
 
 # Generate C++ in executable form
-VERILATOR_FLAGS += -cc --exe
+VERILATOR_FLAGS += -cc -exe
 # suppress all warnings
 VERILATOR_FLAGS += -Wno-UNOPTFLAT
 VERILATOR_FLAGS += -Wno-WIDTH
@@ -48,8 +48,14 @@ VERILOG_ROOT := src
 # Input files for Verilator
 VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
 
-SIM_SRC := $(wildcard sim/sim_*.cpp)
+# [use this to change testbench]
+# a spike-like environment is sim_main2, not tested yet, the entry point of the CPU should be default to 0x80000000
+SIM_TARGET = sim_main
+SIM_TARGET_SRC = $(SIM_TARGET).cc
 
+include sim/fesvr450.mk.in
+
+SIM_SRC := $(addprefix sim/,  $(fesvr450_srcs) $(SIM_TARGET_SRC))
 VERILATOR_OPTIONS := input.vc
 
 # Input files for Verilator
@@ -63,7 +69,7 @@ SIMULATOR_PROG = prog/bin/c_example.bin
 
 default: run
 
-verilate: build-soft
+verilate:
 	@echo
 	@echo "-- VERILATE ----------------"
 	@echo "Inputs: "
