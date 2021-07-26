@@ -2,6 +2,21 @@
 #          GNU Makefile
 # Author:  Yichao Yuan, Li Shi
 # Date:    2021/07/02
+#
+##### README:
+# The simulation testbench can be selected by option
+# SIM_TARGET
+# e.g. SIM_TARGET=sim_main2 activate the spike-like simulatior
+# SIMULATOR_PROG controls the program to run, form sim_main2, 
+# the program has to be elf. The default is spike-software/
+# sobel.elf
+#
+# To start a spike-like simulation for verilated model, run 
+# make SIM_TARGET=sim_main2 SIMULATOR_PROG=spike-software/sobel.elf
+#
+# The reset PC should be set to 0x1000, see my note on 
+# src/frontend/inst_fetch.sv
+#####
 
 ifneq ($(words $(CURDIR)),1)
  $(error Unsupported: GNU Make cannot build in directories containing spaces, build elsewhere: '$(CURDIR)')
@@ -62,7 +77,9 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
-SIMULATOR_PROG = prog/bin/c_example.bin
+#
+# SIMULATOR_PROG = prog/bin/c_example.bin
+SIMULATOR_PROG = spike-software/sobel.elf
 #SIMULATOR_PROG = myfile
 # the dmem init
 #SIMULATOR_DATA_INIT = software/c_example/c_example.bin
@@ -90,7 +107,7 @@ run: build
 	@echo "To see waveforms, open vlt_dump.vcd in a waveform viewer"
 	@echo
 
-view-wave: run
+view-wave: run make-spike
 	gtkwave obj_dir/vlt_dump.vcd
 
 

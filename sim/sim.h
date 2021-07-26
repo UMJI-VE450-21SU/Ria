@@ -18,6 +18,8 @@ class sim_t : public htif_t {
 
   virtual size_t chunk_align();
   virtual size_t chunk_max_size();
+
+  void setup_rom();
 };
 
 #endif /* SIM_H */

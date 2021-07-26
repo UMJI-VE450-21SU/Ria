@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 
   std::cout << std::endl;
   // Prevent unused variable warnings
-  if (false && argc && argv && env) {}
+  if (false && argc && argv) {}
 
   Verilated::mkdir("logs");
 
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
   unsigned char core2dcache_data_size = 0;
 
   // In the final version, the terminate condition may only depends on the sim object
-  while (!sim.is_signal_exit() && sim.exit_code() == 0 && !contextp->getFinish()) {
+  while (!sim.is_signal_exit() && sim.exit_code() == 0 && !contextp->gotFinish()) {
 //    std::cout << "at time " << i << std::endl;
 
     contextp->timeInc(1);  // 1 timeprecision period passes...
