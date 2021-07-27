@@ -13,7 +13,6 @@
 `define DECODE_WIDTH        `FRONTEND_WIDTH
 `define RENAME_WIDTH        `FRONTEND_WIDTH
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH
-`define COMMIT_WIDTH        6
 
 `define INST_PACK           32 * `FETCH_WIDTH
 
@@ -36,6 +35,9 @@
 `define ISSUE_WIDTH_INT     3
 `define ISSUE_WIDTH_MEM     1
 `define ISSUE_WIDTH_FP      2
+`define ISSUE_WIDTH_TATAL   (`ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM + `ISSUE_WIDTH_FP)
+
+`define COMMIT_WIDTH        `ISSUE_WIDTH_TATAL
 
 `define IQ_INT_SIZE         32
 `define IQ_MEM_SIZE         16
@@ -47,24 +49,20 @@
 `define ARF_FP_SIZE         32
 `define ARF_FP_INDEX_SIZE   5
 
-`define PRF_INT_SIZE        64
-`define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
-`define PRF_INT_WAYS        (`ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM)
+`define ARF_SIZE            (`ARF_INT_SIZE + `ARF_FP_SIZE)
+`define ARF_INDEX_SIZE      6   // log2(ARF_SIZE)
 
-`define PRF_FP_SIZE         64
-`define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
-`define PRF_FP_WAYS         (`ISSUE_WIDTH_FP + `ISSUE_WIDTH_MEM)
+`define PRF_SIZE            128
+`define PRF_INDEX_SIZE      7   // log2(PRF_SIZE)
+`define PRF_WAYS            `ISSUE_WIDTH_TATAL
 
 `define IMUL_LATENCY        5
 `define IDIV_LATENCY        32
 
-typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
-typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
+typedef logic [`ARF_INDEX_SIZE-1:0] arf_index_t;
+typedef logic [`PRF_INDEX_SIZE-1:0] prf_index_t;
 
-typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
-typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
-
-typedef logic [`ROB_INDEX_SIZE-1:0]     rob_index_t;
+typedef logic [`ROB_INDEX_SIZE-1:0] rob_index_t;
 
 // RISCV ISA SPEC
 typedef union packed {

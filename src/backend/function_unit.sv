@@ -214,3 +214,65 @@ module idiv (
   assign busy = ~ready;  // Blocking divider
 
 endmodule
+
+
+module fdiv (
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [63:0]       in1,
+  input  [63:0]       in2,
+  input  fmt_type_t   fmt,
+  input  rm_type_t    rm,
+  output logic [63:0] out,
+  output              busy
+);
+
+  wire ready, divider_error;
+
+  // todo: C mode fdivider
+
+  assign busy = ~ready;  // Blocking divider
+
+endmodule
+
+module fmul (
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [63:0]       in1,
+  input  [63:0]       in2,
+  input  fmt_type_t   fmt,
+  input  rm_type_t    rm,
+  output logic [63:0] out,
+  output              busy
+);
+
+  wire ready, divider_error;
+
+  // todo: C mode fmul
+
+  assign busy = ~ready;  // Blocking divider
+
+endmodule
+
+module fpu (
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [63:0]       in1,
+  input  [63:0]       in2,
+  input  [63:0]       in3,
+  input  fmt_type_t   fmt,
+  input  rm_type_t    rm,
+  output logic [63:0] out,
+  output              busy
+);
+
+  wire ready, divider_error;
+
+  // todo: C mode fpu
+
+  assign busy = ~ready;  // Blocking divider
+
+endmodule

@@ -208,3 +208,108 @@ module pipe_3 (
   assign busy = busy_reg;
 
 endmodule
+
+
+// Pipe 4: FPU
+module pipe_0_1 (
+  input             clock,
+  input             clear,
+  input             reset,
+  input  micro_op_t uop,
+  input  [63:0]     in1,
+  input  [63:0]     in2,
+  input  [63:0]     in3,
+  output micro_op_t uop_out,
+  output [63:0]     out,
+  output            busy
+);
+
+  logic [31:0]  fpu_out;
+  micro_op_t    uop_next;
+  fmt_type_t    fmt;
+  rm_type_t     rm;
+
+  fpu fpu_inst (
+    .clock    (clock),
+    .reset    (reset),
+    .uop      (uop),
+    .in1      (in1),
+    .in2      (in2),
+    .in2      (in3),
+    .fmt      (fmt),
+    .rm       (rm),
+    .out      (fpu_out)
+  );
+
+  always_ff @(posedge clock) begin
+    if (reset | clear) begin
+      uop_out <= 0;
+    end else begin
+      uop_out <= uop_next;
+    end
+  end
+
+  assign uop_next = uop;
+
+  assign busy = 1'b0;
+
+endmodule
+
+
+// Pipe 5: FMUL + FDIV
+module pipe_2 (
+  input             clock,
+  input             reset,
+  input             clear,
+  input  micro_op_t uop,
+  input  [63:0]     in1,
+  input  [63:0]     in2,
+  output micro_op_t uop_out,
+  output [63:0]     out,
+  output            busy
+);
+
+  micro_op_t   uop_reg;
+  logic [63:0] fmul_out, fdiv_out;
+  logic        fmul_busy, fdiv_busy, ready;
+  fmt_type_t    fmt;
+  rm_type_t     rm;
+
+  fmul fmul_inst (
+    .clock    (clock),
+    .reset    (reset),
+    .uop      (uop),
+    .in1      (in1),
+    .in2      (in2),
+    .fmt      (fmt),
+    .rm       (rm),
+    .out      (fmul_out),
+    .busy     (fmul_busy)
+  );
+
+  fdiv fdiv_inst (
+    .clock    (clock),
+    .reset    (reset),
+    .uop      (uop),
+    .in1      (in1),
+    .in2      (in2),
+    .fmt      (fmt),
+    .rm       (rm),
+    .out      (fdiv_out),
+    .busy     (fdiv_busy)
+  );
+
+  always_ff @(posedge clock) begin
+    if (reset | clear)
+      uop_reg <= 0;
+    else if (!busy && uop.valid)
+      uop_reg <= uop;
+  end
+
+  assign out = ({64{uop_out.fu_code == FU_FMUL}} & fmul_out) |
+               ({64{uop_out.fu_code == FU_FDIV}} & fdiv_out);
+
+  assign busy = fmul_busy | fdiv_busy;  // busy is synchronous signal
+  assign uop_out = busy ? 0 : uop_reg;  // uop_out is synchronous signal
+
+endmodule

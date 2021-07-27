@@ -11,44 +11,46 @@ module mapping_table (
   input         stall,
   input         recover,
 
-  input         [`RENAME_WIDTH-1:0]                           rd_valid,
+  input         [`RENAME_WIDTH-1:0]                       rd_valid,
 
-  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs1,
-  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs2,
-  input         [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rd,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INDEX_SIZE-1:0] rs1,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INDEX_SIZE-1:0] rs2,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INDEX_SIZE-1:0] rs3,
+  input         [`RENAME_WIDTH-1:0] [`ARF_INDEX_SIZE-1:0] rd,
 
-  input         [`COMMIT_WIDTH-1:0]                           pre_prf_valid,
-  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] pre_prf,
+  input         [`COMMIT_WIDTH-1:0]                       pre_prf_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] pre_prf,
 
-  input         [`COMMIT_WIDTH-1:0]                           retire_valid,
-  input         [`COMMIT_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] retire_prf,
-  input         [`COMMIT_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] retire_arf,
+  input         [`COMMIT_WIDTH-1:0]                       retire_valid,
+  input         [`COMMIT_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] retire_prf,
+  input         [`COMMIT_WIDTH-1:0] [`ARF_INDEX_SIZE-1:0] retire_arf,
 
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prs1,
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prs2,
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prd,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] prs1,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] prs2,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] prs3,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] prd,
 
-  output logic  [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prev_rd,
-  output logic  [`RENAME_WIDTH-1:0]                           prev_rd_valid,
+  output logic  [`RENAME_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] prev_rd,
+  output logic  [`RENAME_WIDTH-1:0]                       prev_rd_valid,
 
-  output logic                                                allocatable
+  output logic                                            allocatable
 );
 
   // I/O for Mapping Table
-  reg   [`PRF_INT_INDEX_SIZE-1:0]                     mp_tb       [`ARF_INT_SIZE-1:0];
-  logic [`PRF_INT_INDEX_SIZE-1:0]                     mp_tb_next  [`ARF_INT_SIZE-1:0];
+  reg   [`PRF_INDEX_SIZE-1:0] mp_tb       [`ARF_SIZE-1:0];
+  logic [`PRF_INDEX_SIZE-1:0] mp_tb_next  [`ARF_SIZE-1:0];
 
-  reg   [`PRF_INT_INDEX_SIZE-1:0]                     r_rat       [`ARF_INT_SIZE-1:0];
-  logic [`PRF_INT_INDEX_SIZE-1:0]                     r_rat_next  [`ARF_INT_SIZE-1:0];
+  reg   [`PRF_INDEX_SIZE-1:0] r_rat       [`ARF_SIZE-1:0];
+  logic [`PRF_INDEX_SIZE-1:0] r_rat_next  [`ARF_SIZE-1:0];
 
   // I/O for Free List
-  logic [`RENAME_WIDTH-1:0] [`PRF_INT_INDEX_SIZE-1:0] prf_out;
+  logic [`RENAME_WIDTH-1:0] [`PRF_INDEX_SIZE-1:0] prf_out;
 
   // ARF Valid
-  reg   [`ARF_INT_SIZE-1:0]                           arf_valid;
-  logic [`ARF_INT_SIZE-1:0]                           arf_valid_next;
-  reg   [`ARF_INT_SIZE-1:0]                           arf_recover;
-  logic [`ARF_INT_SIZE-1:0]                           arf_recover_next;
+  reg   [`ARF_SIZE-1:0] arf_valid;
+  logic [`ARF_SIZE-1:0] arf_valid_next;
+  reg   [`ARF_SIZE-1:0] arf_recover;
+  logic [`ARF_SIZE-1:0] arf_recover_next;
 
   free_list free_list (
     .clock          (clock          ),
@@ -70,7 +72,7 @@ module mapping_table (
     arf_recover_next  = arf_recover;
     prev_rd           = 0;
     prev_rd_valid     = 0;
-    for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+    for (int i = 0; i < `ARF_SIZE; i = i + 1 )  begin
       mp_tb_next[i] = mp_tb[i];
       r_rat_next[i] = r_rat[i];
     end
@@ -78,6 +80,7 @@ module mapping_table (
       prd[i]  = 0;
       prs1[i] = 0;
       prs2[i] = 0;
+      prs3[i] = 0;
     end
 
     for (int i = 0; i < `COMMIT_WIDTH; ++i) begin
@@ -93,6 +96,7 @@ module mapping_table (
         prd[i]  = 0;
         prs1[i] = (rs1[i] == 0) ? 0 : mp_tb_next[rs1[i]];
         prs2[i] = (rs2[i] == 0) ? 0 : mp_tb_next[rs2[i]];
+        prs3[i] = (rs3[i] == 0) ? 0 : mp_tb_next[rs3[i]];
         if (rd_valid[i]) begin
           // WAW: Return Previous PRF
           prev_rd[i] = mp_tb_next[rd[i]];
@@ -109,21 +113,21 @@ module mapping_table (
 
   always_ff @(posedge clock) begin
     if (reset) begin
-      for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+      for (int i = 0; i < `ARF_SIZE; i = i + 1 )  begin
         mp_tb[i] <= 0;
         r_rat[i] <= 0;
       end
       arf_valid   <= 1;
       arf_recover <= 1;
     end else if (recover) begin
-      for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+      for (int i = 0; i < `ARF_SIZE; i = i + 1 )  begin
         mp_tb[i] <= r_rat_next[i];
         r_rat[i] <= r_rat_next[i];
       end
       arf_valid   <= arf_recover_next;
       arf_recover <= arf_recover_next;
     end else if (!stall) begin
-      for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
+      for (int i = 0; i < `ARF_SIZE; i = i + 1 )  begin
         mp_tb[i] <= mp_tb_next[i];
         r_rat[i] <= r_rat_next[i];
       end

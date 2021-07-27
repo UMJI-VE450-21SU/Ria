@@ -34,8 +34,7 @@ typedef enum logic [3:0] {
   FU_MEM  = 4'h5,
   FU_FPU  = 4'h6,
   FU_FMUL = 4'h7,
-  FU_FDIV = 4'h8,
-  FU_CSR  = 4'h9
+  FU_FDIV = 4'h8
 } fu_code_t;
 
 typedef enum logic [3:0] {
@@ -78,12 +77,6 @@ typedef enum logic [1:0] {
   IDIV_REMU   = 2'h3
 } idiv_type_t;
 
-typedef enum logic [1:0] {
-  FP_F  = 2'h0,
-  FP_D  = 2'h1,
-  FP_Q  = 2'h2
-} fp_type_t;
-
 typedef enum logic [4:0] {
   FPU_X     = 5'h0,
   FPU_ADD   = 5'h1,
@@ -109,6 +102,13 @@ typedef enum logic [4:0] {
   FPU_NMSUB = 5'h15,
   FPU_NMADD = 5'h16
 } fpu_type_t;
+
+typedef enum logic [1:0] {
+  FMT_F  = 2'h0,
+  FMT_D  = 2'h1,
+  FMT_H  = 2'h2,
+  FMT_Q  = 2'h3
+} fmt_type_t;
 
 typedef enum logic [2:0] {
   RM_RNE  = 3'h0,
@@ -157,8 +157,8 @@ typedef struct packed {
   imul_type_t     imul_type;
   idiv_type_t     idiv_type;
 
-  fp_type_t       fp_type;
   fpu_type_t      fpu_type;
+  fmt_type_t      fmt_type;
   rm_type_t       rm_type;
 
   mem_type_t      mem_type;
@@ -173,24 +173,21 @@ typedef struct packed {
   logic [31:0]    imm;
 
   rs_source_t     rs1_source;
-  arf_int_index_t rs1_arf_int_index;
-  prf_int_index_t rs1_prf_int_index;
-  logic           rs1_from_ctb;       // rs1 prf index from common tag bus
+  arf_index_t     rs1_arf_index;
+  prf_index_t     rs1_prf_index;
 
   rs_source_t     rs2_source;
-  arf_int_index_t rs2_arf_int_index;
-  prf_int_index_t rs2_prf_int_index;
-  logic           rs2_from_ctb;       // rs2 prf index from common tag bus
+  arf_index_t     rs2_arf_index;
+  prf_index_t     rs2_prf_index;
 
   rs_source_t     rs3_source;
-  arf_int_index_t rs3_arf_int_index;
-  prf_int_index_t rs3_prf_int_index;
-  logic           rs3_from_ctb;       // rs3 prf index from common tag bus
+  arf_index_t     rs3_arf_index;
+  prf_index_t     rs3_prf_index;
 
-  arf_int_index_t rd_arf_int_index;
-  prf_int_index_t rd_prf_int_index;
-  prf_int_index_t rd_prf_int_index_prev;
-  logic           rd_prf_int_index_prev_valid;
+  arf_index_t     rd_arf_index;
+  prf_index_t     rd_prf_index;
+  prf_index_t     rd_prf_index_prev;
+  logic           rd_prf_index_prev_valid;
   logic           rd_valid;
 
   logic           valid;
@@ -199,8 +196,8 @@ typedef struct packed {
 
 task print_uop(input micro_op_t uop);
   $display("        pc=%h, iq_code=%h, fu_code=%h, imm=%h, rs1_arf=%h, rs1_prf=%h, rs2_arf=%h, rs2_prf=%h, rd_arf=%h, rd_prf=%h, rd_valid=%b, valid=%b",
-           uop.pc, uop.iq_code, uop.fu_code, uop.imm, uop.rs1_arf_int_index, uop.rs1_prf_int_index,
-           uop.rs2_arf_int_index, uop.rs2_prf_int_index, uop. rd_arf_int_index, uop.rd_prf_int_index, 
+           uop.pc, uop.iq_code, uop.fu_code, uop.imm, uop.rs1_arf_index, uop.rs1_prf_index,
+           uop.rs2_arf_index, uop.rs2_prf_index, uop. rd_arf_index, uop.rd_prf_index, 
            uop.rd_valid, uop.valid);
 endtask
 
