@@ -107,7 +107,7 @@ typedef enum logic [1:0] {
   FMT_I  = 2'h0,
   FMT_F  = 2'h1,
   FMT_D  = 2'h2,
-  FMT_H  = 2'h3,
+  FMT_H  = 2'h3
 } fmt_type_t;
 
 typedef enum logic [2:0] {
