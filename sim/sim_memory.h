@@ -23,7 +23,7 @@ struct IdeaMemory {
   virtual unsigned read_bytes(char *dest, unsigned addr, unsigned size) = 0;
 
   // write <size> bytes from <src> to <addr>
-  virtual unsigned write_bytes(char *src, unsigned size, unsigned addr) = 0;
+  virtual unsigned write_bytes(const char *src, unsigned size, unsigned addr) = 0;
 
   // print <size> bytes from <addr> to <addr> + <size>
   virtual void print_bytes_up(unsigned addr, unsigned size) const = 0;
@@ -63,7 +63,7 @@ class DMem {
     DMem(IdeaMemory *mem): mem(mem) {}
 
     // write <size> bytes to memory
-    bool write_transcation(unsigned addr, char *src, unsigned char size);
+    bool write_transcation(unsigned addr, const char *src, unsigned char size);
 
     bool read_transction(unsigned addr, char *dest);
     
