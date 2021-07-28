@@ -615,7 +615,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -627,7 +626,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -635,11 +633,10 @@ module decode (
         uop.iq_code           = IQ_FP;
         uop.fu_code           = FU_FPU;
         uop.fmt_type          = FMT_F;
-        uop.fpu_type          = FPU_CVTW;
+        uop.fpu_type          = FPU_CVTWS;
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -647,11 +644,10 @@ module decode (
         uop.iq_code           = IQ_FP;
         uop.fu_code           = FU_FPU;
         uop.fmt_type          = FMT_F;
-        uop.fpu_type          = FPU_CVTWU;
+        uop.fpu_type          = FPU_CVTWUS;
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -663,7 +659,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -675,7 +670,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -687,7 +681,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -699,7 +692,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -711,7 +703,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -723,7 +714,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -735,7 +725,6 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
@@ -747,7 +736,317 @@ module decode (
         uop.rm_type           = `RV32_RM(inst);
         uop.rs1_source        = RS_FROM_RF;
         uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
-        uop.rs2_source        = RS_INVALID;
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FLD: begin
+        uop.iq_code           = IQ_MEM;
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_LD;
+        uop.mem_size          = MEM_DWORD;
+        uop.fmt_type          = FMT_D;
+        uop.imm               = `RV32_signext_I_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `INT_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_IMM;
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FSD: begin
+        uop.iq_code           = IQ_MEM;
+        uop.fu_code           = FU_MEM;
+        uop.mem_type          = MEM_ST;
+        uop.mem_size          = MEM_DWORD;
+        uop.fmt_type          = FMT_D;
+        uop.imm               = `RV32_signext_S_Imm(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `INT_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+      end
+      `RV32_FMADD_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_MADD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rs3_source        = RS_FROM_RF;
+        uop.rs3_arf_index     = `FP_ARF(`RV32_RS3(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FMSUB_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_MSUB;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rs3_source        = RS_FROM_RF;
+        uop.rs3_arf_index     = `FP_ARF(`RV32_RS3(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FNMSUB_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_NMSUB;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rs3_source        = RS_FROM_RF;
+        uop.rs3_arf_index     = `FP_ARF(`RV32_RS3(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FNMADD_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_NMADD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rs3_source        = RS_FROM_RF;
+        uop.rs3_arf_index     = `FP_ARF(`RV32_RS3(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FADD_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_ADD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FSUB_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_SUB;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FMUL_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FMUL;
+        uop.fmt_type          = FMT_D;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FDIV_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FDIV;
+        uop.fmt_type          = FMT_D;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rs2_source        = RS_FROM_RF;
+        uop.rs2_arf_index     = `FP_ARF(`RV32_RS2(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FSQRT_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_SQRT;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FSGNJ_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_SGNJ;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FSGNJN_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_SGNJN;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FSGNJX_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_SGNJX;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FMIN_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_MIN;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FMAX_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_MAX;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FCVT_S_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_F;
+        uop.fpu_type          = FPU_CVTS;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FCVT_D_S: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_CVTWUD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FEQ_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_EQ;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FLT_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_LT;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FLE_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_LE;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FCLASS_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_CLASS;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FCVT_W_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_CVTWD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RV32_FCVT_WU_D: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_CVTWUD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RC32_FCVT_D_W: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_CVTD;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
+        uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
+        uop.rd_valid          = 1;
+      end
+      `RC32_FCVT_D_WU: begin
+        uop.iq_code           = IQ_FP;
+        uop.fu_code           = FU_FPU;
+        uop.fmt_type          = FMT_D;
+        uop.fpu_type          = FPU_CVTDU;
+        uop.rm_type           = `RV32_RM(inst);
+        uop.rs1_source        = RS_FROM_RF;
+        uop.rs1_arf_index     = `FP_ARF(`RV32_RS1(inst));
         uop.rd_arf_index      = `FP_ARF(`RV32_RD(inst));
         uop.rd_valid          = 1;
       end
