@@ -28,11 +28,11 @@ module issue_slot_int (
 
   always_comb begin
     if (load & uop_in.valid) begin
-      rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_int_index : 0;
-      rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_int_index : 0;
+      rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_index : 0;
+      rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_index : 0;
     end else begin
-      rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_int_index : 0;
-      rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_int_index : 0;
+      rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_index : 0;
+      rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_index : 0;
     end
   end
 

@@ -207,11 +207,13 @@
 `define RC32_FCVT_D_W   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b1101001)
 `define RC32_FCVT_D_WU  `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00001, 7'b1101001)
 
-`define RV32_RS3(inst) {``inst``[31:27]}
-`define RV32_RS2(inst) {``inst``[24:20]}
-`define RV32_RS1(inst) {``inst``[19:15]}
-`define RV32_RM(inst)  {``inst``[14:12]}
-`define RV32_RD(inst)  {``inst``[11:7]}
+`define RV32_RS3(inst)  {``inst``[31:27]}
+`define RV32_RS2(inst)  {``inst``[24:20]}
+`define RV32_RS1(inst)  {``inst``[19:15]}
+`define RV32_RM(inst)   {``inst``[14:12]}
+`define RV32_RD(inst)   {``inst``[11:7]}
+`define INT_ARF(arf)    {1'b0, ``arf``}
+`define FP_ARF(arf)     {1'b1, ``arf``}
 
 // RV32 Immediate signed/unsigned (U is technically unsigned) extension macros
 `define RV32_shamt_Imm(inst)     {{27{1'b0}}, ``inst``[24:20]}

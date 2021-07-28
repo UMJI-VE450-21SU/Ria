@@ -276,7 +276,7 @@ module core (
   
   generate
     for (genvar i = 0; i < `DISPATCH_WIDTH; i++) begin
-      assign set_busy_index[i] = dp_uops_in[i].rd_prf_int_index;
+      assign set_busy_index[i] = dp_uops_in[i].rd_prf_index;
       assign set_busy_valid[i] = dp_uops_in[i].rd_valid;
     end
   endgenerate
@@ -578,17 +578,17 @@ module core (
   // Note: ex_***_uop_out and ex_***_rd_data_out are sequential logics
   generate
     for (genvar i = 0; i < `ISSUE_WIDTH_INT; i++) begin
-      assign rf_rd_index_in[i] = ex_int_uop_out[i].rd_prf_int_index;
+      assign rf_rd_index_in[i] = ex_int_uop_out[i].rd_prf_index;
       assign rf_rd_data_in [i] = ex_int_rd_data_out[i];
       assign rf_rd_en_in   [i] = ex_int_uop_out[i].rd_valid;
-      assign clear_busy_index  [i] = ex_int_uop_out[i].rd_prf_int_index;
+      assign clear_busy_index  [i] = ex_int_uop_out[i].rd_prf_index;
       assign clear_busy_valid  [i] = ex_int_uop_out[i].rd_valid;
     end
     for (genvar i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
-      assign rf_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
+      assign rf_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_index;
       assign rf_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
       assign rf_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
-      assign clear_busy_index  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
+      assign clear_busy_index  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_index;
       assign clear_busy_valid  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
     end
   endgenerate
