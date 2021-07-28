@@ -22,7 +22,7 @@ module scoreboard (
   input  [`IQ_MEM_SIZE-1:0][`PRF_INDEX_SIZE-1:0]    rs1_mem_index,
   input  [`IQ_MEM_SIZE-1:0][`PRF_INDEX_SIZE-1:0]    rs2_mem_index,
   output logic [`IQ_MEM_SIZE-1:0]                   rs1_mem_busy,
-  output logic [`IQ_MEM_SIZE-1:0]                   rs2_mem_busy
+  output logic [`IQ_MEM_SIZE-1:0]                   rs2_mem_busy,
   // Inquiry from fp issue queue slots
   input  [`IQ_FP_SIZE-1:0][`PRF_INDEX_SIZE-1:0]     rs1_fp_index,
   input  [`IQ_FP_SIZE-1:0][`PRF_INDEX_SIZE-1:0]     rs2_fp_index,

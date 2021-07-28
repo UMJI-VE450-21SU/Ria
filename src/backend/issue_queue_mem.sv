@@ -16,8 +16,8 @@ module issue_slot_mem (
   input  micro_op_t uop_new,
   output micro_op_t uop,    // current uop in this slot
 
-  output logic [`PRF_INT_INDEX_SIZE-1:0] rs1_index,
-  output logic [`PRF_INT_INDEX_SIZE-1:0] rs2_index,
+  output logic [`PRF_INDEX_SIZE-1:0] rs1_index,
+  output logic [`PRF_INDEX_SIZE-1:0] rs2_index,
   input             rs1_busy,
   input             rs2_busy,
 
@@ -30,11 +30,11 @@ module issue_slot_mem (
 
   always_comb begin
     if (load & uop_in.valid) begin
-      rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_int_index : 0;
-      rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_int_index : 0;
+      rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_index : 0;
+      rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_index : 0;
     end else begin
-      rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_int_index : 0;
-      rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_int_index : 0;
+      rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_index : 0;
+      rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_index : 0;
     end
   end
 
@@ -125,8 +125,8 @@ module issue_queue_mem (
   input  clear_en,
   input  load_en,  // global load signal
 
-  output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_index,
-  output [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_index,
+  output [`IQ_MEM_SIZE-1:0][`PRF_INDEX_SIZE-1:0] rs1_index,
+  output [`IQ_MEM_SIZE-1:0][`PRF_INDEX_SIZE-1:0] rs2_index,
   input  [`IQ_MEM_SIZE-1:0]                          rs1_busy,
   input  [`IQ_MEM_SIZE-1:0]                          rs2_busy,
 

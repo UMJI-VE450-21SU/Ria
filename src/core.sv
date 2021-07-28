@@ -486,7 +486,7 @@ module core (
         ex_mem_rs1_data_in[i] <= rf_rs1_data_out[i];
         ex_mem_rs2_data_in[i] <= rf_rs2_data_out[i];
       end
-      for (int i = `ISSUE_WIDTH_MEM + `ISSUE_WIDTH_INT; i < `ISSUE_WIDTH_TOTAL; i++) begin
+      for (int i = `ISSUE_WIDTH_MEM + `ISSUE_WIDTH_INT; i < `ISSUE_WIDTH_TATAL; i++) begin
         ex_fp_uop_in[i]      <= rf_uop_out[i];
         ex_fp_rs1_data_in[i] <= rf_rs1_data_out[i];
         ex_fp_rs2_data_in[i] <= rf_rs2_data_out[i];
@@ -564,6 +564,9 @@ module core (
     .core2dcache_addr       (core2dcache_addr      )
   );
 
+  micro_op_t [`ISSUE_WIDTH_FP-1:0]  ex_fp_uop_out;
+  logic [`ISSUE_WIDTH_FP-1:0][63:0] ex_fp_rd_data_out;
+
   /* EX ~ WB Pipeline Registers (inside EX pipes) */
   
   micro_op_t [`COMMIT_WIDTH-1:0] wb_uops;
@@ -575,16 +578,16 @@ module core (
   // Note: ex_***_uop_out and ex_***_rd_data_out are sequential logics
   generate
     for (genvar i = 0; i < `ISSUE_WIDTH_INT; i++) begin
-      assign rf_int_rd_index_in[i] = ex_int_uop_out[i].rd_prf_int_index;
-      assign rf_int_rd_data_in [i] = ex_int_rd_data_out[i];
-      assign rf_int_rd_en_in   [i] = ex_int_uop_out[i].rd_valid;
+      assign rf_rd_index_in[i] = ex_int_uop_out[i].rd_prf_int_index;
+      assign rf_rd_data_in [i] = ex_int_rd_data_out[i];
+      assign rf_rd_en_in   [i] = ex_int_uop_out[i].rd_valid;
       assign clear_busy_index  [i] = ex_int_uop_out[i].rd_prf_int_index;
       assign clear_busy_valid  [i] = ex_int_uop_out[i].rd_valid;
     end
     for (genvar i = 0; i < `ISSUE_WIDTH_MEM; i++) begin
-      assign rf_int_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
-      assign rf_int_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
-      assign rf_int_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
+      assign rf_rd_index_in[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
+      assign rf_rd_data_in [i + `ISSUE_WIDTH_INT] = ex_mem_rd_data_out[i];
+      assign rf_rd_en_in   [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
       assign clear_busy_index  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_prf_int_index;
       assign clear_busy_valid  [i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i].rd_valid;
     end

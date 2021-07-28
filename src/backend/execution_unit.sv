@@ -211,7 +211,7 @@ endmodule
 
 
 // Pipe 4: FPU
-module pipe_0_1 (
+module pipe_4 (
   input             clock,
   input             clear,
   input             reset,
@@ -257,7 +257,7 @@ endmodule
 
 
 // Pipe 5: FMUL + FDIV
-module pipe_2 (
+module pipe_5 (
   input             clock,
   input             reset,
   input             clear,
