@@ -53,7 +53,7 @@ VERILATOR_FLAGS += -Wno-PINMISSING
 # Warn abount lint issues; may not want this on less solid designs
 # VERILATOR_FLAGS += -Wall
 # Make waveforms
-VERILATOR_FLAGS += --trace
+VERILATOR_FLAGS += --trace-fst
 # Check SystemVerilog assertions
 VERILATOR_FLAGS += --assert
 
@@ -104,11 +104,11 @@ run: build
 	@mkdir -p logs
 	obj_dir/Vtop ${SIMULATOR_PROG} +trace
 	@echo "-- DONE --------------------"
-	@echo "To see waveforms, open vlt_dump.vcd in a waveform viewer"
+	@echo "To see waveforms, open vlt_dump.fst in a waveform viewer"
 	@echo
 
 view-wave: run make-spike
-	gtkwave obj_dir/vlt_dump.vcd
+	gtkwave obj_dir/vlt_dump.fst
 
 
 ######################################################################
@@ -153,4 +153,4 @@ WAVEFORM_VIEWER := gtkwave
 .PHONY: view-waveform
 
 view-waveform:
-	$(WAVEFORM_VIEWER) logs/vlt_dump.vcd	
+	$(WAVEFORM_VIEWER) logs/vlt_dump.fst

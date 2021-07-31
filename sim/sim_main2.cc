@@ -7,6 +7,8 @@
 #include <verilated.h>
 #include "Vtop.h"
 
+#define SIM_TIME 500
+
 // Legacy function required only so linking works on Cygwin and MSVC++
 double sc_time_stamp() { return 0; }
 
@@ -107,7 +109,7 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    if (i > 2000) {
+    if (i > SIM_TIME) {
       break;
     }
 
