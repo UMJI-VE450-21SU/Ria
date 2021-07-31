@@ -20,7 +20,11 @@ module core (
   output logic [63:0]  core2dcache_data,
   output logic         core2dcache_data_we,
   output mem_size_t    core2dcache_data_size,
-  output logic [31:0]  core2dcache_addr
+  output logic [31:0]  core2dcache_addr,
+
+  // ======= store buffer related ============
+  output logic [`COMMIT_WIDTH-1:0] store_retire,
+  output logic                     recover
 );
 
   logic                           stall = 0;
@@ -31,20 +35,28 @@ module core (
   logic                           cm_recover;
   micro_op_t                      cm_uop_recover;
   micro_op_t  [`COMMIT_WIDTH-1:0] cm_uop_retire;
+  logic       [`COMMIT_WIDTH-1:0] cm_store_retire;
 
-  logic                           recover;
   micro_op_t                      uop_recover;
   micro_op_t  [`COMMIT_WIDTH-1:0] uop_retire;
+
+  always_comb begin
+    for (int i = 0; i < `COMMIT_WIDTH; i++) begin
+        cm_store_retire[i] = (cm_uop_retire[i].mem_type == MEM_ST);
+    end
+  end
 
   always_ff @(posedge clock) begin
     if (reset) begin
       recover     <= 0;
       uop_recover <= 0;
       uop_retire  <= 0;
+      store_retire <= 0;
     end else begin
       recover     <= cm_recover;
       uop_recover <= cm_uop_recover;
       uop_retire  <= cm_uop_retire;
+      store_retire <= cm_store_retire;
     end
   end
 
