@@ -65,6 +65,8 @@ int main(int argc, char **argv) {
 
   unsigned char core2dcache_data_size = 0;
 
+  StoreBuffer store_buffer(std::move(dmem));
+
   // In the final version, the terminate condition may only depends on the sim object
   while (!sim.is_signal_exit() && sim.exit_code() == 0 && !contextp->gotFinish()) {
     std::cout << "==================================================== At time " << i << " ====================================================" << std::endl;
