@@ -8,7 +8,7 @@
 #include <verilated.h>
 #include "Vtop.h"
 
-#define SIM_TIME 500
+#define SIM_TIME 2500
 
 // Legacy function required only so linking works on Cygwin and MSVC++
 double sc_time_stamp() { return 0; }
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     if (contextp->time() >= 4) {
       imem->read_transction(top->core2icache_addr, reinterpret_cast<char *>(top->icache2core_data));
       top->icache2core_data_valid = 1;
-      if (top->clock == 1) {
+      if (top->clock == 0) {
         // When store instructions retire, write data to memory
         store_buffer.CommitStoreRequest(__builtin_popcount(top->store_retire));
         // Branch mis-prediction -> flush store buffer

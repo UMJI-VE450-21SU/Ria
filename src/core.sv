@@ -42,7 +42,7 @@ module core (
 
   always_comb begin
     for (int i = 0; i < `COMMIT_WIDTH; i++) begin
-        cm_store_retire[i] = (cm_uop_retire[i].mem_type == MEM_ST);
+      cm_store_retire[i] = (cm_uop_retire[i].mem_type == MEM_ST);
     end
   end
 
@@ -581,7 +581,7 @@ module core (
 
   /* Debug Messages        */
 
-  wire if_id_print = 1;
+  wire if_id_print = 0;
   wire id_rr_print = 1;
   wire rr_dp_print = 1;
   wire dp_is_print = 1;
@@ -589,6 +589,10 @@ module core (
   wire rf_ex_print = 1;
   wire ex_wb_print = 1;
   wire wb_cm_print = 1;
+
+  integer fi, fd;
+
+  initial fi = 0;
 
   always_ff @(posedge clock) begin
     $display("===== Pipeline Registers =====");
@@ -713,6 +717,19 @@ module core (
     $display("|full: %h |full: %h           |full: %h           |full: %h           |        |        |        |        |", 
              id_stall_reg, rr_stall_prev, dp_stall_prev, iq_full_reg);
     $display("|---ID---|---RR---(--------)|---DP---(--------)|---IS---(--------)|---RF---|---EX---|---WB---|---CM---|");
+
+    if (fi == 0)
+      fd = $fopen("retire.out", "w");
+    else
+      fd = $fopen("retire.out", "a");
+
+    for (int i = 0; i < `COMMIT_WIDTH; i++)
+      if (uop_retire[i].pc != 0)
+        $fwrite(fd, "[%d] %h\n", fi, uop_retire[i].pc);
+
+    fi = fi + 2;
+
+    $fclose(fd);
   end
 
 endmodule

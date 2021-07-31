@@ -18,8 +18,6 @@ int StoreBuffer::CommitStoreRequest(unsigned int num_commit) {
     return -1;
   }
 
-  printf("[Store Buffer] num_commit=%d\n", num_commit);
-
   for (unsigned int i = 0; i < num_commit; i++) {
     req = buffer.front();
     data_size = data_size_map[req->size];
@@ -54,9 +52,10 @@ void StoreBuffer::FlushStoreBuffer() {
 void StoreBuffer::LoadData(unsigned int load_addr, char* dest) {
   unsigned int addr, size;
   int offset;
-  unsigned long long data;
+  unsigned long long data = 0;
   char* data_ptr = reinterpret_cast<char *>(&data);
   dmem->read_transction(load_addr, dest);
+  printf("Loading data: addr=0x%x, dest_data=0x%llx\n", load_addr, *((unsigned long long *)dest));
   for (auto i = buffer.begin(); i != buffer.end(); i++) {
     addr = (*i)->addr;
     data = (*i)->data;
@@ -91,12 +90,5 @@ void StoreBuffer::LoadData(unsigned int load_addr, char* dest) {
         memcpy(dest, data_ptr - offset, size + offset);
       }
     }
-    if ((*i)->addr == addr) {
-      data = (*i)->data;
-      size = (*i)->size;
-      break;
-    }
   }
-  memcpy(dest, &data, data_size_map[size]);
-
 }
