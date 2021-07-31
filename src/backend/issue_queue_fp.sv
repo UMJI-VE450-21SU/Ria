@@ -80,40 +80,24 @@ module issue_queue_fp_selector (ready, sel, sel_valid);
     for (int i = 0; i < REQS; i++) begin
       sel_valid[i] = 1;
       casez (readys[i])
-        32'b???????????????????????????????1: sel[i] = 5'b00000;
-        32'b??????????????????????????????10: sel[i] = 5'b00001;
-        32'b?????????????????????????????100: sel[i] = 5'b00010;
-        32'b????????????????????????????1000: sel[i] = 5'b00011;
-        32'b???????????????????????????10000: sel[i] = 5'b00100;
-        32'b??????????????????????????100000: sel[i] = 5'b00101;
-        32'b?????????????????????????1000000: sel[i] = 5'b00110;
-        32'b????????????????????????10000000: sel[i] = 5'b00111;
-        32'b???????????????????????100000000: sel[i] = 5'b01000;
-        32'b??????????????????????1000000000: sel[i] = 5'b01001;
-        32'b?????????????????????10000000000: sel[i] = 5'b01010;
-        32'b????????????????????100000000000: sel[i] = 5'b01011;
-        32'b???????????????????1000000000000: sel[i] = 5'b01100;
-        32'b??????????????????10000000000000: sel[i] = 5'b01101;
-        32'b?????????????????100000000000000: sel[i] = 5'b01110;
-        32'b????????????????1000000000000000: sel[i] = 5'b01111;
-        32'b???????????????10000000000000000: sel[i] = 5'b10000;
-        32'b??????????????100000000000000000: sel[i] = 5'b10001;
-        32'b?????????????1000000000000000000: sel[i] = 5'b10010;
-        32'b????????????10000000000000000000: sel[i] = 5'b10011;
-        32'b???????????100000000000000000000: sel[i] = 5'b10100;
-        32'b??????????1000000000000000000000: sel[i] = 5'b10101;
-        32'b?????????10000000000000000000000: sel[i] = 5'b10110;
-        32'b????????100000000000000000000000: sel[i] = 5'b10111;
-        32'b???????1000000000000000000000000: sel[i] = 5'b11000;
-        32'b??????10000000000000000000000000: sel[i] = 5'b11001;
-        32'b?????100000000000000000000000000: sel[i] = 5'b11010;
-        32'b????1000000000000000000000000000: sel[i] = 5'b11011;
-        32'b???10000000000000000000000000000: sel[i] = 5'b11100;
-        32'b??100000000000000000000000000000: sel[i] = 5'b11101;
-        32'b?1000000000000000000000000000000: sel[i] = 5'b11110;
-        32'b10000000000000000000000000000000: sel[i] = 5'b11111;
+        16'b???????????????1: sel[i] = 4'b0000;
+        16'b??????????????10: sel[i] = 4'b0001;
+        16'b?????????????100: sel[i] = 4'b0010;
+        16'b????????????1000: sel[i] = 4'b0011;
+        16'b???????????10000: sel[i] = 4'b0100;
+        16'b??????????100000: sel[i] = 4'b0101;
+        16'b?????????1000000: sel[i] = 4'b0110;
+        16'b????????10000000: sel[i] = 4'b0111;
+        16'b???????100000000: sel[i] = 4'b1000;
+        16'b??????1000000000: sel[i] = 4'b1001;
+        16'b?????10000000000: sel[i] = 4'b1010;
+        16'b????100000000000: sel[i] = 4'b1011;
+        16'b???1000000000000: sel[i] = 4'b1100;
+        16'b??10000000000000: sel[i] = 4'b1101;
+        16'b?100000000000000: sel[i] = 4'b1110;
+        16'b1000000000000000: sel[i] = 4'b1111;
         default: begin
-          sel[i] = 5'b00000;
+          sel[i] = 4'b0000;
           sel_valid[i] = 0;
         end
       endcase
@@ -139,10 +123,10 @@ module issue_queue_fp (
   input  [`IQ_FP_SIZE-1:0]                       rs2_busy,
   input  [`IQ_FP_SIZE-1:0]                       rs3_busy,
 
-  input  [`ISSUE_WIDTH_INT-1:0]             ex_busy,
+  input  [`ISSUE_WIDTH_FP-1:0]             ex_busy,
 
-  input  micro_op_t [`DISPATCH_WIDTH-1:0]   uop_in,
-  output micro_op_t [`ISSUE_WIDTH_INT-1:0]  uop_out,
+  input  micro_op_t [`DISPATCH_WIDTH-1:0]  uop_in,
+  output micro_op_t [`ISSUE_WIDTH_FP-1:0]  uop_out,
 
   output iq_fp_full
 );
@@ -156,13 +140,11 @@ module issue_queue_fp (
 
   logic [`IQ_FP_SIZE-1:0] free, load;
 
-  logic [`IQ_FP_SIZE-1:0] ready, ready_alu_br, ready_imul_idiv;
+  logic [`IQ_FP_SIZE-1:0] ready;
   logic [`IQ_FP_SIZE-1:0] clear;
 
-  logic [1:0][$clog2(`IQ_FP_SIZE)-1:0]  clear_alu_br;
-  logic [1:0]                           clear_alu_br_valid;
-  logic [$clog2(`IQ_FP_SIZE)-1:0]       clear_imul_idiv;
-  logic                                 clear_imul_idiv_valid;
+  logic [`ISSUE_WIDTH_FP-1:0][$clog2(`IQ_INT_SIZE)-1:0] clear_fp;
+  logic [`ISSUE_WIDTH_FP-1:0]                           clear_fp_valid;
 
   micro_op_t [`IQ_FP_SIZE-1:0] uop_to_slot, uop_to_issue;
 
@@ -196,12 +178,6 @@ module issue_queue_fp (
         .ready      (ready[k]),
         .free       (free[k])
       );
-      assign ready_alu_br[k]    = ready[k] & 
-                                  ((uop_to_issue[k].fu_code == FU_ALU) | 
-                                   (uop_to_issue[k].fu_code == FU_BR));
-      assign ready_imul_idiv[k] = ready[k] & 
-                                  ((uop_to_issue[k].fu_code == FU_IMUL) | 
-                                   (uop_to_issue[k].fu_code == FU_IDIV));
     end
   endgenerate
 
@@ -210,13 +186,11 @@ module issue_queue_fp (
   always_ff @(posedge clock) begin
     if (iq_fp_print) begin
       for (integer i = 0; i < `IQ_FP_SIZE; i++) begin
-        $display("[IQ_INT] slot %d (ready=%b)", i, ready[i]);
+        $display("[IQ_FP] slot %d (ready=%b)", i, ready[i]);
         print_uop(uop_to_issue[i]);
       end
-      $display("[IQ_INT] clear=%b, ready_alu_br=%b", clear, ready_alu_br);
-      $display("[IQ_INT] clear_alu_br[0]=%h, clear_alu_br[1]=%h", clear_alu_br[0], clear_alu_br[1]);
-      $display("[IQ_INT] clear_alu_br_valid[0]=%h, clear_alu_br_valid[1]=%h", clear_alu_br_valid[0], clear_alu_br_valid[1]);
-      $display("[IQ_INT] free_count_reg=%d", free_count_reg);
+      $display("[IQ_FP] clear=%b, ready=%b", clear, ready);
+      $display("[IQ_FP] free_count_reg=%d", free_count_reg);
     end
   end
 
@@ -254,22 +228,13 @@ module issue_queue_fp (
   end
 
   // Output selector
-  issue_queue_fp_selector #(
-    /*REQS=*/  2,
+  issue_queue_int_selector #(
+    /*REQS=*/  `ISSUE_WIDTH_FP,
     /*WIDTH=*/ `IQ_FP_SIZE
   ) output_selector_alu_br (
-    .ready      (ready_alu_br),
-    .sel        (clear_alu_br),
-    .sel_valid  (clear_alu_br_valid)
-  );
-
-  issue_queue_fp_selector #(
-    /*REQS=*/  1,
-    /*WIDTH=*/ `IQ_FP_SIZE
-  ) output_selector_imul_idiv (
-    .ready      (ready_imul_idiv),
-    .sel        (clear_imul_idiv),
-    .sel_valid  (clear_imul_idiv_valid)
+    .ready      (ready),
+    .sel        (clear_fp),
+    .sel_valid  (clear_fp_valid)
   );
 
   always_comb begin
@@ -285,17 +250,11 @@ module issue_queue_fp (
   always_comb begin
     uop_out = 0;
     clear = 0;
-    if (clear_alu_br_valid[0]) begin
-      uop_out[0] = uop_to_issue[clear_alu_br[0]];
-      clear[clear_alu_br[0]] = 1;
-    end
-    if (clear_alu_br_valid[1]) begin
-      uop_out[1] = uop_to_issue[clear_alu_br[1]];
-      clear[clear_alu_br[1]] = 1;
-    end
-    if (clear_imul_idiv_valid) begin
-      uop_out[2] = uop_to_issue[clear_imul_idiv];
-      clear[clear_imul_idiv] = 1;
+    for (int i = 0; i < `ISSUE_WIDTH_FP; i++) begin
+      if (clear_fp_valid[i]) begin
+        uop_out[i] = uop_to_issue[clear_fp[i]];
+        clear[clear_fp[i]] = 1;
+      end
     end
   end
 
