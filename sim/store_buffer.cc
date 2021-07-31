@@ -13,7 +13,8 @@ int StoreBuffer::CommitStoreRequest(unsigned int num_commit) {
   store_request_t* req;
 
   if (num_commit > buffer.size()) {
-    fprintf(stderr, "[Store Buffer] Error: #commit > store buffer size\n");
+    fprintf(stderr, "[Store Buffer] Error: #commit=%d > store buffer size=%ld\n", num_commit, buffer.size());
+    FlushStoreBuffer();
     return -1;
   }
 

@@ -8,6 +8,7 @@ fesvr450_hdrs = byteorder.h\
 				sim.h      \
 				sim_memory.h\
 				syscall.h  \
+				store_buffer.h
 
 fesvr450_srcs = device.cc\
 				elfloader.cc\
@@ -16,5 +17,6 @@ fesvr450_srcs = device.cc\
 				sim.cc \
 				sim_memory.cc\
 				syscall.cc\
+				store_buffer.cc
 
 fesvr450_obj = $(patsubst %.cc, %.o, $(fesvr450_srcs))
