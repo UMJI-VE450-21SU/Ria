@@ -63,10 +63,14 @@ VERILOG_ROOT := src
 # Input files for Verilator
 VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
 
+<<<<<<< HEAD
 # [use this to change testbench]
 # a spike-like environment is sim_main2, not tested yet, the entry point of the CPU should be default to 0x80000000
 SIM_TARGET = sim_main
 SIM_TARGET_SRC = $(SIM_TARGET).cc
+=======
+SIM_SRC := sim/sim_memory.cpp sim/store_buffer.cpp sim/sim_main.cpp
+>>>>>>> Li/StoreBuffer
 
 include sim/fesvr450.mk.in
 
@@ -77,12 +81,19 @@ VERILATOR_OPTIONS := input.vc
 VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
 # the program to run
+<<<<<<< HEAD
 #
 # SIMULATOR_PROG = prog/bin/c_example.bin
 SIMULATOR_PROG = spike-software/sobel.elf
 #SIMULATOR_PROG = myfile
 # the dmem init
 #SIMULATOR_DATA_INIT = software/c_example/c_example.bin
+=======
+SIMULATOR_PROG = software/c_example/c_example.bin
+#SIMULATOR_PROG = myfile
+# the dmem init
+SIMULATOR_DATA_INIT = software/c_example/c_example.bin
+>>>>>>> Li/StoreBuffer
 
 default: run
 
