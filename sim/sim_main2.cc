@@ -1,6 +1,7 @@
 
 #include "sim_memory.h"
 #include "sim.h"
+#include "store_buffer.h"
 #include <iostream>
 #include <cstdint>
 
@@ -73,15 +74,21 @@ int main(int argc, char **argv) {
 
     top->reset = contextp->time() < 4 ? 1 : 0;
 
-    if(contextp->time() >= 4) {
+    if (contextp->time() >= 4) {
       imem->read_transction(top->core2icache_addr, reinterpret_cast<char *>(top->icache2core_data));
       top->icache2core_data_valid = 1;
-
-      if(top->core2dcache_data_we) {
-        core2dcache_data_size = data_size_map[top->core2dcache_data_size];
-        dmem->write_transcation(top->core2dcache_addr, reinterpret_cast<char *>(&(top->core2dcache_data)), core2dcache_data_size);
-      } else {
-        dmem->read_transction(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
+      if (top->clock == 1) {
+        // When store instructions retire, write data to memory
+        store_buffer.CommitStoreRequest(__builtin_popcount(top->store_retire));
+        // Branch mis-prediction -> flush store buffer
+        if (top->recover)
+          store_buffer.FlushStoreBuffer();
+        // Execute store instructions -> add store requests to store buffer
+        if (top->core2dcache_data_we)
+          store_buffer.AddStoreRequest(new store_request_t(top->core2dcache_addr, top->core2dcache_data, top->core2dcache_data_size));
+        // Execute load instructions -> first check store buffer then check memory
+        else
+          store_buffer.LoadData(top->core2dcache_addr, reinterpret_cast<char *>(&(top->dcache2core_data)));
       }
       top->dcache2core_data_valid = 1;
     }
