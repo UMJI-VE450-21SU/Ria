@@ -26,7 +26,7 @@ public:
   void AddStoreRequest(store_request_t* req);
 
   // return 0 for normal store
-  // return 1 for halt
+  // return 1 for halt (unused now)
   int CommitStoreRequest(unsigned int num_commit);
 
   void FlushStoreBuffer();
