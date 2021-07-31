@@ -2,7 +2,7 @@
 #include <iostream>
 
 sim_t::sim_t(const std::vector<std::string> &args, IdeaMemory *ptr) : htif_t(args), mem_ptr(ptr) {
-  setup_rom();
+  // setup_rom();
 }
 
 void sim_t::reset() {}
@@ -27,7 +27,7 @@ void sim_t::setup_rom() {
 
   const int reset_vec_size = 7;
 
-  auto start_pc =get_entry_point();
+  auto start_pc = get_entry_point();
 
   uint32_t reset_vec[reset_vec_size] = {
     0x297,                                      // auipc  t0,0x0
@@ -38,6 +38,8 @@ void sim_t::setup_rom() {
     0,
     (uint32_t) (start_pc & 0xffffffff)
   };
+
+  printf("start_pc=0x%lx\n", start_pc);
 
   mem_ptr->write_bytes((const char *) reset_vec, sizeof(reset_vec), 0x1000);
 }

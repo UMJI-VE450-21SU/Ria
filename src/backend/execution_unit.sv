@@ -158,7 +158,7 @@ module pipe_3 (
     data_out = 0;
     if (busy_reg & dcache2core_data_valid) begin
       if (is_ld) begin
-        case (uop.mem_size)
+        case (uop_reg.mem_size)
           MEM_BYTE:  data_out = {{56{dcache2core_data[7]}},  dcache2core_data[7:0]};
           MEM_HALF:  data_out = {{48{dcache2core_data[15]}}, dcache2core_data[15:0]};
           MEM_WORD:  data_out = {{32{dcache2core_data[31]}}, dcache2core_data[31:0]};
@@ -166,7 +166,7 @@ module pipe_3 (
         endcase
       end
       if (is_ldu) begin
-        case (uop.mem_size)
+        case (uop_reg.mem_size)
           MEM_BYTE:  data_out = {56'b0, dcache2core_data[7:0]};
           MEM_HALF:  data_out = {48'b0, dcache2core_data[15:0]};
           MEM_WORD:  data_out = {32'b0, dcache2core_data[31:0]};

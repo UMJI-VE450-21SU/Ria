@@ -42,10 +42,6 @@ int main(int argc, char **argv) {
   
   auto memory = make_BucketMemory();
 
-  printf("Current memory layout: \n");
-
-  memory->print_all();
-
   auto imem = std::make_unique<IMem>(memory.get());
 
   auto dmem = std::make_unique<DMem>(memory.get());
@@ -55,14 +51,20 @@ int main(int argc, char **argv) {
   sim_t sim(args, memory.get());
 
   sim.start();
-//  unsigned i = 0;
-//
+
+  sim.setup_rom();
+
+  printf("Current memory layout: \n");
+
+  memory->print_all();
+
+  unsigned i = 1;
 
   unsigned char core2dcache_data_size = 0;
 
   // In the final version, the terminate condition may only depends on the sim object
   while (!sim.is_signal_exit() && sim.exit_code() == 0 && !contextp->gotFinish()) {
-//    std::cout << "at time " << i << std::endl;
+    std::cout << "==================================================== At time " << i << " ====================================================" << std::endl;
 
     contextp->timeInc(1);  // 1 timeprecision period passes...
     top->clock = !top->clock;
@@ -105,20 +107,15 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-//////////////////////////////////
-// manually terminat by using syscalls
-//////////////////////////////////
-//    if (i > 100) {
-//
-//      uint32_t myexit = 0x00000011;
-//
-//      dmem->write_transcation(0x10000000, (char *)&myexit, sizeof myexit);
-//    }
-//    std::cout << "[host move]" << std::endl;
+    if (i > 2000) {
+      break;
+    }
 
-// front end server handle the command
+    std::cout << "[host move]" << std::endl;
+
+    // front end server handle the command
     sim.process_htio();
-//    i++; 
+    i++; 
   }
 
   std::cout << std::endl << std::endl;

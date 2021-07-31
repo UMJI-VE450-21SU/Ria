@@ -16,7 +16,8 @@ LD_OPTS := -m elf32lriscv
 
 TARGETS := \
   moreThanExit \
-  sobel
+  sobel \
+	simple
 
 TARGETS_ELF := $(foreach target, $(TARGETS), $(target).elf)
 
@@ -25,6 +26,7 @@ default: $(TARGETS_ELF)
 # how to make it output to a directory?
 %.elf : $(PROGS_PATH)/%.o $(LIB_OBJECT)
 	$(RISCV)-ld  $(LD_OPTS) -T $(LDSCRIPT) $^ $(wildcard $(LIB_PATH)/*.o) -o $@
+	$(RISCV)-objdump -D $@ > $@.dump
 
 %.o : %.c
 	$(RISCV)-gcc $(GCC_OPTS) -o $@ -c $^

@@ -57,7 +57,7 @@ module inst_fetch (
 
   always_ff @(posedge clock) begin
     if (reset)
-      pc <= 0; // to let sim_main2 work properly, should set this value to 0x1000
+      pc <= 32'h1000; // to let sim_main2 work properly, should set this value to 0x1000
     else if (insts_out_valid)
       pc <= next_pc;
   end
