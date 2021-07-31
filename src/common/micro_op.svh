@@ -198,10 +198,11 @@ typedef struct packed {
 } micro_op_t;
 
 task print_uop(input micro_op_t uop);
-  $display("        pc=%h, iq_code=%h, fu_code=%h, imm=%h, rs1_arf=%h, rs1_prf=%h, rs2_arf=%h, rs2_prf=%h, rd_arf=%h, rd_prf=%h, rd_valid=%b, valid=%b",
-           uop.pc, uop.iq_code, uop.fu_code, uop.imm, uop.rs1_arf_int_index, uop.rs1_prf_int_index,
+  $display("        pc=%h, iq_code=%h, fu_code=%h, br_type=%h, imm=%h, rs1_arf=%h, rs1_prf=%h, rs2_arf=%h, rs2_prf=%h, rd_arf=%h, rd_prf=%h, rd_valid=%b, \
+           valid=%b, br_taken=%b, br_addr=%h, pred_taken=%b, pred_addr=%h",
+           uop.pc, uop.iq_code, uop.fu_code, uop.br_type, uop.imm, uop.rs1_arf_int_index, uop.rs1_prf_int_index,
            uop.rs2_arf_int_index, uop.rs2_prf_int_index, uop. rd_arf_int_index, uop.rd_prf_int_index, 
-           uop.rd_valid, uop.valid);
+           uop.rd_valid, uop.valid, uop.br_taken, uop.br_addr, uop.pred_taken, uop.pred_addr);
 endtask
 
 `endif  // __MICRO_OP_SVH__
