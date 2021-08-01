@@ -92,9 +92,10 @@ module branch (
   always_comb begin
     br_uop = uop;
     br_uop.br_taken = result;
-    br_uop.br_addr = uop.pc + uop.imm;
     if (is_jalr)
       br_uop.br_addr = in1 + uop.imm;
+    else
+      br_uop.br_addr = result ? (uop.pc + uop.imm) : br_uop.npc;
   end
 
   assign result = ((br_type == BR_EQ)  & eq)  | ((br_type == BR_NE)  & ne)  |

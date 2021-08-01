@@ -77,7 +77,7 @@ module rob (
             rob_size_next = 0;
             break;
           end
-          if (uop_retire[i].br_addr != uop_retire[i].pred_addr) begin
+          if ((uop_retire[i].br_addr != uop_retire[i].pred_addr) && uop_retire[i].pred_taken) begin
             // A Mis-Prediction uop
             recover       = 1;
             uop_recover   = uop_retire[i];
