@@ -128,6 +128,11 @@ module branch_pred (
           next_pc = target_update[i];
           break;
         end
+        if (uop_retire[i].br_addr != uop_retire[i].pred_addr && ~mispredict) begin
+          mispredict = 1;
+          next_pc = target_update[i];
+          break;
+        end
       end
     end
 

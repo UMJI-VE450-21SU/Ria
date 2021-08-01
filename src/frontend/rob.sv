@@ -77,6 +77,14 @@ module rob (
             rob_size_next = 0;
             break;
           end
+          if (uop_retire[i].br_addr != uop_retire[i].pred_addr) begin
+            // A Mis-Prediction uop
+            recover       = 1;
+            uop_recover   = uop_retire[i];
+            rob_head_next = 0;
+            rob_size_next = 0;
+            break;
+          end
         end
       end else begin
         break;
