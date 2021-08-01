@@ -592,7 +592,7 @@ module core (
 
   integer fi, fd;
 
-  initial fi = 0;
+  initial fi = 3;
 
   always_ff @(posedge clock) begin
     $display("===== Pipeline Registers =====");
@@ -718,7 +718,7 @@ module core (
              id_stall_reg, rr_stall_prev, dp_stall_prev, iq_full_reg);
     $display("|---ID---|---RR---(--------)|---DP---(--------)|---IS---(--------)|---RF---|---EX---|---WB---|---CM---|");
 
-    if (fi == 0)
+    if (fi == 3)
       fd = $fopen("retire.out", "w");
     else
       fd = $fopen("retire.out", "a");
