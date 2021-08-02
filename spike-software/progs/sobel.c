@@ -6,8 +6,6 @@
 #define WT_DIM      3
 #define WT_SIZE     WT_DIM * WT_DIM
 
-reg_t tohost = 0;
-reg_t fromhost = 0;
 reg_t tohost_cmd[8] = {0};
 
 // weight matrices

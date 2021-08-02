@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
   StoreBuffer store_buffer(std::move(dmem));
 
   // In the final version, the terminate condition may only depends on the sim object
-  while (!sim.is_signal_exit() && sim.exit_code() == 0 && !contextp->gotFinish()) {
+  while (!sim.is_signal_exit() && !sim.done() && !contextp->gotFinish()) {
     std::cout << "==================================================== At time " << i << " ====================================================" << std::endl;
 
     contextp->timeInc(1);  // 1 timeprecision period passes...
@@ -134,6 +134,7 @@ int main(int argc, char **argv) {
   std::cout << "===================================  [SIMULATION ENDS] ===============================" << std::endl;
   std::cout << "exit code: " << sim.exit_code() << std::endl;
 
+//  memory->print_all();
   sim.stop();
 
   return 0;

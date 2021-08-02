@@ -29,13 +29,17 @@ void sim_t::setup_rom() {
 
   auto start_pc = get_entry_point();
 
+  // still consider use the system call the terminate the simulation
+  // jal to main
+  // when return 0, go back to the start code,
+  // then start shift the tohost/fromhost register & invoke syscall
   uint32_t reset_vec[reset_vec_size] = {
     0x297,        // auipc  t0, 0x0
     0x0182a283u,  // lw     t0, 24(t0)
-    0x97,         // auipc  ra, 0x0
-    0x00108093u,  // addi   ra, ra, 12
     0x28067,      // jr     t0
-    0xfe002e23u,  // sw     x0, -4(x0)
+    0,             
+    0,      
+    0,
     (uint32_t) (start_pc & 0xffffffff)
   };
 

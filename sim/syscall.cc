@@ -199,6 +199,7 @@ void syscall_t::handle_syscall(command_t cmd)
   if (cmd.payload() & 1) // test pass/fail
   {
     htif->exitcode = cmd.payload();
+    htif->stopped = true; // now the exit method will terminate the simulation
     if (htif->exit_code())
       std::cerr << "*** FAILED *** (tohost = " << htif->exit_code() << ")" << std::endl;
     return;

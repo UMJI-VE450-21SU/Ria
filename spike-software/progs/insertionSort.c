@@ -5,8 +5,6 @@ int A[N] = {387, 552, 201, 808, 220, 996, 594, 282, 152, 999,
             876, 395, 542, 557, 430, 562, 342, 357, 682, 670};
 
 char buf[5] = {0};
-reg_t tohost = 0;
-reg_t fromhost = 0;
 reg_t tohost_cmd[8] = {0};
 
 void insertion(int arr[], int size){

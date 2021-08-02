@@ -1,8 +1,6 @@
 #include "ExecLib.h"
 
 char buf[100] = {0};
-reg_t tohost = 0;
-reg_t fromhost = 0;
 reg_t tohost_cmd[8] = {0};
 
 char str0[] = "Test";
