@@ -136,7 +136,7 @@ show-config:
 SPIKE_BIN := bin/spike
 SPIKE_PROG_DIR := spike-software
 SPIKE_PROG := sobel.elf
-SPIKE_OPT := --isa=rv32i --priv=mu
+SPIKE_OPT := --isa=rv32i --priv=mu -l
 
 sim-spike: make-spike
 	$(SPIKE_BIN) $(SPIKE_OPT) $(SPIKE_PROG_DIR)/$(SPIKE_PROG)

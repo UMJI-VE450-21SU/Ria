@@ -42,6 +42,7 @@ default: $(TARGETS_ELF)
 
 clean: clean-library clean-progs
 	rm -f *.elf
+	rm -f *.dump
 
 clean-library:
 	rm -f $(LIB_PATH)/*.o

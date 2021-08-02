@@ -1,6 +1,11 @@
 #ifndef EXECLIB_H
 #define EXECLIB_H
-#include <stdint.h>
+// #include <stdint.h>
+
+typedef unsigned long long  uint64_t;
+typedef unsigned int        uint32_t;
+typedef int                 int32_t;
+typedef unsigned char       uint8_t;
 
 typedef uint64_t reg_t;
 #define CASTPTR(ptr) (unsigned)(ptr)

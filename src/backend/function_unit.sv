@@ -78,9 +78,9 @@ module branch (
   assign eq   = in1 == in2;
   assign ne   = in1 != in2;
   assign lt   = signed_in1 < signed_in2;
-  assign ge   = signed_in1 > signed_in2;
+  assign ge   = signed_in1 >= signed_in2;
   assign ltu  = in1 < in2;
-  assign geu  = in1 > in2;
+  assign geu  = in1 >= in2;
 
   assign br_type = uop.br_type;
   assign is_jal  = (br_type == BR_JAL);
