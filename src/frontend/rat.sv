@@ -21,7 +21,6 @@ module rat (
 );
 
   // I/O for Mapping Table
-  logic                                               mp_stall;
   logic [`RENAME_WIDTH-1:0]                           rd_valid;
   logic [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs1;
   logic [`RENAME_WIDTH-1:0] [`ARF_INT_INDEX_SIZE-1:0] rs2;
@@ -40,7 +39,6 @@ module rat (
   mapping_table mapping_table (
     .clock            (clock            ),
     .reset            (reset            ),
-    .stall            (mp_stall         ),
     .recover          (recover          ),
     .rd_valid         (rd_valid         ),
     .rs1              (rs1              ),

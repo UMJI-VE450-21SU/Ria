@@ -8,7 +8,6 @@
 module mapping_table (
   input         clock,
   input         reset,
-  input         stall,
   input         recover,
 
   input         [`RENAME_WIDTH-1:0]                           rd_valid,
@@ -53,7 +52,6 @@ module mapping_table (
   free_list free_list (
     .clock          (clock          ),
     .reset          (reset          ),
-    .stall          (stall          ),
     .recover        (recover        ),
     .pre_prf_valid  (pre_prf_valid  ),
     .pre_prf        (pre_prf        ),
@@ -122,7 +120,7 @@ module mapping_table (
       end
       arf_valid   <= arf_recover_next;
       arf_recover <= arf_recover_next;
-    end else if (!stall) begin
+    end else begin
       for (int i = 0; i < `ARF_INT_SIZE; i = i + 1 )  begin
         mp_tb[i] <= mp_tb_next[i];
         r_rat[i] <= r_rat_next[i];
