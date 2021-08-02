@@ -22,20 +22,18 @@ typedef enum logic [1:0] {
   IQ_X    = 2'h0,
   IQ_INT  = 2'h1,
   IQ_MEM  = 2'h2,
-  IQ_FP   = 2'h3
+  IQ_AP   = 2'h3
 } iq_code_t;
 
-typedef enum logic [3:0] {
-  FU_X    = 4'h0,
-  FU_ALU  = 4'h1,
-  FU_BR   = 4'h2,
-  FU_IMUL = 4'h3,
-  FU_IDIV = 4'h4,
-  FU_MEM  = 4'h5,
-  FU_FPU  = 4'h6,
-  FU_FMUL = 4'h7,
-  FU_FDIV = 4'h8,
-  FU_CSR  = 4'h9
+typedef enum logic [2:0] {
+  FU_X    = 3'h0,
+  FU_ALU  = 3'h1,
+  FU_BR   = 3'h2,
+  FU_IMUL = 3'h3,
+  FU_IDIV = 3'h4,
+  FU_MEM  = 3'h5,
+  FU_AMUL = 3'h6,
+  FU_ADIV = 3'h7
 } fu_code_t;
 
 typedef enum logic [3:0] {
@@ -157,10 +155,6 @@ typedef struct packed {
   imul_type_t     imul_type;
   idiv_type_t     idiv_type;
 
-  fp_type_t       fp_type;
-  fpu_type_t      fpu_type;
-  rm_type_t       rm_type;
-
   mem_type_t      mem_type;
   mem_size_t      mem_size;
 
@@ -181,11 +175,6 @@ typedef struct packed {
   arf_int_index_t rs2_arf_int_index;
   prf_int_index_t rs2_prf_int_index;
   logic           rs2_from_ctb;       // rs2 prf index from common tag bus
-
-  rs_source_t     rs3_source;
-  arf_int_index_t rs3_arf_int_index;
-  prf_int_index_t rs3_prf_int_index;
-  logic           rs3_from_ctb;       // rs3 prf index from common tag bus
 
   arf_int_index_t rd_arf_int_index;
   prf_int_index_t rd_prf_int_index;

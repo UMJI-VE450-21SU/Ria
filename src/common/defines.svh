@@ -35,34 +35,24 @@
 
 `define ISSUE_WIDTH_INT     3
 `define ISSUE_WIDTH_MEM     1
-`define ISSUE_WIDTH_FP      2
+`define ISSUE_WIDTH_AP      2
 
 `define IQ_INT_SIZE         32
 `define IQ_MEM_SIZE         16
-`define IQ_FP_SIZE          16
+`define IQ_AP_SIZE          16
 
 `define ARF_INT_SIZE        32
 `define ARF_INT_INDEX_SIZE  5
-
-`define ARF_FP_SIZE         32
-`define ARF_FP_INDEX_SIZE   5
 
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
 `define PRF_INT_WAYS        (`ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM)
 
-`define PRF_FP_SIZE         64
-`define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
-`define PRF_FP_WAYS         (`ISSUE_WIDTH_FP + `ISSUE_WIDTH_MEM)
-
 `define IMUL_LATENCY        5
 `define IDIV_LATENCY        32
 
 typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
-typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
-
 typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
-typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
 
 typedef logic [`ROB_INDEX_SIZE-1:0]     rob_index_t;
 
@@ -142,6 +132,5 @@ typedef union packed {
     logic [6:0]  opcode;
   } sys;
 } inst_t;
-
 
 `endif  // __DEFINES_SVH__
