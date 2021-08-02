@@ -215,3 +215,99 @@ module idiv (
   assign busy = ~ready;  // Blocking divider
 
 endmodule
+
+
+module amul (
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [31:0]       in1,
+  input  [31:0]       in2,
+  output logic [31:0] out,
+  output              busy
+);
+
+  logic signed [31:0]          signed_in1, signed_in2; // for signed wire
+  logic signed [63:0]          final_product, product_0, product_1, product_2;
+  logic [1:0]                  sign;
+  reg [`IMUL_LATENCY-1:0]      range;                  // 1 if [63:32]
+  reg [`IMUL_LATENCY-1:0][1:0] sign_reg;
+  reg [`IMUL_LATENCY-1:0]      valid;
+  // every imul have a delay of `AMUL_LATENCY clock cycles
+
+  assign signed_in1 = in1;
+  assign signed_in2 = in2;
+
+  always_comb begin
+    case (uop.imul_type)
+      IMUL_MULHU:   sign = 2'b00;  
+      IMUL_MULHSU:  sign = 2'b01;
+      default:      sign = 2'b11;
+    endcase
+    case (sign_reg[`IMUL_LATENCY-1])
+      2'b0:    final_product = product_0;
+      2'b1:    final_product = product_1;
+      default: final_product = product_2;
+    endcase
+  end
+
+  assign out = range[`IMUL_LATENCY-1]? final_product[63:32]:final_product[31:0];
+
+  always_ff @(posedge clock) begin
+    if (reset) begin
+      range <= 0;
+      sign_reg <= 0;
+      valid <= 0;
+    end else begin
+      range[`IMUL_LATENCY-1:1] <= range[`IMUL_LATENCY-2:0];
+      range[0] <= (uop.imul_type != IMUL_MULHU);
+      sign_reg[`IMUL_LATENCY-1:1] <= sign_reg[`IMUL_LATENCY-2:0];
+      sign_reg[0] <= sign;
+      valid[`IMUL_LATENCY-1:1] <= valid[`IMUL_LATENCY-2:0];
+      valid[0] <= uop.valid & (uop.fu_code == FU_IMUL);
+    end
+  end
+
+  // todo: fix unsigned / signed issue
+  imul_unsigned int_mult (
+    .clock  (clock),
+    .A      (in1),
+    .B      (in2),
+    .RES    (product_0)
+  );
+  assign product_1 = product_0;
+  assign product_2 = product_0;
+
+  assign busy = (valid[`IMUL_LATENCY-2:0] != 0);  // Blocking multiplier
+
+endmodule
+
+
+module adiv (
+  input               clock,
+  input               reset,
+  input  micro_op_t   uop,
+  input  [31:0]       in1,
+  input  [31:0]       in2,
+  output logic [31:0] out,
+  output              busy
+);
+
+  wire ready, divider_error;
+
+  divider idiv_inst(  
+    .clk    (clock),  
+    .reset  (reset),  
+    .start  (uop.valid & (uop.fu_code == FU_ADIV)),  
+    .A      (in1),  
+    .B      (in2),  
+    .D      (out),  
+    .R      (),  // remaindar, currently useless
+    .ok     (ready),  // =1 when the divider is not running
+    .err    (divider_error)
+  );
+
+  assign busy = ~ready;  // Blocking divider
+
+endmodule
+
