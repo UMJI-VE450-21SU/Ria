@@ -22,19 +22,16 @@ int StoreBuffer::CommitStoreRequest(unsigned int num_commit) {
     req = buffer.front();
     data_size = data_size_map[req->size];
     
-    // printf("[Store Buffer] store to memory... addr=0x%x, data=0x%llx\n", req->addr, req->data);
-    // if (req->addr == 0xFFFFFFFC) {
-    // // When we write a non-zero value to [0xFFFFFFFC], halt the simulation
-    //   FlushStoreBuffer();
-    //   return -1;
-    // } else if (req->addr == 0xFFFFFFF8) {
-    // // When we write a character to [0xFFFFFFF8], print it to stderr (only 1 character)
-    //   fprintf(stderr, "%c", *(reinterpret_cast<char *>(&(req->data))));
-    // } else {
-    //   dmem->write_transcation(req->addr, reinterpret_cast<char *>(&(req->data)), data_size);
-    // }
-
-    dmem->write_transcation(req->addr, reinterpret_cast<char *>(&(req->data)), data_size);
+    if (req->addr == 0xFFFFFFFC) {
+    // When we write to [0xFFFFFFFC], halt the simulation
+      FlushStoreBuffer();
+      return -1;
+    } else if (req->addr == 0xFFFFFFF8) {
+    // When we write a character to [0xFFFFFFF8], print it to stderr (only 1 character)
+      fprintf(stderr, "%c", *(reinterpret_cast<char *>(&(req->data))));
+    } else {
+      dmem->write_transcation(req->addr, reinterpret_cast<char *>(&(req->data)), data_size);
+    }
 
     delete req;
     buffer.pop_front();

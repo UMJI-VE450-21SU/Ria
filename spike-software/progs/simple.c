@@ -1,7 +1,7 @@
 #include "ExecLib.h"
 #define N 5
 
-char buf[100] = {0};
+char buf[5] = {0};
 reg_t tohost = 0;
 reg_t fromhost = 0;
 reg_t tohost_cmd[8] = {0};
@@ -14,9 +14,11 @@ int sum(int* a) {
 }
 
 int main() {
-  int a[N] = {1, 2, 3, 4, 5};
+  int a[N];
+  for (unsigned int i = 0; i < N; i++)
+    a[i] = i;
 
   int result = sum(a);
 
-  tohost_exit(0);
+  return 0;
 }

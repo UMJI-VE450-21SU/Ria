@@ -81,7 +81,8 @@ int main(int argc, char **argv) {
       top->icache2core_data_valid = 1;
       if (top->clock == 0) {
         // When store instructions retire, write data to memory
-        store_buffer.CommitStoreRequest(__builtin_popcount(top->store_retire));
+        if (store_buffer.CommitStoreRequest(__builtin_popcount(top->store_retire)) == -1)
+          break;
         // Branch mis-prediction -> flush store buffer
         if (top->recover)
           store_buffer.FlushStoreBuffer();
