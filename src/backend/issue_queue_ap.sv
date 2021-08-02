@@ -153,10 +153,10 @@ module issue_queue_ap (
   logic [`IQ_AP_SIZE-1:0] ready, ready_amul, ready_adiv;
   logic [`IQ_AP_SIZE-1:0] clear;
 
-  logic [1:0][`IQ_AP_INDEX_SIZE-1:0]  clear_amul;       // Pipe 4 for apporximate mul
-  logic [1:0]                         clear_amul_valid;
-  logic [`IQ_AP_INDEX_SIZE-1:0]       clear_adiv;       // Pipe 5 for approximate div
-  logic                               clear_adiv_valid;
+  logic [`IQ_AP_INDEX_SIZE-1:0]   clear_amul;       // Pipe 4 for apporximate mul
+  logic                           clear_amul_valid;
+  logic [`IQ_AP_INDEX_SIZE-1:0]   clear_adiv;       // Pipe 5 for approximate div
+  logic                           clear_adiv_valid;
 
   micro_op_t [`IQ_AP_SIZE-1:0] uop_to_slot, uop_to_issue;
 
@@ -202,8 +202,11 @@ module issue_queue_ap (
         print_uop(uop_to_issue[i]);
       end
       $display("[IQ_AP] clear=%b, ready_amul=%b", clear, ready_amul);
-      $display("[IQ_AP] clear_amul[0]=%h, clear_amul[1]=%h", clear_amul[0], clear_amul[1]);
-      $display("[IQ_AP] clear_amul_valid[0]=%h, clear_amul_valid[1]=%h", clear_amul_valid[0], clear_amul_valid[1]);
+      $display("[IQ_AP] clear_amul=%h", clear_amul);
+      $display("[IQ_AP] clear_amul_valid=%h", clear_amul_valid);
+      $display("[IQ_AP] clear=%b, ready_adiv=%b", clear, ready_adiv);
+      $display("[IQ_AP] clear_adiv=%h", clear_adiv);
+      $display("[IQ_AP] clear_adiv_valid=%h", clear_adiv_valid);
       $display("[IQ_AP] free_count_reg=%d", free_count_reg);
     end
   end
@@ -243,7 +246,7 @@ module issue_queue_ap (
 
   // Output selector
   issue_queue_ap_selector #(
-    /*REQS=*/  2,
+    /*REQS=*/  1,
     /*WIDTH=*/ `IQ_AP_SIZE
   ) output_selector_amul (
     .ready      (ready_amul),
@@ -273,16 +276,12 @@ module issue_queue_ap (
   always_comb begin
     uop_out = 0;
     clear = 0;
-    if (clear_amul_valid[0]) begin
-      uop_out[0] = uop_to_issue[clear_amul[0]];
-      clear[clear_amul[0]] = 1;
-    end
-    if (clear_amul_valid[1]) begin
-      uop_out[1] = uop_to_issue[clear_amul[1]];
-      clear[clear_amul[1]] = 1;
+    if (clear_amul_valid) begin
+      uop_out[0] = uop_to_issue[clear_amul];
+      clear[clear_amul] = 1;
     end
     if (clear_adiv_valid) begin
-      uop_out[2] = uop_to_issue[clear_adiv];
+      uop_out[1] = uop_to_issue[clear_adiv];
       clear[clear_adiv] = 1;
     end
   end

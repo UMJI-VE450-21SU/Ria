@@ -22,7 +22,12 @@ module scoreboard_int (
   input  [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs1_mem_index,
   input  [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0] rs2_mem_index,
   output logic [`IQ_MEM_SIZE-1:0]                    rs1_mem_busy,
-  output logic [`IQ_MEM_SIZE-1:0]                    rs2_mem_busy
+  output logic [`IQ_MEM_SIZE-1:0]                    rs2_mem_busy,
+  // Inquiry from ap issue queue slots
+  input  [`IQ_AP_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]  rs1_ap_index,
+  input  [`IQ_AP_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]  rs2_ap_index,
+  output logic [`IQ_AP_SIZE-1:0]                     rs1_ap_busy,
+  output logic [`IQ_AP_SIZE-1:0]                     rs2_ap_busy
 );
 
   reg [`PRF_INT_SIZE-1:0] sb;
@@ -33,6 +38,8 @@ module scoreboard_int (
   logic [`IQ_INT_SIZE-1:0] [`PRF_INT_WAYS-1:0] rs2_int_from_clear;
   logic [`IQ_MEM_SIZE-1:0] [`PRF_INT_WAYS-1:0] rs1_mem_from_clear;
   logic [`IQ_MEM_SIZE-1:0] [`PRF_INT_WAYS-1:0] rs2_mem_from_clear;
+  logic [`IQ_AP_SIZE-1:0] [`PRF_INT_WAYS-1:0]  rs1_ap_from_clear;
+  logic [`IQ_AP_SIZE-1:0] [`PRF_INT_WAYS-1:0]  rs2_ap_from_clear;
 
   always_comb begin
     set_busy_req = 0;
@@ -69,6 +76,15 @@ module scoreboard_int (
     end
   endgenerate
 
+  generate
+    for (genvar i = 0; i < `IQ_AP_SIZE; i++) begin
+      for (genvar j = 0; j < `PRF_INT_WAYS; j++) begin
+        assign rs1_ap_from_clear[i][j] = clear_busy_valid[j] && (clear_busy_index[j] == rs1_ap_index[i]);
+        assign rs2_ap_from_clear[i][j] = clear_busy_valid[j] && (clear_busy_index[j] == rs2_ap_index[i]);
+      end
+    end
+  endgenerate
+
   always_comb begin
     for (int i = 0; i < `IQ_INT_SIZE; i++) begin
       // t0 is never busy
@@ -93,6 +109,20 @@ module scoreboard_int (
           rs1_mem_busy[i] = 0;  
         if (rs2_mem_from_clear[i][j])
           rs2_mem_busy[i] = 0;
+      end
+    end
+  end
+
+  always_comb begin
+    for (int i = 0; i < `IQ_AP_SIZE; i++) begin
+      // t0 is never busy
+      rs1_ap_busy[i] = (rs1_ap_index[i] == 0) ? 0 : sb[rs1_ap_index[i]];
+      rs2_ap_busy[i] = (rs2_ap_index[i] == 0) ? 0 : sb[rs2_ap_index[i]];
+      for (int j = 0; j < `PRF_INT_WAYS; j++) begin
+        if (rs1_ap_from_clear[i][j])
+          rs1_ap_busy[i] = 0;  
+        if (rs2_ap_from_clear[i][j])
+          rs2_ap_busy[i] = 0;
       end
     end
   end

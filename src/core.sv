@@ -260,13 +260,13 @@ module core (
 
   micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_int;
   micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_mem;
-  micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_fp;
+  micro_op_t [`DISPATCH_WIDTH-1:0]  dp_uop_to_ap;
 
   dispatch dp (
     .uop_in     (dp_uops_in     ),
     .uop_to_int (dp_uop_to_int  ),
     .uop_to_mem (dp_uop_to_mem  ),
-    .uop_to_fp  (dp_uop_to_fp   )
+    .uop_to_ap  (dp_uop_to_ap   )
   );
 
   wire [`DISPATCH_WIDTH-1:0][`PRF_INT_INDEX_SIZE-1:0] set_busy_index;
@@ -281,6 +281,10 @@ module core (
   wire [`IQ_MEM_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]    rs2_mem_index;
   wire [`IQ_MEM_SIZE-1:0]                             rs1_mem_busy;
   wire [`IQ_MEM_SIZE-1:0]                             rs2_mem_busy;
+  wire [`IQ_AP_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]     rs1_ap_index;
+  wire [`IQ_AP_SIZE-1:0][`PRF_INT_INDEX_SIZE-1:0]     rs2_ap_index;
+  wire [`IQ_AP_SIZE-1:0]                              rs1_ap_busy;
+  wire [`IQ_AP_SIZE-1:0]                              rs2_ap_busy;
   
   generate
     for (genvar i = 0; i < `DISPATCH_WIDTH; i++) begin
@@ -304,26 +308,32 @@ module core (
     .rs1_mem_index    (rs1_mem_index    ),
     .rs2_mem_index    (rs2_mem_index    ),
     .rs1_mem_busy     (rs1_mem_busy     ),
-    .rs2_mem_busy     (rs2_mem_busy     )
+    .rs2_mem_busy     (rs2_mem_busy     ),
+    .rs1_ap_index     (rs1_ap_index     ),
+    .rs2_ap_index     (rs2_ap_index     ),
+    .rs1_ap_busy      (rs1_ap_busy      ),
+    .rs2_ap_busy      (rs2_ap_busy      )
   );
 
   /* DP ~ IS Pipeline Registers */
 
   micro_op_t [`DISPATCH_WIDTH-1:0] is_int_uop_in;
   micro_op_t [`DISPATCH_WIDTH-1:0] is_mem_uop_in;
-  // micro_op_t [`DISPATCH_WIDTH-1:0] is_fp_uop_in;
+  micro_op_t [`DISPATCH_WIDTH-1:0] is_ap_uop_in;
   
   micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_int_tmp;
   micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_mem_tmp;
-  // micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_fp_tmp;
+  micro_op_t [`DISPATCH_WIDTH-1:0] dp_uop_to_ap_tmp;
   logic                            is_stall_prev;
 
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       is_int_uop_in     <= 0;
       is_mem_uop_in     <= 0;
+      is_ap_uop_in      <= 0;
       dp_uop_to_int_tmp <= 0;
       dp_uop_to_mem_tmp <= 0;
+      dp_uop_to_ap_tmp  <= 0;
       is_stall_prev     <= 0;
     end else if (iq_full & (~is_stall_prev)) begin
       // iq_full = 1; is_stall_prev = 0;
@@ -331,8 +341,10 @@ module core (
       // -> Store data from DP stage
       is_int_uop_in     <= 0;
       is_mem_uop_in     <= 0;
+      is_ap_uop_in      <= 0;
       dp_uop_to_int_tmp <= dp_uop_to_int;
       dp_uop_to_mem_tmp <= dp_uop_to_mem;
+      dp_uop_to_ap_tmp  <= dp_uop_to_ap;
       is_stall_prev     <= 1;
     end else if (is_stall_prev & (~iq_full)) begin
       // iq_full = 0; is_stall_prev = 1;
@@ -340,15 +352,19 @@ module core (
       // -> Output stored data
       is_int_uop_in     <= dp_uop_to_int_tmp;
       is_mem_uop_in     <= dp_uop_to_mem_tmp;
+      is_mem_uop_in     <= dp_uop_to_mem_tmp;
       dp_uop_to_int_tmp <= 0;
       dp_uop_to_mem_tmp <= 0;
+      dp_uop_to_ap_tmp  <= 0;
       is_stall_prev     <= 0;
     end else if (iq_full) begin
       is_int_uop_in     <= 0;
       is_mem_uop_in     <= 0;
+      is_ap_uop_in      <= 0;
     end else begin
       is_int_uop_in     <= dp_uop_to_int;
       is_mem_uop_in     <= dp_uop_to_mem;
+      is_ap_uop_in      <= dp_uop_to_ap;
     end
   end
 
@@ -392,15 +408,31 @@ module core (
     .iq_mem_full  (iq_mem_full    )
   );
 
+  logic      [`ISSUE_WIDTH_AP-1:0]  ex_ap_busy;
+  micro_op_t [`ISSUE_WIDTH_AP-1:0]  is_ap_uop_out;
+  logic                             iq_ap_full;
+
+  issue_queue_ap iq_ap (
+    .clock        (clock          ),
+    .reset        (reset          ),
+    .clear_en     (clear          ),
+    .load_en      (!iq_full_reg   ),
+    .ex_busy      (ex_mem_busy    ),
+    .rs1_index    (rs1_ap_index  ),
+    .rs2_index    (rs2_ap_index  ),
+    .rs1_busy     (rs1_ap_busy   ),
+    .rs2_busy     (rs2_ap_busy   ),
+    .uop_in       (is_ap_uop_in  ),
+    .uop_out      (is_ap_uop_out ),
+    .iq_ap_full   (iq_ap_full    )
+  );
+
   /* IS ~ RF Pipeline Registers */
 
   micro_op_t [`PRF_INT_WAYS-1:0] rf_int_uop_in;
-  // micro_op_t [`ISSUE_WIDTH_FP-1:0]  rf_fp_uop_in;
-
   always_ff @(posedge clock) begin
     if (reset | clear) begin
       rf_int_uop_in <= 0;
-      // rf_fp_uop_in  <= 0;
     end else if (!stall) begin
       for (int i = 0; i < `ISSUE_WIDTH_INT; i++)
         rf_int_uop_in[i] <= is_int_uop_out[i];
@@ -541,8 +573,6 @@ module core (
       wb_uops[i] = ex_int_uop_out[i];
     for (int i = 0; i < `ISSUE_WIDTH_MEM; i++)
       wb_uops[i + `ISSUE_WIDTH_INT] = ex_mem_uop_out[i];
-    // for (int i = 0; i < `ISSUE_WIDTH_FP; i++)
-    //   wb_uops[i + `ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM] <= ex_fp_uop_out[i];
   end
 
   /* Stage 9: WB - Write Back */
