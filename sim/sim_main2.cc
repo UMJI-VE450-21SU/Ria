@@ -8,7 +8,7 @@
 #include <verilated.h>
 #include "Vtop.h"
 
-#define SIM_TIME 2500
+#define SIM_TIME 4000
 
 // Legacy function required only so linking works on Cygwin and MSVC++
 double sc_time_stamp() { return 0; }

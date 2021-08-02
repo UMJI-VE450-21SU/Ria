@@ -65,7 +65,7 @@ VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.s
 
 # [use this to change testbench]
 # a spike-like environment is sim_main2, not tested yet, the entry point of the CPU should be default to 0x80000000
-SIM_TARGET = sim_main
+SIM_TARGET = sim_main2
 SIM_TARGET_SRC = $(SIM_TARGET).cc
 
 include sim/fesvr450.mk.in
@@ -79,7 +79,7 @@ VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 # the program to run
 #
 # SIMULATOR_PROG = prog/bin/c_example.bin
-SIMULATOR_PROG = spike-software/sobel.elf
+SIMULATOR_PROG = spike-software/insertionSort.elf
 #SIMULATOR_PROG = myfile
 # the dmem init
 #SIMULATOR_DATA_INIT = software/c_example/c_example.bin
@@ -135,11 +135,10 @@ show-config:
 
 SPIKE_BIN := bin/spike
 SPIKE_PROG_DIR := spike-software
-SPIKE_PROG := sobel.elf
 SPIKE_OPT := --isa=rv32i --priv=mu -l
 
 sim-spike: make-spike
-	$(SPIKE_BIN) $(SPIKE_OPT) $(SPIKE_PROG_DIR)/$(SPIKE_PROG)
+	$(SPIKE_BIN) $(SPIKE_OPT) $(SIMULATOR_PROG)
 
 make-spike:
 	$(MAKE) -C $(SPIKE_PROG_DIR)

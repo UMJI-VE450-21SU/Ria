@@ -17,7 +17,8 @@ LD_OPTS := -m elf32lriscv
 TARGETS := \
   moreThanExit \
   sobel \
-	simple
+	simple \
+	insertionSort
 
 TARGETS_ELF := $(foreach target, $(TARGETS), $(target).elf)
 

@@ -68,7 +68,10 @@ module inst_fetch (
     for (genvar i = 0; i < `FETCH_WIDTH; i++) begin
       assign insts_out[i].inst        = icache2core_data[(i+1)*32-1:i*32];
       assign insts_out[i].pc          = pc + i * 4;
-      assign is_branch[i]             = (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_BRANCH) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JALR) || (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL);
+      assign is_branch[i]             = insts_out_valid & pc_enable &
+                                        ((icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_BRANCH) || 
+                                         (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JALR)   || 
+                                         (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL));
       assign insts_out[i].pred_taken  = predictions[i];
       assign insts_out[i].pred_addr   = predictions[i] ? next_pc:0;
     end
