@@ -8,7 +8,6 @@
 module free_list (
   input       clock,
   input       reset,
-  input       stall,
 
   input       recover,
 
@@ -115,7 +114,7 @@ module free_list (
       free_num        <= prf_recover_num_next;
       prf_recover     <= prf_recover_next;
       prf_recover_num <= prf_recover_num_next;
-    end else if (!stall) begin
+    end else begin
       free_list       <= free_list_next;
       free_num        <= free_num_next;
       prf_recover     <= prf_recover_next;
