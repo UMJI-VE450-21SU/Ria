@@ -8,7 +8,7 @@
 #include <verilated.h>
 #include "Vtop.h"
 
-#define SIM_TIME 4000
+#define SIM_TIME 30000
 
 // Legacy function required only so linking works on Cygwin and MSVC++
 double sc_time_stamp() { return 0; }
@@ -136,7 +136,10 @@ int main(int argc, char **argv) {
   std::cout << "===================================  [SIMULATION ENDS] ===============================" << std::endl;
   std::cout << "exit code: " << sim.exit_code() << std::endl;
 
-//  memory->print_all();
+  printf("Final memory layout: \n");
+
+  memory->print_all();
+
   sim.stop();
 
   return 0;

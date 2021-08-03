@@ -28,33 +28,43 @@ module issue_slot_mem (
   wire rs1_ready, rs2_ready;
   reg  is_new = 0;
 
-  always_comb begin
-    if (load & uop_in.valid) begin
-      rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_int_index : 0;
-      rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_int_index : 0;
-    end else begin
-      rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_int_index : 0;
-      rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_int_index : 0;
-    end
-  end
+  // always_comb begin
+  //   rs1_index = 0;
+  //   rs2_index = 0;
+  //   if (!is_new) begin
+  //     if (load & uop_in.valid) begin
+  //       rs1_index = (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_int_index : 0;
+  //       rs2_index = (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_int_index : 0;
+  //     end else begin
+  //       rs1_index = (uop.rs1_source == RS_FROM_RF) ? uop.rs1_prf_int_index : 0;
+  //       rs2_index = (uop.rs2_source == RS_FROM_RF) ? uop.rs2_prf_int_index : 0;
+  //     end
+  //   end
+  // end
 
   always_ff @ (posedge clock) begin
     if (reset | clear) begin
       uop <= 0;
       is_new <= 0;
+      rs1_index <= 0;
+      rs2_index <= 0;
     end else if (load & uop_in.valid) begin
       uop <= uop_in;
       is_new <= 1;
+      rs1_index <= (uop_in.rs1_source == RS_FROM_RF) ? uop_in.rs1_prf_int_index : 0;
+      rs2_index <= (uop_in.rs2_source == RS_FROM_RF) ? uop_in.rs2_prf_int_index : 0;
     end else begin
       uop <= uop_new;
       is_new <= 0;
+      rs1_index <= (uop_new.rs1_source == RS_FROM_RF) ? uop_new.rs1_prf_int_index : 0;
+      rs2_index <= (uop_new.rs2_source == RS_FROM_RF) ? uop_new.rs2_prf_int_index : 0;
     end
   end
 
   assign free = ~uop.valid;
-  assign rs1_ready = ~rs1_busy;
-  assign rs2_ready = ~rs2_busy;
-  assign ready = rs1_ready & rs2_ready & uop.valid & ~is_new;
+  assign rs1_ready = ~rs1_busy & ~is_new;
+  assign rs2_ready = ~rs2_busy & ~is_new;
+  assign ready = rs1_ready & rs2_ready & uop.valid;
 
 endmodule
 
@@ -66,17 +76,34 @@ module issue_queue_mem_output_selector (
   output reg  [`ISSUE_WIDTH_MEM-1:0] sel_valid
 );
 
-  logic [`ISSUE_WIDTH_MEM-1:0] [`IQ_MEM_SIZE-1:0] readys;
+  logic [`IQ_MEM_SIZE-1:0] readys [`ISSUE_WIDTH_MEM-1:0];
+  logic [`IQ_MEM_SIZE-1:0] store_mask;
 
   always_comb begin
-    readys[0] = ready;
-    for (int i = `ISSUE_WIDTH_MEM; i < `IQ_MEM_SIZE; i++) begin
-      if (is_store[i]) begin
-        for (int j = i; j < `IQ_MEM_SIZE; j++) begin
-          readys[0][j] = 0;
-        end
-      end
-    end
+    store_mask = 0;
+    casez (is_store)
+      16'b???????????????1: store_mask = 16'b1111111111111110;
+      16'b??????????????10: store_mask = 16'b1111111111111110;
+      16'b?????????????100: store_mask = 16'b1111111111111100;
+      16'b????????????1000: store_mask = 16'b1111111111111000;
+      16'b???????????10000: store_mask = 16'b1111111111110000;
+      16'b??????????100000: store_mask = 16'b1111111111100000;
+      16'b?????????1000000: store_mask = 16'b1111111111000000;
+      16'b????????10000000: store_mask = 16'b1111111110000000;
+      16'b???????100000000: store_mask = 16'b1111111100000000;
+      16'b??????1000000000: store_mask = 16'b1111111000000000;
+      16'b?????10000000000: store_mask = 16'b1111110000000000;
+      16'b????100000000000: store_mask = 16'b1111100000000000;
+      16'b???1000000000000: store_mask = 16'b1111000000000000;
+      16'b??10000000000000: store_mask = 16'b1110000000000000;
+      16'b?100000000000000: store_mask = 16'b1100000000000000;
+      16'b1000000000000000: store_mask = 16'b1000000000000000;
+      default:              store_mask = 16'b0000000000000000;
+    endcase
+  end
+
+  always_comb begin
+    readys[0] = ready & ~store_mask;
   end
 
   generate
@@ -183,6 +210,11 @@ module issue_queue_mem (
       );
     end
   endgenerate
+
+  // always_comb begin
+  //   $display("[IQ-MEM] rs1_index[0]=%h, load=%b, uop_in[0]", rs1_index[0], load);
+  //   print_uop(uop_in[0]);
+  // end
 
   wire iq_mem_print = 0;
 
