@@ -24,7 +24,10 @@ module top (
 
   // ======= store buffer related ============
   output logic [`COMMIT_WIDTH-1:0] store_retire,
-  output logic                     recover
+  output logic                     recover,
+
+  // ======= debug log related ===============
+  input                log_verbose
 );
 
   core core (
@@ -40,7 +43,8 @@ module top (
     .core2dcache_data_size  (core2dcache_data_size  ),
     .core2dcache_addr       (core2dcache_addr       ),
     .store_retire           (store_retire           ),
-    .recover                (recover                )
+    .recover                (recover                ),
+    .log_verbose            (log_verbose            )
   );
 
   initial begin

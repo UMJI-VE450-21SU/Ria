@@ -5,7 +5,7 @@ if __name__ == '__main__':
   spike = spike_fd.readlines()
   retire = retire_fd.readlines()
 
-  for i in range(len(retire)):
+  for i in range(min(len(retire), len(spike))):
     spike_pc = spike[i].strip().split()[2].split('x')[1]
     retire_pc = retire[i].strip().split()[2]
     if spike_pc != retire_pc:

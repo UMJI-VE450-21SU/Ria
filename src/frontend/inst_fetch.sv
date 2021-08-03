@@ -73,7 +73,7 @@ module inst_fetch (
                                          (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JALR)   || 
                                          (icache2core_data[(i+1)*32-26:i*32] == `RV32_OP_JAL));
       assign insts_out[i].pred_taken  = predictions[i];
-      assign insts_out[i].pred_addr   = predictions[i] ? next_pc:0;
+      assign insts_out[i].pred_addr   = next_pc;
     end
   endgenerate
 

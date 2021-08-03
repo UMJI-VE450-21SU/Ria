@@ -67,6 +67,8 @@ int main(int argc, char **argv) {
 
   StoreBuffer store_buffer(std::move(dmem));
 
+  top->log_verbose = 1;
+
   // In the final version, the terminate condition may only depends on the sim object
   while (!sim.is_signal_exit() && !sim.done() && !contextp->gotFinish()) {
     std::cout << "==================================================== At time " << i << " ====================================================" << std::endl;
