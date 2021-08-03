@@ -23,7 +23,7 @@ module decode (
     uop.inst  = inst;
     uop.valid = valid;
     uop.pred_taken = pred_taken;
-    uop.pred_addr  = pred_addr;
+    uop.pred_addr  = pred_taken ? pred_addr : (pc + 4);
     casez (inst) 
       `RV32_LUI: begin
         uop.iq_code           = IQ_INT;
