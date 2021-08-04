@@ -1,21 +1,43 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Header:  Project Macros Definition
+// Author:  Yiqiu Sun, Li Shi, Jian Shi
+// Date:    2021/05/19
+
 `ifndef __DEFINES_SVH__
 `define __DEFINES_SVH__
 
-`define FRONTEND_WIDTH      4
+`define INST_NUM            40
 
+`define FRONTEND_WIDTH      4
+`define FETCH_WIDTH         `FRONTEND_WIDTH
 `define DECODE_WIDTH        `FRONTEND_WIDTH
 `define RENAME_WIDTH        `FRONTEND_WIDTH
 `define DISPATCH_WIDTH      `FRONTEND_WIDTH
-`define COMMIT_WIDTH        `FRONTEND_WIDTH
+`define COMMIT_WIDTH        6
 
-`define RAT_CP_SIZE         2
-`define RAT_CP_INDEX_SIZE   1   // log2(RAT_CP_SIZE)
+`define INST_PACK           32 * `FETCH_WIDTH
+
+`define BHT_SIZE            128
+`define BHT_INDEX_SIZE      7   // log2(BHT_SIZE)
+`define PHT_SIZE            128
+`define PHT_INDEX_SIZE      7   // log2(PHT_SIZE)
+`define BTB_SIZE            32
+`define BTB_INDEX_SIZE      5   // log2(BTB_SIZE)
+`define BTB_WIDTH           4
+`define BTB_WIDTH_INDEX     2   // log2(BTB_WIDTH)
+`define BTB_TAG_SIZE        (`BTB_SIZE - 2 - `BTB_INDEX_SIZE - `BTB_WIDTH_INDEX) // 32-2-7=23
+
+`define FB_SIZE             16
+`define FB_ADDR             4
+
+`define ROB_SIZE            64
+`define ROB_INDEX_SIZE      6   // log2(ROB_SIZE)
 
 `define ISSUE_WIDTH_INT     3
 `define ISSUE_WIDTH_MEM     1
 `define ISSUE_WIDTH_FP      2
 
-`define IQ_INT_SIZE         16
+`define IQ_INT_SIZE         32
 `define IQ_MEM_SIZE         16
 `define IQ_FP_SIZE          16
 
@@ -27,13 +49,14 @@
 
 `define PRF_INT_SIZE        64
 `define PRF_INT_INDEX_SIZE  6  // log2(PRF_INT_SIZE)
-`define PRF_INT_WAYS        3
+`define PRF_INT_WAYS        (`ISSUE_WIDTH_INT + `ISSUE_WIDTH_MEM)
 
 `define PRF_FP_SIZE         64
 `define PRF_FP_INDEX_SIZE   6  // log2(PRF_FP_SIZE)
-`define PRF_FP_WAYS         2
+`define PRF_FP_WAYS         (`ISSUE_WIDTH_FP + `ISSUE_WIDTH_MEM)
 
 `define IMUL_LATENCY        5
+`define IDIV_LATENCY        32
 
 typedef logic [`ARF_INT_INDEX_SIZE-1:0] arf_int_index_t;
 typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
@@ -41,7 +64,7 @@ typedef logic [`ARF_FP_INDEX_SIZE-1:0]  arf_fp_index_t;
 typedef logic [`PRF_INT_INDEX_SIZE-1:0] prf_int_index_t;
 typedef logic [`PRF_FP_INDEX_SIZE-1:0]  prf_fp_index_t;
 
-typedef logic [`RAT_CP_INDEX_SIZE-1:0]  cp_index_t;
+typedef logic [`ROB_INDEX_SIZE-1:0]     rob_index_t;
 
 // RISCV ISA SPEC
 typedef union packed {
@@ -54,6 +77,15 @@ typedef union packed {
     logic [4:0]   rd;
     logic [6:0]   opcode;
   } r;
+  struct packed {
+    logic [4:0]   rs3;
+    logic [1:0]   funct2;
+    logic [4:0]   rs2;
+    logic [4:0]   rs1;
+    logic [2:0]   funct3;
+    logic [4:0]   rd;
+    logic [6:0]   opcode;
+  } r4;
   struct packed {
     logic [11:0]  imm;
     logic [4:0]   rs1;
@@ -110,7 +142,6 @@ typedef union packed {
     logic [6:0]  opcode;
   } sys;
 } inst_t;
-
 
 
 `endif  // __DEFINES_SVH__

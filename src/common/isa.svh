@@ -1,3 +1,8 @@
+// Project: RISC-V SoC Microarchitecture Design & Optimization
+// Header:  RISC-V ISA Definition
+// Author:  Li Shi, Jian Shi
+// Date:    2021/05/19
+
 `ifndef __ISA_SVH__
 `define __ISA_SVH__
 
@@ -58,13 +63,14 @@
 
 
 // ---------- Types -------------------------------------------------------- //
-`define RV32_R_t(op, funct3, funct7)  {``funct7``, {5{1'b?}},  {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
-`define RV32_R4_t(op, funct3, funct2) {{5{1'b?}}, ``funct2``, {5{1'b?}},  {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
+`define RV32_R_t(op, funct3, funct7)  {``funct7``, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
+`define RV32_R4_t(op, funct3, funct2) {{5{1'b?}}, ``funct2``, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
 `define RV32_I_t(op, funct3)          {{12{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``} 
 `define RV32_S_t(op, funct3)          {{7{1'b?}}, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
 `define RV32_B_t(op, funct3)          {{7{1'b?}}, {5{1'b?}}, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
 `define RV32_U_t(op)                  {{20{1'b?}}, {5{1'b?}}, ``op``}
 `define RV32_J_t(op)                  {{20{1'b?}}, {5{1'b?}}, ``op``}
+`define RV32_F_t(op, funct3, funct5, funct7)  {``funct7``, ``funct5``, {5{1'b?}}, ``funct3``, {5{1'b?}}, ``op``}
 
 
 // ---------- Instruction encoding ----------------------------------------- //
@@ -148,65 +154,67 @@
 // RV32F
 `define RV32_FLW        `RV32_I_t(`RV32_OP_LOAD_FP, 3'b010)
 `define RV32_FSW        `RV32_S_t(`RV32_OP_STORE_FP, 3'b010)
-`define RV32_FMADD_S    
-`define RV32_FMSUB_S    
-`define RV32_FNMSUB_S   
-`define RV32_FNMADD_S   
-`define RV32_FADD_S     
-`define RV32_FSUB_S     
-`define RV32_FMUL_S     
-`define RV32_FDIV_S     
-`define RV32_FSQRT_S    
-`define RV32_FSGNJ_S    
-`define RV32_FSGNJN_S   
-`define RV32_FSGNJX_S   
-`define RV32_FMIN_S     
-`define RV32_FMAX_S     
-`define RV32_FCVT_W_S   
-`define RV32_FCVT_WU_S  
-`define RV32_FMV_X_W    
-`define RV32_FEQ_S      
-`define RV32_FLT_S      
-`define RV32_FLE_S      
-`define RV32_FCLASS_S   
-`define RV32_FCVT_S_W   
-`define RV32_FCVT_S_WU  
-`define RV32_FMV_W_X    
+`define RV32_FMADD_S    `RV32_R4_t(`RV32_OP_FMADD, 3'b???, 2'b00)
+`define RV32_FMSUB_S    `RV32_R4_t(`RV32_OP_FMSUB, 3'b???, 2'b00)
+`define RV32_FNMSUB_S   `RV32_R4_t(`RV32_OP_FNMSUB, 3'b???, 2'b00)
+`define RV32_FNMADD_S   `RV32_R4_t(`RV32_OP_FNMADD, 3'b???, 2'b00)
+`define RV32_FADD_S     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0000000)
+`define RV32_FSUB_S     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0000100)
+`define RV32_FMUL_S     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0001000)
+`define RV32_FDIV_S     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0001100)
+`define RV32_FSQRT_S    `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b0101100)
+`define RV32_FSGNJ_S    `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b?????, 7'b0010000)
+`define RV32_FSGNJN_S   `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b?????, 7'b0010000)
+`define RV32_FSGNJX_S   `RV32_F_t(`RV32_OP_FP, 3'b010, 5'b?????, 7'b0010000)
+`define RV32_FMIN_S     `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b?????, 7'b0010100)
+`define RV32_FMAX_S     `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b?????, 7'b0010100)
+`define RV32_FCVT_W_S   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b1100000)
+`define RV32_FCVT_WU_S  `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00001, 7'b1100000)
+`define RV32_FMV_X_W    `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b00000, 7'b1110000)
+`define RV32_FEQ_S      `RV32_F_t(`RV32_OP_FP, 3'b010, 5'b?????, 7'b1010000)
+`define RV32_FLT_S      `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b?????, 7'b1010000)
+`define RV32_FLE_S      `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b?????, 7'b1010000)
+`define RV32_FCLASS_S   `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b00000, 7'b1110000)
+`define RV32_FCVT_S_W   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b1101000)
+`define RV32_FCVT_S_WU  `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00001, 7'b1101000)
+`define RV32_FMV_W_X    `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b00000, 7'b1111000)
 
 // RV32D
 `define RV32_FLD        `RV32_I_t(`RV32_OP_LOAD_FP, 3'b011)
-`define RV32_FSW        `RV32_S_t(`RV32_OP_STORE_FP, 3'b011)
-`define RV32_FMADD_D    
-`define RV32_FMSUB_D    
-`define RV32_FNMSUB_D   
-`define RV32_FNMADD_D   
-`define RV32_FADD_D     
-`define RV32_FSUB_D     
-`define RV32_FMUL_D     
-`define RV32_FDIV_D     
-`define RV32_FSQRT_D    
-`define RV32_FSGNJ_D    
-`define RV32_FSGNJN_D   
-`define RV32_FSGNJX_D   
-`define RV32_FMIN_D     
-`define RV32_FMAX_D     
-`define RV32_FCVT_S_D   
-`define RV32_FCVT_D_S   
-`define RV32_FEQ_D      
-`define RV32_FLT_D      
-`define RV32_FLE_D      
-`define RV32_FCLASS_D   
-`define RV32_FCVT_W_D   
-`define RV32_FCVT_WU_D  
-`define RC32_FCVT_D_W   
-`define RC32_FCVT_D_WU  
+`define RV32_FSD        `RV32_S_t(`RV32_OP_STORE_FP, 3'b011)
+`define RV32_FMADD_D    `RV32_R4_t(`RV32_OP_FMADD, 3'b???, 2'b01)
+`define RV32_FMSUB_D    `RV32_R4_t(`RV32_OP_FMSUB, 3'b???, 2'b01)
+`define RV32_FNMSUB_D   `RV32_R4_t(`RV32_OP_FNMSUB, 3'b???, 2'b01)
+`define RV32_FNMADD_D   `RV32_R4_t(`RV32_OP_FNMADD, 3'b???, 2'b01)
+`define RV32_FADD_D     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0000001)
+`define RV32_FSUB_D     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0000101)
+`define RV32_FMUL_D     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0001001)
+`define RV32_FDIV_D     `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b?????, 7'b0001101)
+`define RV32_FSQRT_D    `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b0101101)
+`define RV32_FSGNJ_D    `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b?????, 7'b0010001)
+`define RV32_FSGNJN_D   `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b?????, 7'b0010001)
+`define RV32_FSGNJX_D   `RV32_F_t(`RV32_OP_FP, 3'b010, 5'b?????, 7'b0010001)
+`define RV32_FMIN_D     `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b?????, 7'b0010101)
+`define RV32_FMAX_D     `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b?????, 7'b0010101)
+`define RV32_FCVT_S_D   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00001, 7'b1100000)
+`define RV32_FCVT_D_S   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b1100001)
+`define RV32_FEQ_D      `RV32_F_t(`RV32_OP_FP, 3'b010, 5'b?????, 7'b1010001)
+`define RV32_FLT_D      `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b?????, 7'b1010001)
+`define RV32_FLE_D      `RV32_F_t(`RV32_OP_FP, 3'b000, 5'b?????, 7'b1010001)
+`define RV32_FCLASS_D   `RV32_F_t(`RV32_OP_FP, 3'b001, 5'b00000, 7'b1110001)
+`define RV32_FCVT_W_D   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b1100001)
+`define RV32_FCVT_WU_D  `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00001, 7'b1100001)
+`define RC32_FCVT_D_W   `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00000, 7'b1101001)
+`define RC32_FCVT_D_WU  `RV32_F_t(`RV32_OP_FP, 3'b???, 5'b00001, 7'b1101001)
 
-`define RV32_RS1(inst) {``inst``[19:15]}
+`define RV32_RS3(inst) {``inst``[31:27]}
 `define RV32_RS2(inst) {``inst``[24:20]}
-`define RV32_RD (inst) {``inst``[11:7]}
+`define RV32_RS1(inst) {``inst``[19:15]}
+`define RV32_RM(inst)  {``inst``[14:12]}
+`define RV32_RD(inst)  {``inst``[11:7]}
 
 // RV32 Immediate signed/unsigned (U is technically unsigned) extension macros
-`define RV32_shamt_Imm(inst)     {{27{1'b0}, ``inst``[24:20]}
+`define RV32_shamt_Imm(inst)     {{27{1'b0}}, ``inst``[24:20]}
 `define RV32_signext_I_Imm(inst) {{21{``inst``[31]}}, ``inst``[30:20]}
 `define RV32_signext_S_Imm(inst) {{21{``inst``[31]}}, ``inst``[30:25], ``inst``[11:7]}
 `define RV32_signext_B_Imm(inst) {{20{``inst``[31]}}, ``inst``[7], ``inst``[30:25], ``inst``[11:8], {1'b0}}

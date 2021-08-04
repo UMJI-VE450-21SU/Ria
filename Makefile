@@ -1,19 +1,34 @@
-######################################################################
+# Project: RISC-V SoC Microarchitecture Design & Optimization
+#          GNU Makefile
+# Author:  Yichao Yuan, Li Shi
+# Date:    2021/07/02
 #
-# UM-SJTU JI VE450 2021 Summer Capstone Design Project
+##### README:
+# The simulation testbench can be selected by option
+# SIM_TARGET
+# e.g. SIM_TARGET=sim_main2 activate the spike-like simulatior
+# SIMULATOR_PROG controls the program to run, form sim_main2, 
+# the program has to be elf. The default is spike-software/
+# sobel.elf
 #
-######################################################################
+# To start a spike-like simulation for verilated model, run 
+# make SIM_TARGET=sim_main2 SIMULATOR_PROG=spike-software/sobel.elf
+#
+# The reset PC should be set to 0x1000, see my note on 
+# src/frontend/inst_fetch.sv
+#####
 
 ifneq ($(words $(CURDIR)),1)
  $(error Unsupported: GNU Make cannot build in directories containing spaces, build elsewhere: '$(CURDIR)')
 endif
 
-######################################################################
-# Set up variables
+SOFTWARE_SUBDIR := software
 
-# If $VERILATOR_ROOT isn't in the environment, we assume it is part of a
-# package install, and verilator is in your path. Otherwise find the
-# binary relative to $VERILATOR_ROOT (such as when inside the git sources).
+SOFTWARE_TARGET := c_example c_hello
+
+SOFTWARE_TARGET_PATH := $(addprefix $(SOFTWARE_SUBDIR)/, $(SOFTWARE_TARGET))
+
+
 ifeq ($(VERILATOR_ROOT),)
 VERILATOR = verilator
 VERILATOR_COVERAGE = verilator_coverage
@@ -23,68 +38,118 @@ VERILATOR = $(VERILATOR_ROOT)/bin/verilator
 VERILATOR_COVERAGE = $(VERILATOR_ROOT)/bin/verilator_coverage
 endif
 
+VERILATOR_FLAGS += --top-module top
+
 # Generate C++ in executable form
-VERILATOR_FLAGS += -cc --exe
-# Generate makefile dependencies (not shown as complicates the Makefile)
-#VERILATOR_FLAGS += -MMD
+VERILATOR_FLAGS += -cc -exe
+# suppress all warnings
+VERILATOR_FLAGS += -Wno-UNOPTFLAT
+VERILATOR_FLAGS += -Wno-WIDTH
+VERILATOR_FLAGS += -Wno-PINMISSING
+
+
 # Optimize
-VERILATOR_FLAGS += -Os -x-assign 0
+# VERILATOR_FLAGS += -Os -x-assign 0
 # Warn abount lint issues; may not want this on less solid designs
-VERILATOR_FLAGS += -Wall
+# VERILATOR_FLAGS += -Wall
 # Make waveforms
-VERILATOR_FLAGS += --trace
+VERILATOR_FLAGS += --trace-fst
 # Check SystemVerilog assertions
 VERILATOR_FLAGS += --assert
-# Generate coverage analysis
-VERILATOR_FLAGS += --coverage
-# Run Verilator in debug mode
-#VERILATOR_FLAGS += --debug
-# Add this trace to get a backtrace in gdb
-#VERILATOR_FLAGS += --gdbbt
+
+VERILATOR_FLAGS += --unroll-count 128
+
+VERILOG_ROOT := src
+# Input files for Verilator
+VERILOG_SRC = $(wildcard src/common/*.svh src/external/fifo/*.v src/external/*.sv src/frontend/*.sv src/backend/*.sv src/*.sv)
+
+# [use this to change testbench]
+# a spike-like environment is sim_main2, not tested yet, the entry point of the CPU should be default to 0x80000000
+SIM_TARGET = sim_main2
+SIM_TARGET_SRC = $(SIM_TARGET).cc
+
+include sim/fesvr450.mk.in
+
+SIM_SRC := $(addprefix sim/,  $(fesvr450_srcs) $(SIM_TARGET_SRC))
+VERILATOR_OPTIONS := input.vc
 
 # Input files for Verilator
-VERILATOR_INPUT = playground/top.sv playground/mux_4x1.sv playground/sim_main.cpp
+VERILATOR_INPUT = -f $(VERILATOR_OPTIONS) $(VERILOG_SRC) $(SIM_SRC)
 
-######################################################################
+# the program to run
+#
+# SIMULATOR_PROG = prog/bin/c_example.bin
+SIMULATOR_PROG = spike-software/insertionSort.elf
+#SIMULATOR_PROG = myfile
+# the dmem init
+#SIMULATOR_DATA_INIT = software/c_example/c_example.bin
+
 default: run
 
-run:
+verilate:
 	@echo
 	@echo "-- VERILATE ----------------"
+	@echo "Inputs: "
+	@echo $(VERILATOR_INPUT)
 	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INPUT)
-
 	@echo
-	@echo "-- BUILD -------------------"
-# To compile, we can either
-# 1. Pass --build to Verilator by editing VERILATOR_FLAGS above.
-# 2. Or, run the make rules Verilator does:
-	$(MAKE) -j -C obj_dir -f Vtop.mk
-# 3. Or, call a submakefile where we can override the rules ourselves:
-# $(MAKE) -j -C obj_dir -f ../Makefile_obj
 
+
+build: verilate
+	$(MAKE) -j -C obj_dir -f ../Makefile_obj
 	@echo
-	@echo "-- RUN ---------------------"
+
+run: build
 	@rm -rf logs
 	@mkdir -p logs
-	obj_dir/Vtop +trace
-
-	@echo
-	@echo "-- COVERAGE ----------------"
-	@rm -rf logs/annotated
-	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
-
-	@echo
+	obj_dir/Vtop ${SIMULATOR_PROG} +trace
 	@echo "-- DONE --------------------"
-	@echo "To see waveforms, open vlt_dump.vcd in a waveform viewer"
+	@echo "To see waveforms, open vlt_dump.fst in a waveform viewer"
 	@echo
+
+view-wave: run make-spike
+	gtkwave obj_dir/vlt_dump.fst
 
 
 ######################################################################
 # Other targets
+.PHONY: build-soft $(SOFTWARE_TARGET_PATH) install-soft sim-spike
+
+build-soft: $(SOFTWARE_TARGET_PATH)
+
+export SOFTWARE_TARGET
+$(SOFTWARE_TARGET_PATH):
+	$(MAKE) -C $@
+
+SOFTWARE_ELF := $(foreach target, ${SOFTWARE_TARGET}, $(addsuffix .elf, $(addprefix $(SOFTWARE_SUBDIR)/$(target)/, $(target))))
+SOFTWARE_BIN := $(foreach target, ${SOFTWARE_TARGET}, $(addsuffix .bin, $(addprefix $(SOFTWARE_SUBDIR)/$(target)/, $(target))))
+install-soft: build-soft
+	cp ${SOFTWARE_ELF} prog/elf
+	cp ${SOFTWARE_BIN} prog/bin
+
 
 show-config:
 	$(VERILATOR) -V
 
+####### spike software, will be merged to the verilator flow when everthing is done ########
+
+SPIKE_BIN := bin/spike
+SPIKE_PROG_DIR := spike-software
+SPIKE_OPT := --isa=rv32i --priv=mu -l
+
+sim-spike: make-spike
+	$(SPIKE_BIN) $(SPIKE_OPT) $(SIMULATOR_PROG)
+
+make-spike:
+	$(MAKE) -C $(SPIKE_PROG_DIR)
+
 maintainer-copy::
 clean mostlyclean distclean maintainer-clean::
 	-rm -rf obj_dir logs *.log *.dmp *.vpd coverage.dat core
+
+WAVEFORM_VIEWER := gtkwave
+
+.PHONY: view-waveform
+
+view-waveform:
+	$(WAVEFORM_VIEWER) logs/vlt_dump.fst
